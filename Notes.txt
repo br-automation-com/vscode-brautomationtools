@@ -1,0 +1,2 @@
+RegExp for build messages:
+https://regex101.com/r/YzUyhH/2

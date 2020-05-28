@@ -1,0 +1,206 @@
+{
+	"name": "vscode-brautomationtools",
+	"displayName": "B&R Automation Tools",
+	"description": "Tools to edit B&R Automation Studio projects in VS Code",
+	"version": "0.0.1",
+	"publisher": "Radeonmann",
+	"engines": {
+		"vscode": "^1.44.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"workspaceContains:/*.apj",
+		"onCommand:vscode-brautomationtools.forceActivate"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "vscode-brautomationtools.forceActivate",
+				"title": "Force activate extension",
+				"category": "B&R Tools"
+			},
+			{
+				"command": "vscode-brautomationtools.test",
+				"title": "Test",
+				"category": "B&R Tools"
+			},
+			{
+				"command": "vscode-brautomationtools.updateConfigInstalledAsVersionsFromSearch",
+				"title": "Update installed AS versions",
+				"category": "B&R Tools"
+			}
+		],
+		"configuration": {
+			"title": "B&R Automation Tools",
+			"properties": {
+				"vscode-brautomationtools.test1.urlForHelp": {
+					"description": "Where I got all this info",
+					"type": "string",
+					"default": "https://code.visualstudio.com/api/references/contribution-points#contributes.configuration"
+				},
+				"vscode-brautomationtools.test1.urlForSample": {
+					"description": "Sample for package.json",
+					"type": "string",
+					"default": "https://github.com/microsoft/vscode-extension-samples/blob/master/configuration-sample/package.json"
+				},
+				"vscode-brautomationtools.build.defaultBuildMode": {
+					"description": "Default mode for build task",
+					"type": "string",
+					"enum": [
+						"Build",
+						"Rebuild",
+						"BuildAndTransfer",
+						"BuildAndCreateCompactFlash"
+					],
+					"enumDescriptions": [
+						"Incremental build",
+						"Complete rebuild",
+						"Build for transfer",
+						"Build for creation of CF card"
+					],
+					"default": "Build"
+				},
+				"vscode-brautomationtools.environment.installedAutomationStudioVersions": {
+					"description": "Information of installed Automation Studio versions",
+					"type": "array",
+					"items": {
+						"description": "Automation Studio version information",
+						"type": "object",
+						"required": [
+							"version",
+							"installPath"
+						],
+						"additionalProperties": false,
+						"properties": {
+							"version": {
+								"description": "Automation Studio version number",
+								"type": "string",
+								"pattern": "^V(\\d+)(?:\\.(\\d+))(?:\\.(\\d+)){0,1}(?:\\.(\\d+)){0,1}(?: [SPU]{2}){0,1}$",
+								"examples": [
+									"V4.5",
+									"V4.6",
+									"V4.7",
+									"V4.7.2",
+									"V4.7.2.98"
+								]
+							},
+							"installPath": {
+								"$comment": "TODO pattern or format for file path",
+								"description": "Installation path of Automation Studio version",
+								"type": "string",
+								"examples": [
+									"C:/BrAutomation/AS45/",
+									"C:/BrAutomation/AS46/",
+									"C:/BrAutomation/AS47/"
+								]
+							},
+							"gccVersions": {
+								"description": "Available gcc Versions in this Automation Studio installation",
+								"type": "array",
+								"items": {
+									"description": "gcc version information",
+									"type": "object",
+									"required": [
+										"version",
+										"automationStudioRelativePath"
+									],
+									"additionalProperties": false,
+									"properties": {
+										"version": {
+											"description": "gcc version number",
+											"type": "string",
+											"pattern": "^V(\\d+).(\\d+).(\\d+)$",
+											"examples": [
+												"V2.95.3",
+												"V4.1.2",
+												"V6.3.0"
+											]
+										},
+										"automationStudioRelativePath": {
+											"$comment": "TODO pattern or format for file path",
+											"description": "Path relative to Automation Studio installation",
+											"type": "string",
+											"examples": [
+												"./AS/gnuinst/V2.95.3/",
+												"./AS/gnuinst/V4.1.2/",
+												"./AS/gnuinst/V6.3.0/"
+											]
+										}
+									}
+								}
+							}
+						}
+					},
+					"default": [
+						{
+							"version": "V4.7",
+							"installPath": "C:/BrAutomation/AS47/",
+							"gccVersions": [
+								{
+									"version": "V2.95.3",
+									"automationStudioRelativePath": "./AS/gnuinst/V2.95.3/"
+								},
+								{
+									"version": "V4.1.2",
+									"automationStudioRelativePath": "./AS/gnuinst/V4.1.2/"
+								},
+								{
+									"version": "V6.3.0",
+									"automationStudioRelativePath": "./AS/gnuinst/V6.3.0/"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		"problemPatterns": [
+			{
+				"name": "BrAsBuildCombinedPattern",
+				"regexp": "^(.*): \\((?:(?:Ln:\\s*(\\d+)(?:,\\s*Col:\\s*){0,1}(\\d+){0,1})|(?:.*))\\)\\s+(warning|error)\\s+(\\d*):(.*)$",
+				"file": 1,
+				"line": 2,
+				"column": 3,
+				"severity": 4,
+				"code": 5,
+				"message": 6
+			}
+		],
+		"problemMatchers": [
+			{
+				"name": "BrAsBuild",
+				"label": "B&R Automation Studio build",
+				"fileLocation": "autoDetect",
+				"pattern": "$BrAsBuildCombinedPattern"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "eslint src --ext ts",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.44.0",
+		"@types/glob": "^7.1.1",
+		"@types/mocha": "^7.0.2",
+		"@types/node": "^13.11.0",
+		"eslint": "^6.8.0",
+		"@typescript-eslint/parser": "^2.30.0",
+		"@typescript-eslint/eslint-plugin": "^2.30.0",
+		"glob": "^7.1.6",
+		"mocha": "^7.1.2",
+		"typescript": "^3.8.3",
+		"vscode-test": "^1.3.0"
+	},
+	"dependencies": {
+		"vscode-cpptools": "^4.0.1",
+		"vscode-jsonrpc": "^5.0.1"
+	}
+}
