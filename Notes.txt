@@ -1,2 +1,6 @@
 RegExp for build messages:
 https://regex101.com/r/YzUyhH/2
+
+TypeScript Links:
+https://typedoc.org/guides/doccomments/
+https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html

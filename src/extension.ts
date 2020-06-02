@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { stringify } from 'querystring';
-import { BRCommands } from './BRCommands';
-import { BRDialogs } from './BRDialogs';
-import { BrIecHeaderProvider } from './BrIecHeaderProvider';
-import { BrCppToolsApi } from './BrCppToolsApi';
+import * as BRCommands from './BRCommands';
+import * as BRDialogs from './BRDialogs';
+import * as BrIecHeaderProvider from './BrIecHeaderProvider';
+import * as BrCppToolsApi from './BrCppToolsApi';
 
 // Activation event
 export async function activate(context: vscode.ExtensionContext) {

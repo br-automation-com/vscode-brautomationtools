@@ -1,18 +1,16 @@
 import * as vscode from 'vscode';
 
-export namespace BrIecHeaderProvider
-{
-    export async function TestProvideHeader(context: vscode.ExtensionContext)
-    {
-        //TODO providing a text document works fine, but how to make it accessible for C/C++ extension?
-        const myProvider = new class implements vscode.TextDocumentContentProvider {
 
-            // emitter and its event
-            onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
-            onDidChange = this.onDidChangeEmitter.event;
-    
-            provideTextDocumentContent(uri: vscode.Uri): string {
-                const header = `
+export async function TestProvideHeader(context: vscode.ExtensionContext) {
+    //TODO providing a text document works fine, but how to make it accessible for C/C++ extension?
+    const myProvider = new class implements vscode.TextDocumentContentProvider {
+
+        // emitter and its event
+        onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+        onDidChange = this.onDidChangeEmitter.event;
+
+        provideTextDocumentContent(uri: vscode.Uri): string {
+            const header = `
                 // ${uri.path}
                 /* Automation Studio generated header file */
                 /* Do not edit ! */
@@ -48,13 +46,12 @@ export namespace BrIecHeaderProvider
 
                 #endif /* _BUR_1588951000_6_ */
                 `;
-                // simply invoke cowsay, use uri-path as text
-                return header;
-            }
-        };
-        context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('myScheme', myProvider));
-        let uri = vscode.Uri.parse('myScheme:SomeTest.h');
-        let doc = await vscode.workspace.openTextDocument(uri); // calls back into the provider
-		await vscode.window.showTextDocument(doc, { preview: false });
-    }
+            // simply invoke cowsay, use uri-path as text
+            return header;
+        }
+    };
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('myScheme', myProvider));
+    let uri = vscode.Uri.parse('myScheme:SomeTest.h');
+    let doc = await vscode.workspace.openTextDocument(uri); // calls back into the provider
+    await vscode.window.showTextDocument(doc, { preview: false });
 }
