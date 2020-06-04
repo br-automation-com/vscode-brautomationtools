@@ -11,6 +11,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.window.showInformationMessage('Extension B&R Automation Tools is now active');
 
 	BRCommands.registerCommands(context);
+	BrAsBuildTaskProvider.registerTaskProviders(context);
     BrCppToolsApi.registerCppToolsConfigurationProvider();
 }
 

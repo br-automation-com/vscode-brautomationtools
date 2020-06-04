@@ -176,6 +176,68 @@
 				"fileLocation": "autoDetect",
 				"pattern": "$BrAsBuildCombinedPattern"
 			}
+		],
+		"taskDefinitions": [
+			{
+				"type": "BrAsBuild",
+				"properties": {
+					"asProjectFile": {
+						"description": "The (absolute?) path of the Automation Studio project file, e.g. 'C:\\projects\\MyFirstProject\\MyFirstProject.apj'. If not set, the first .apj file in the workspace will be used.",
+						"type": "string"
+					},
+					"asBuildMode": {
+						"description": "The build mode for this task. If set to \"$dialog\", a selection needs to be made on each execution",
+						"type": "string",
+						"enum": [
+							"$dialog",
+							"Build",
+							"Rebuild",
+							"BuildAndTransfer",
+							"BuildAndCreateCompactFlash"
+						]
+					},
+					"asConfiguration": {
+						"description": "The AS configuration which will be built. If set to \"$dialog\", a selection needs to be made on each execution",
+						"type": "string",
+						"examples": ["$dialog"]
+					},
+					"buildForSimulation": {
+						"description": "Always build project for ArSim target. If not set or set to false, the setting of the Automation Studio project configuration is used",
+						"type": "boolean"
+					},
+					"buildRUCPackage": {
+						"description": "Always create RUC package. If not set or set to false, the setting of the Automation Studio project configuration is used",
+						"type": "boolean"
+					},
+					"buildCrossReferences": {
+						"description": "Build only cross reference and header files. If set to true, no binaries are created",
+						"type": "boolean"
+					},
+					"cleanTemporary": {
+						"description": "Cleans the temporary folder.",
+						"type": "boolean"
+					},
+					"cleanBinary": {
+						"description": "Cleans the binaries folder.",
+						"type": "boolean"
+					},
+					"cleanGenerated": {
+						"description": "Cleans all generated .h and .a files. ATTENTION this affects all configurations!",
+						"type": "boolean"
+					},
+					"cleanDiagnosis": {
+						"description": "Cleans the diagnosis folder.",
+						"type": "boolean"
+					},
+					"additionalArguments": {
+						"description": "Additional arguments for Br.As.Build.exe. Write each argument as a separate array element, as strings with whitespaces get automatically quoted. For the same reason e.g. paths with whitespaces do not need to be quoted manually",
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			}
 		]
 	},
 	"scripts": {
