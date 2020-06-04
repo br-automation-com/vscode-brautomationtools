@@ -14,9 +14,15 @@ related to https://github.com/microsoft/vscode-cpptools/issues/5512
 /**
  * Register the custom configuration provider on the C/C++ Tools extension
  */
-export async function registerCppToolsConfigurationProvider(): Promise<void> {
-    const provider = new CppConfigurationProvider();
+export async function registerCppToolsConfigurationProvider(context: vscode.ExtensionContext): Promise<void> {
+    
     const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v3);
+    if (!cppToolsApi) {
+        return;
+    }
+    context.subscriptions.push(cppToolsApi);
+    const provider = new CppConfigurationProvider();
+    context.subscriptions.push(provider);
     cppToolsApi?.registerCustomConfigurationProvider(provider);
     cppToolsApi?.notifyReady(provider);
 }

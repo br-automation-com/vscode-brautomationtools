@@ -1,18 +1,16 @@
 import * as vscode from 'vscode';
-import { stringify } from 'querystring';
-import * as BRCommands from './BRCommands';
-import * as BRDialogs from './BRDialogs';
-import * as BrIecHeaderProvider from './BrIecHeaderProvider';
-import * as BrCppToolsApi from './BrCppToolsApi';
-import * as BrAsBuildTaskProvider from './BrAsBuildTaskProvider';
+import {registerCommands} from './BRCommands';
+import {registerCppToolsConfigurationProvider} from './BrCppToolsApi';
+import {registerTaskProviders} from './BrAsBuildTaskProvider';
+import {registerApiTests} from './Tools/ApiTests';
 
 // Activation event
 export async function activate(context: vscode.ExtensionContext) {
 	vscode.window.showInformationMessage('Extension B&R Automation Tools is now active');
-
-	BRCommands.registerCommands(context);
-	BrAsBuildTaskProvider.registerTaskProviders(context);
-    BrCppToolsApi.registerCppToolsConfigurationProvider();
+	registerApiTests(context);
+	registerCommands(context);
+	registerTaskProviders(context);
+    registerCppToolsConfigurationProvider(context);
 }
 
 // this method is called when your extension is deactivated
