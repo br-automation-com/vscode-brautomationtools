@@ -8,38 +8,23 @@ import * as vscode from 'vscode';
 
 
 //#region interfaces for types
-/**
- * B&R Automation Studio version and installation information
- */
-export interface AsVersionInformation {
-    version: string;
-    installPath: string;
-    gccVersions: Array<AsGccVersionInformation>;
-}
 
-/**
- * Information of gcc installation within B&R Automation Studio
- */
-export interface AsGccVersionInformation {
-    version: string;
-    automationStudioRelativePath: string;
-}
 //#endregion interfaces for types
 
 //#region setting of values
-export async function setAvailableAutomationStudioVersions(versions: Array<AsVersionInformation>) {
-    //TODO error checking if types do not match (both directions read and write) -> is this easily possible somehow?
-    const config = getConfiguration();
-    await config.update('environment.installedAutomationStudioVersions', versions, true);
-}
 //#endregion setting of values
 
 //#region getting of values
-export function getAvailableAutomationStudioVersions() {
+export function getAutomationStudioInstallPaths(): vscode.Uri[] {
     //TODO error checking if types do not match (both directions read and write) -> is this easily possible somehow?
     const config = getConfiguration();
-    return config.get<AsVersionInformation[]>('environment.installedAutomationStudioVersions');
-
+    const configValue = config.get<string[]>('environment.automationStudioInstallPaths');
+    if (configValue) {
+        return configValue.map(fsPath => vscode.Uri.file(fsPath));
+    }
+    else {
+        return [];
+    }
 }
 
 export function getDefaultBuildMode() {
@@ -60,11 +45,11 @@ export function getAllowedBuildModes() {
 }
 //#endregion getting of values
 
-//#region internal functions
+//#region local functions
 /**
  * Get configuration of this extension
  */
 function getConfiguration() {
     return vscode.workspace.getConfiguration('vscode-brautomationtools');
 }
-    //#endregion internal functions
+//#endregion local functions

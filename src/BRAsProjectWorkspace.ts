@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import * as Helpers from './Helpers';
+import * as Helpers from './Tools/Helpers';
+import * as uriTools from './Tools/UriTools';
 
 
 //#region interfaces
@@ -16,12 +17,13 @@ export interface ProjectBaseUris {
 /**
  * Get all available AS configurations in the AS project
  */
-export async function getAvailableConfigurations() {
+export async function getAvailableConfigurations(): Promise<string[] | undefined> {
+    //TODO maybe get in context of an AS project file to support workspaces with multiple projects or where the Physical dir is not the in the root of the workspace
     if (vscode.workspace.workspaceFolders !== undefined) {
         //TODO get from Physical.xml
         const projectUri = vscode.workspace.workspaceFolders[0].uri;
-        const physicalUri = Helpers.appendUri(projectUri, 'Physical', true);
-        const configFolders = Helpers.listDirectories(physicalUri);
+        const physicalUri = uriTools.pathJoin(projectUri, 'Physical');
+        const configFolders = uriTools.listSubDirectoryNames(physicalUri);
         return configFolders;
     }
     else {
@@ -51,11 +53,11 @@ export async function getProjectBaseUris(): Promise<ProjectBaseUris | undefined>
         const workspaceUri = workspaceFolders[0].uri;
         const projectBaseUris: ProjectBaseUris = {
             base: workspaceUri,
-            projectFile: Helpers.appendUri(workspaceUri, 'AsTestPrj.apj', true),
-            logical: Helpers.appendUri(workspaceUri, 'Logical', true),
-            physical: Helpers.appendUri(workspaceUri, 'Physical', true),
-            temporary: Helpers.appendUri(workspaceUri, 'Temp', true),
-            temporaryIncludes: Helpers.appendUri(workspaceUri, 'Temp/Includes', true)
+            projectFile:       uriTools.pathJoin(workspaceUri, 'AsTestPrj.apj'),
+            logical:           uriTools.pathJoin(workspaceUri, 'Logical'),
+            physical:          uriTools.pathJoin(workspaceUri, 'Physical'),
+            temporary:         uriTools.pathJoin(workspaceUri, 'Temp'),
+            temporaryIncludes: uriTools.pathJoin(workspaceUri, 'Temp/Includes')
         };
         return projectBaseUris;
     }

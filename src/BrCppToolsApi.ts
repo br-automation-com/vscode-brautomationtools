@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import * as cppTools from 'vscode-cpptools';
 import * as path from 'path';
 import * as BRAsProjectWorkspace from './BRAsProjectWorkspace';
-import * as Helpers from './Helpers';
+import * as BREnvironment from './BREnvironment';
+import * as Helpers from './Tools/Helpers';
 
 
 /* TODO currently standard includes and defines are provided from here, maybe it is possible
@@ -24,7 +25,7 @@ export async function registerCppToolsConfigurationProvider(context: vscode.Exte
     const provider = new CppConfigurationProvider();
     context.subscriptions.push(provider);
     cppToolsApi?.registerCustomConfigurationProvider(provider);
-    cppToolsApi?.notifyReady(provider);
+    cppToolsApi?.notifyReady(provider);//TODO ready only after available AS versions are updated
 }
 
 
@@ -92,13 +93,6 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
     private _workspaceBrowseConfiguration: cppTools.WorkspaceBrowseConfiguration = { browsePath: [] };
     private readonly _workspaceBrowseConfigurations = new Map<string, cppTools.WorkspaceBrowseConfiguration>();
 
-    //TODO get standard values depending on AS version, selected target, gcc version...
-    /** Standard header file locations */
-    private readonly standardIncludePaths = [
-        'C:\\BrAutomation\\AS46\\AS\\gnuinst\\V4.1.2\\i386-elf\\include\\',
-        'C:\\BrAutomation\\AS46\\AS\\gnuinst\\V4.1.2\\lib\\gcc\\i386-elf\\4.1.2\\include\\'
-    ];
-
     /** Standard compiler arguments */
     private readonly defaultCompilerArgs = [
         '-fPIC',
@@ -133,7 +127,13 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         // get headers
         const headerUris = await this._getHeaderUris(uri);
         const headerPaths = headerUris.map(u => u.fsPath);
-        headerPaths.push(...this.standardIncludePaths);
+        //TODO test with new versions
+        const standardIncludes = (await BREnvironment.getGccTargetSystemInfo('4.6.3', '4.1.2', 'SG4 Ia32'))?.cStandardIncludePaths.map(uri => uri.fsPath);
+        if (!standardIncludes) {
+            return undefined;
+        }
+        headerPaths.push(...standardIncludes);
+        //headerPaths.push(...this.standardIncludePaths); old version
         //TODO get other settings properly
         const config: cppTools.SourceFileConfigurationItem = {
             uri: uri,

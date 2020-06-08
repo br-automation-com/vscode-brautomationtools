@@ -13,3 +13,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command to get all installed AS versions
 - C/C++ Configuration provider for source files in ANSI C tasks
 - Task provider for Br.As.Build.exe
+- Find installed Automation Studio versions and gcc versions

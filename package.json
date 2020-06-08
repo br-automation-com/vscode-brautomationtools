@@ -28,8 +28,8 @@
 				"category": "B&R Tools"
 			},
 			{
-				"command": "vscode-brautomationtools.updateConfigInstalledAsVersionsFromSearch",
-				"title": "Update installed AS versions",
+				"command": "vscode-brautomationtools.updateAvailableAutomationStudioVersions",
+				"title": "Update installed AS versions information from AS install paths",
 				"category": "B&R Tools"
 			}
 		],
@@ -63,96 +63,14 @@
 					],
 					"default": "Build"
 				},
-				"vscode-brautomationtools.environment.installedAutomationStudioVersions": {
-					"description": "Information of installed Automation Studio versions",
+				"vscode-brautomationtools.environment.automationStudioInstallPaths": {
+					"description": "Paths where the Automation Studio was installed. E.g. if AS is installed in C:\\BrAutomation\\AS46, the install path is C:\\BrAutomation",
 					"type": "array",
 					"items": {
-						"description": "Automation Studio version information",
-						"type": "object",
-						"required": [
-							"version",
-							"installPath"
-						],
-						"additionalProperties": false,
-						"properties": {
-							"version": {
-								"description": "Automation Studio version number",
-								"type": "string",
-								"pattern": "^V(\\d+)(?:\\.(\\d+))(?:\\.(\\d+)){0,1}(?:\\.(\\d+)){0,1}(?: [SPU]{2}){0,1}$",
-								"examples": [
-									"V4.5",
-									"V4.6",
-									"V4.7",
-									"V4.7.2",
-									"V4.7.2.98"
-								]
-							},
-							"installPath": {
-								"$comment": "TODO pattern or format for file path",
-								"description": "Installation path of Automation Studio version",
-								"type": "string",
-								"examples": [
-									"C:/BrAutomation/AS45/",
-									"C:/BrAutomation/AS46/",
-									"C:/BrAutomation/AS47/"
-								]
-							},
-							"gccVersions": {
-								"description": "Available gcc Versions in this Automation Studio installation",
-								"type": "array",
-								"items": {
-									"description": "gcc version information",
-									"type": "object",
-									"required": [
-										"version",
-										"automationStudioRelativePath"
-									],
-									"additionalProperties": false,
-									"properties": {
-										"version": {
-											"description": "gcc version number",
-											"type": "string",
-											"pattern": "^V(\\d+).(\\d+).(\\d+)$",
-											"examples": [
-												"V2.95.3",
-												"V4.1.2",
-												"V6.3.0"
-											]
-										},
-										"automationStudioRelativePath": {
-											"$comment": "TODO pattern or format for file path",
-											"description": "Path relative to Automation Studio installation",
-											"type": "string",
-											"examples": [
-												"./AS/gnuinst/V2.95.3/",
-												"./AS/gnuinst/V4.1.2/",
-												"./AS/gnuinst/V6.3.0/"
-											]
-										}
-									}
-								}
-							}
-						}
+						"type": "string"
 					},
 					"default": [
-						{
-							"version": "V4.7",
-							"installPath": "C:/BrAutomation/AS47/",
-							"gccVersions": [
-								{
-									"version": "V2.95.3",
-									"automationStudioRelativePath": "./AS/gnuinst/V2.95.3/"
-								},
-								{
-									"version": "V4.1.2",
-									"automationStudioRelativePath": "./AS/gnuinst/V4.1.2/"
-								},
-								{
-									"version": "V6.3.0",
-									"automationStudioRelativePath": "./AS/gnuinst/V6.3.0/"
-								}
-							]
-						}
+						"C:\\BrAutomation"
 					]
 				}
 			}
@@ -199,7 +117,9 @@
 					"asConfiguration": {
 						"description": "The AS configuration which will be built. If set to \"$dialog\", a selection needs to be made on each execution",
 						"type": "string",
-						"examples": ["$dialog"]
+						"examples": [
+							"$dialog"
+						]
 					},
 					"buildForSimulation": {
 						"description": "Always build project for ArSim target. If not set or set to false, the setting of the Automation Studio project configuration is used",
@@ -253,6 +173,7 @@
 		"@types/glob": "^7.1.1",
 		"@types/mocha": "^7.0.2",
 		"@types/node": "^13.11.0",
+		"@types/semver": "^7.2.0",
 		"eslint": "^6.8.0",
 		"@typescript-eslint/parser": "^2.30.0",
 		"@typescript-eslint/eslint-plugin": "^2.30.0",
@@ -262,6 +183,7 @@
 		"vscode-test": "^1.3.0"
 	},
 	"dependencies": {
+		"semver": "^7.3.2",
 		"vscode-cpptools": "^4.0.1",
 		"vscode-jsonrpc": "^5.0.1"
 	}

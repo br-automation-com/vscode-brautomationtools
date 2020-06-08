@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import * as BRAsProjectWorkspace from './BRAsProjectWorkspace';
-import * as Helpers from './Helpers';
+import * as Helpers from './Tools/Helpers';
 
 //#region definitions and types from package.json contribution points
 /**
