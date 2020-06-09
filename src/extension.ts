@@ -3,6 +3,7 @@ import {registerCommands} from './BRCommands';
 import {registerCppToolsConfigurationProvider} from './BrCppToolsApi';
 import {registerTaskProviders} from './BrAsBuildTaskProvider';
 import {registerApiTests} from './Tools/ApiTests';
+import {registerProjectWorkspace} from './BRAsProjectWorkspace';
 
 // Activation event
 export async function activate(context: vscode.ExtensionContext) {
@@ -10,7 +11,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerApiTests(context);
 	registerCommands(context);
 	registerTaskProviders(context);
-    registerCppToolsConfigurationProvider(context);
+	registerCppToolsConfigurationProvider(context);
+	registerProjectWorkspace(context);
 }
 
 // this method is called when your extension is deactivated

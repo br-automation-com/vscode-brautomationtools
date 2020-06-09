@@ -1,38 +1,6 @@
 import * as vscode from 'vscode';
 
 
-/**
- * Lists all files / directories of a specified type within a directory
- * @param directoryUri URI of base directory
- * @param fileType File type which should be listed
- */
-async function listFilesOfType(directoryUri: vscode.Uri, fileType: vscode.FileType) {
-    return (await vscode.workspace.fs.readDirectory(directoryUri))
-        .filter(f => f[1] === fileType)
-        .map(d => d[0]);
-}
-
-export function getRelativeUri(baseUri: vscode.Uri, fullUri: vscode.Uri): string | undefined {
-    const base = baseUri.toString();
-    const full = fullUri.toString();
-    const basePosInFull = full.indexOf(base);
-    if (basePosInFull === 0) {
-        const relative = full.substr(base.length);
-        return relative;
-    }
-    else {
-        return undefined;
-    }
-    //TODO test
-}
-
-export async function uriExists(uri: vscode.Uri)
-{
-    //TODO test
-    const a = await vscode.workspace.fs.stat(uri);
-    const b = a.type !== vscode.FileType.Unknown;
-}
-
 export function logTimedHeader(message: string, lineLength: number = 150): void {
     const time = new Date().toLocaleTimeString();
     const separator = ' - ';

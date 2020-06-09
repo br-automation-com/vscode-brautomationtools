@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as cppTools from 'vscode-cpptools';
-import * as path from 'path';
 import * as BRAsProjectWorkspace from './BRAsProjectWorkspace';
 import * as BREnvironment from './BREnvironment';
 import * as Helpers from './Tools/Helpers';
+import * as uriTools from './Tools/UriTools';
 
 
 /* TODO currently standard includes and defines are provided from here, maybe it is possible
@@ -25,7 +25,10 @@ export async function registerCppToolsConfigurationProvider(context: vscode.Exte
     const provider = new CppConfigurationProvider();
     context.subscriptions.push(provider);
     cppToolsApi?.registerCustomConfigurationProvider(provider);
-    cppToolsApi?.notifyReady(provider);//TODO ready only after available AS versions are updated
+    // Ready only parsing of workspace and environment (required for proper includes)
+    await BREnvironment.getAvailableAutomationStudioVersions();
+    await BRAsProjectWorkspace.getWorkspaceProjects();
+    cppToolsApi?.notifyReady(provider);
 }
 
 
@@ -45,8 +48,12 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
     async canProvideConfiguration(uri: vscode.Uri): Promise<boolean> {
         Helpers.logTimedHeader('canProvideConfiguration');
         console.log(uri.toString(true));
-        //TODO
-        return true;
+        const asProject = await BRAsProjectWorkspace.getProjectForUri(uri);
+        if (asProject) {
+            return uriTools.isSubOf(asProject.logical, uri);
+        } else {
+            return false;
+        }
     }
 
     async provideConfigurations(uris: vscode.Uri[], token?: vscode.CancellationToken): Promise<cppTools.SourceFileConfigurationItem[]> {
@@ -107,7 +114,8 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
     ];
 
     private readonly defaultDefines = [
-        '_DEFAULT_INCLUDES'
+        '_DEFAULT_INCLUDES',
+        '_SG4'
     ];
 
     private readonly defaultIntelliSenseMode = 'gcc-x86';
@@ -124,71 +132,33 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
     private async _getConfiguration(uri: vscode.Uri): Promise<cppTools.SourceFileConfigurationItem | undefined> {
         Helpers.logTimedHeader('_getConfiguration');
         console.log(uri.toString(true));
-        // get headers
-        const headerUris = await this._getHeaderUris(uri);
+        // get project include directories
+        const headerUris = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri);
         const headerPaths = headerUris.map(u => u.fsPath);
-        //TODO test with new versions
-        const standardIncludes = (await BREnvironment.getGccTargetSystemInfo('4.6.3', '4.1.2', 'SG4 Ia32'))?.cStandardIncludePaths.map(uri => uri.fsPath);
+        // get standard includes
+        const asProjectInfo = await BRAsProjectWorkspace.getProjectForUri(uri);
+        if (!asProjectInfo) {
+            return undefined;
+        }
+        const standardIncludes = (await BREnvironment.getGccTargetSystemInfo(asProjectInfo?.asVersion, '4.1.2', 'SG4 Ia32'))?.cStandardIncludePaths.map(uri => uri.fsPath);
         if (!standardIncludes) {
             return undefined;
         }
         headerPaths.push(...standardIncludes);
-        //headerPaths.push(...this.standardIncludePaths); old version
-        //TODO get other settings properly
+        //TODO get all settings properly
         const config: cppTools.SourceFileConfigurationItem = {
             uri: uri,
             configuration: {
-                includePath: headerPaths,
-                defines: this.defaultDefines,
+                includePath:      headerPaths,
+                defines:          this.defaultDefines,
                 intelliSenseMode: this.defaultIntelliSenseMode,
-                standard: this.defaultCStandard,
-                compilerArgs: this.defaultCompilerArgs,
-                compilerPath: this.defaultCompilerPath,
+                standard:         this.defaultCStandard,
+                compilerArgs:     this.defaultCompilerArgs,
+                compilerPath:     this.defaultCompilerPath,
             }
         };
         console.log(config);
         return config;
-    }
-
-    /**
-     * Get all header include URIs to a specific source file
-     * @param uri URI of the source file of which the headers are requested
-     */
-    private async _getHeaderUris(uri: vscode.Uri): Promise<vscode.Uri[]> {
-        // get workspace base paths
-        const workspaceUris = await BRAsProjectWorkspace.getProjectBaseUris();
-        if (workspaceUris === undefined) {
-            return [];
-        }
-        let logicalBasePath = workspaceUris.logical.fsPath;
-        let includeBasePath = workspaceUris.temporaryIncludes.fsPath;
-        if (logicalBasePath === undefined) {
-            return [];
-        }
-        // TODO test for libraries and maybe also headers in includes dir?
-        const headerUris: vscode.Uri[] = [];
-        let finished = false;
-        let currentPath = path.parse(uri.fsPath);
-        while (!finished) {
-            let currentDir = currentPath.dir;
-            let relativeToLogical = path.relative(logicalBasePath, currentDir);
-            let includePath = path.join(includeBasePath, relativeToLogical);
-            let includeUri = vscode.Uri.file(includePath);
-            headerUris.push(includeUri);
-            // check logical path reached or reached base
-            if (currentDir === logicalBasePath) {
-                finished = true;
-            }
-            if (currentDir === '') {
-                // error, never reached logicalBasePath --> file is not in AS project
-                return [];
-            }
-            // next higher folder
-            currentPath = path.parse(currentPath.dir);
-        }
-        //TODO
-
-        return headerUris;
     }
 
     /** No-op */

@@ -3,6 +3,7 @@ import * as BREnvironment from '../BREnvironment';
 import * as BRConfiguration from '../BRConfiguration';
 import * as Helpers from './Helpers';
 import * as uriTools from './UriTools';
+import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
 //import * as NAME from '../BRxxxxxx';
 
 export function registerApiTests(context: vscode.ExtensionContext) {
@@ -21,11 +22,17 @@ async function testCommand(arg1: any, arg2: any) {
 	if (await yesNoDialog('Run various tests?')) {
 		await testVarious(arg1, arg2);
 	}
+	if (await yesNoDialog('Run tests for UriTools?')) {
+		await testUriTools();
+	}
 	if (await yesNoDialog('Run tests for BREnvironment?')) {
 		await testBREnvironment();
 	}
 	if (await yesNoDialog('Run tests for BRConfiguration?')) {
 		await testBRConfiguration();
+	}
+	if (await yesNoDialog('Run tests for BRAsProjectWorkspace?')) {
+		await testBRAsProjectWorkspace();
 	}
 	// end
 	Helpers.logTimedHeader('Test command end');
@@ -38,14 +45,43 @@ async function testVarious(arg1: any, arg2: any)
 	console.log('arg1 and arg2:');
 	console.log(arg1);
 	console.log(arg2);
-	// Test URI with wildcard
-	console.log('Wildcard URI');
-	const wildcardBaseUri = vscode.Uri.file('C:\\BrAutomation\\AS46\\AS\\gnuinst\\V4.1.2\\i386-elf\\include\\');
-	const wildcardUri = uriTools.pathJoin(wildcardBaseUri, '*');
-	console.log(wildcardUri);
-	console.log(wildcardUri.fsPath);
 	// end
 	console.warn('Test various end');
+}
+
+async function testUriTools() {
+	console.warn('Test UriTools start');
+	// test pathRelative and isSubOf
+	const uriFrom = vscode.Uri.file('C:\\Temp\\');
+	const uriToIsSub = vscode.Uri.file('c:\\Temp\\Test1\\test.txt');
+	const uriToNotSub = vscode.Uri.file('C:\\User\\Test1\\test.txt');
+	console.log(`uriTools.pathRelative from '${uriFrom.path}' to '${uriToIsSub.path}' --> '${uriTools.pathRelative(uriFrom, uriToIsSub)}'`);
+	console.log(`uriTools.pathRelative from '${uriFrom.path}' to '${uriToNotSub.path}' --> '${uriTools.pathRelative(uriFrom, uriToNotSub)}'`);
+	console.log(`uriTools.isSubOf base '${uriFrom.path}' uri '${uriToIsSub.path}' --> '${uriTools.isSubOf(uriFrom, uriToIsSub)}'`);
+	console.log(`uriTools.isSubOf base '${uriFrom.path}' uri '${uriToNotSub.path}' --> '${uriTools.isSubOf(uriFrom, uriToNotSub)}'`);
+	// test pathsFromTo
+	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriToIsSub.path}'`);
+	const fromToIsSub = uriTools.pathsFromTo(uriFrom, uriToIsSub);
+	console.log(fromToIsSub);
+	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriToNotSub.path}'`);
+	const fromToNotSub = uriTools.pathsFromTo(uriFrom, uriToNotSub);
+	console.log(fromToNotSub);
+	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriFrom.path}'`);
+	const fromToSame = uriTools.pathsFromTo(uriFrom, uriFrom);
+	console.log(fromToSame);
+	// test pathsFromTo with replace
+	const uriReplace = vscode.Uri.file('C:\\Replace\\');
+	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriToIsSub.path}' replace '${uriReplace.path}'`);
+	const fromToIsSubReplace = uriTools.pathsFromTo(uriFrom, uriToIsSub, uriReplace);
+	console.log(fromToIsSubReplace);
+	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriToNotSub.path}' replace '${uriReplace.path}'`);
+	const fromToNotSubReplace = uriTools.pathsFromTo(uriFrom, uriToNotSub, uriReplace);
+	console.log(fromToNotSubReplace);
+	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriFrom.path}' replace '${uriReplace.path}'`);
+	const fromToSameReplace = uriTools.pathsFromTo(uriFrom, uriFrom, uriReplace);
+	console.log(fromToSameReplace);
+	// end
+	console.warn('Test UriTools end');
 }
 
 async function testBREnvironment() {
@@ -93,6 +129,96 @@ async function testBRConfiguration() {
 	console.log(allowedBuildModes);
 	// end
 	console.warn('Test BRConfiguration end');
+}
+
+async function testBRAsProjectWorkspace() {
+	console.warn('Test BRAsProjectWorkspace start');
+	// Update AS projects
+	if (await yesNoDialog('Update AS projects in workspace?')) {
+		console.log('BRAsProjectWorkspace.updateAvailableAutomationStudioVersions');
+		const numProjects = await BRAsProjectWorkspace.updateWorkspaceProjects();
+		console.log(`${numProjects} found`);
+	}
+	// Get AS projects info
+	console.log('BRAsProjectWorkspace.getWorkspaceProjects');
+	const projectsData = await BRAsProjectWorkspace.getWorkspaceProjects();
+	console.log(projectsData);
+	// find project for path
+	const pathToGetProject = await vscode.window.showInputBox({prompt: 'Enter path to get corresponding project'});
+	if (pathToGetProject) {
+		console.log(`BRAsProjectWorkspace.getProjectForUri(${pathToGetProject})`);
+		const projectForPath = await BRAsProjectWorkspace.getProjectForUri(vscode.Uri.file(pathToGetProject));
+		console.log(projectForPath);
+	}
+	// Get header directories
+	const pathToGetHeaderDirs = await vscode.window.showInputBox({prompt: 'Enter path to get corresponding header directories'});
+	if (pathToGetHeaderDirs) {
+		console.log(`BRAsProjectWorkspace.getProjectHeaderIncludeDirs(${pathToGetHeaderDirs})`);
+		const headerDirsForPath = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(vscode.Uri.file(pathToGetHeaderDirs));
+		console.log(headerDirsForPath);
+	}
+
+	//TODO add library in test project
+	/*
+	const wsFolder = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : undefined;
+	if (!wsFolder) {
+		console.error('No workspace folder found');
+		return;
+	}
+	// test getProjectUriType
+	console.log('BRAsProjectWorkspace.getProjectUriType');
+	const uris: vscode.Uri[] = [
+		// project base folders and files
+		uriTools.pathJoin(wsFolder, ''),
+		uriTools.pathJoin(wsFolder, 'AsTestPrj.apj'),
+		uriTools.pathJoin(wsFolder, 'Logical'),
+		uriTools.pathJoin(wsFolder, 'Physical'),
+		uriTools.pathJoin(wsFolder, 'Binaries'),
+		uriTools.pathJoin(wsFolder, 'Temp'),
+		// programs and program source files
+		uriTools.pathJoin(wsFolder, 'Logical/Package.pkg'),
+		uriTools.pathJoin(wsFolder, 'Logical/Global.typ'),
+		uriTools.pathJoin(wsFolder, 'Logical/Global.var'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/Package.pkg'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/NoErrNoWrnConst.var'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/NoErrNoWrnEnum.typ'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/NoErrNoWrnStruct.typ'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/NoErrNoWrnVar.var'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgMulti'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgMulti/ANSIC.prg'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgMulti/Cyclic.c'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgMulti/Types.typ'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgMulti/Variables.var'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgMulti/InitExit'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgMulti/InitExit/Package.pkg'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgMulti/InitExit/Exit.c'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgMulti/InitExit/Init.c'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgSingle'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgSingle/ANSIC.prg'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgSingle/Main.c'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgSingle/Types.typ'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/CPrgSingle/Variables.var'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/STPrgMuti'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/STPrgMuti/IEC.prg'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/STPrgMuti/Cyclic.st'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/STPrgMuti/Exit.st'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/STPrgMuti/Init.st'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/STPrgMuti/Types.typ'),
+		uriTools.pathJoin(wsFolder, 'Logical/NoErrNoWrn/STPrgMuti/Variables.var')
+	];
+	const urisWithTypes: {uri: vscode.Uri, type: BRAsProjectWorkspace.ProjectUriType}[] = [];
+	for (const uri of uris) {
+		const type = await BRAsProjectWorkspace.getProjectUriType(uri);
+		urisWithTypes.push({
+			uri: uri,
+			type: type
+		});
+	}
+	console.log(urisWithTypes);
+	*/
+	// end
+	console.warn('Test BRAsProjectWorkspace end');
 }
 
 async function yesNoDialog(prompt?: string): Promise<boolean> {

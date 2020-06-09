@@ -8,6 +8,66 @@ import * as BRAsProjectWorkspace from './BRAsProjectWorkspace';
 import * as BRConfiguration from './BRConfiguration';
 
 
+export async function selectAsProjectFile(): Promise<string | undefined> {
+    const projectsData = await BRAsProjectWorkspace.getWorkspaceProjects();
+    if (projectsData.length === 0) {
+        return undefined;
+    } else if (projectsData.length === 1) {
+        return projectsData[0].projectFile.fsPath;
+    } else {
+        const projectItems = projectsData.map(data => {
+            const item: ValueQuickPickItem<vscode.Uri> = {label: data.projectFile.fsPath, value: data.projectFile};
+            return item;
+        });
+        return (await getQuickPickSingleValue(projectItems))?.fsPath;
+    }
+}
+
+/**
+ * Dialog to select an AS configuration out of all available AS configurations in the AS project
+ */
+export async function selectASProjectConfiguration(): Promise<string | undefined> {
+    //TODO depending on AS project?
+    //TODO get also description of configurations and use it in quick pick
+    // get items and options
+    const configurationValues = await BRAsProjectWorkspace.getAvailableConfigurations() ?? [];
+    const configurationItems = configurationValues.map(c => {
+        const item: ValueQuickPickItem<string> = { label: c, value: c };
+        return item;
+    });
+    const activeConfigurationValue = ''; //TODO implement BRAsProjectWorkspace.getActiveConfiguration()
+    const activeConfigurationItem = configurationItems.find(item => item.value === activeConfigurationValue);
+    // set options and initial values
+    const pickOptions: ValueQuickPickOptions = { title: 'Select configuration' };
+    const pickInitial: ValueQuickPickInitialValues<string> = { activeItems: activeConfigurationItem };
+    // get selected value
+    const selectedConfiguration = await getQuickPickSingleValue(configurationItems, pickOptions, pickInitial);
+    return selectedConfiguration;
+}
+
+/**
+ * Dialog to select the AS build mode
+ */
+export async function selectBuildMode(): Promise<string | undefined> {
+    // get build modes and default build mode
+    //const buildModes = BRConfiguration.getAllowedBuildModes();
+    const buildModeItems: ValueQuickPickItem<string>[] = [
+        { label: 'Build', detail: 'Incremental build', value: 'Build' },
+        { label: 'Rebuild', detail: 'Complete rebuild', value: 'Rebuild' },
+        { label: 'BuildAndTransfer', detail: 'Build for transfer', value: 'BuildAndTransfer' },
+        { label: 'BuildAndCreateCompactFlash', detail: 'Build for creation of CF card', value: 'BuildAndCreateCompactFlash' }
+    ];
+    const defaultBuildModeValue = BRConfiguration.getDefaultBuildMode();
+    const defaultBuildModeItem = buildModeItems.find(mode => mode.value === defaultBuildModeValue);
+    // set options and initial values
+    const pickOptions = <ValueQuickPickOptions>{ title: 'Select build mode' };
+    const pickInitial = <ValueQuickPickInitialValues<string>>{ activeItems: defaultBuildModeItem };
+    // get selected value
+    const selectedBuildMode = await getQuickPickSingleValue(buildModeItems, pickOptions, pickInitial);
+    return selectedBuildMode;
+}
+
+//#region internal dialog helpers
 /**
  * A QuickPickItem that contains an additional value, which is not shown in the dialog
  */
@@ -39,50 +99,6 @@ interface ValueQuickPickInitialValues<T> {
     activeItems?: ValueQuickPickItem<T>[] | ValueQuickPickItem<T>/* | T*/; //TODO maybe also values
     /** Items which are already selected on opening of dialog. this has no effect without multi selection */
     selectedItems?: ValueQuickPickItem<T>[] | ValueQuickPickItem<T>/* | T*/; //TODO maybe also values
-}
-
-/**
- * Dialog to select an AS configuration out of all available AS configurations in the AS project
- */
-export async function selectASProjectConfiguration(): Promise<string | undefined> {
-    //TODO get also description of configurations and use it in quick pick
-    // get items and options
-    const configurationValues = await BRAsProjectWorkspace.getAvailableConfigurations() ?? [];
-    const configurationItems = configurationValues.map(c => {
-        let item: ValueQuickPickItem<string> = { label: c, value: c };
-        return item;
-    });
-    const activeConfigurationValue = ''; //TODO implement BRAsProjectWorkspace.getActiveConfiguration()
-    const activeConfigurationItem = configurationItems.find(item => item.value === activeConfigurationValue);
-    // set options and initial values
-    const pickOptions: ValueQuickPickOptions = { title: 'Select configuration' };
-    const pickInitial: ValueQuickPickInitialValues<string> = { activeItems: activeConfigurationItem };
-    // get selected value
-    const selectedConfiguration = await getQuickPickSingleValue(configurationItems, pickOptions, pickInitial);
-    return selectedConfiguration;
-}
-
-/**
- * Dialog to select the AS build mode
- */
-export async function selectBuildMode(): Promise<string | undefined> {
-    // get build modes and default build mode
-    //TODO get available modes and preselect default mode
-    //const buildModes = BRConfiguration.getAllowedBuildModes();
-    const buildModeItems: ValueQuickPickItem<string>[] = [
-        { label: 'Build', detail: 'Incremental build', value: 'Build' },
-        { label: 'Rebuild', detail: 'Complete rebuild', value: 'Rebuild' },
-        { label: 'BuildAndTransfer', detail: 'Build for transfer', value: 'BuildAndTransfer' },
-        { label: 'BuildAndCreateCompactFlash', detail: 'Build for creation of CF card', value: 'BuildAndCreateCompactFlash' }
-    ];
-    const defaultBuildModeValue = BRConfiguration.getDefaultBuildMode();
-    const defaultBuildModeItem = buildModeItems.find(mode => mode.value === defaultBuildModeValue);
-    // set options and initial values
-    const pickOptions = <ValueQuickPickOptions>{ title: 'Select build mode' };
-    const pickInitial = <ValueQuickPickInitialValues<string>>{ activeItems: defaultBuildModeItem };
-    // get selected value
-    const selectedBuildMode = await getQuickPickSingleValue(buildModeItems, pickOptions, pickInitial);
-    return selectedBuildMode;
 }
 
 /**
@@ -126,7 +142,7 @@ async function getQuickPickValues<T>(items: ValueQuickPickItem<T>[], options?: V
     try {
         return await new Promise<T[] | undefined>((resolve, reject) => {
             picker.onDidChangeSelection((items) => {
-                //TODO do some validation here? Maybe input for callbacks?
+                // Maybe do some validation here in the future. Maybe input for callbacks?
             });
             picker.onDidAccept(() => {
                 resolve(picker.selectedItems.map(i => i.value));
@@ -154,3 +170,4 @@ async function getQuickPickSingleValue<T>(items: ValueQuickPickItem<T>[], option
     const values = await getQuickPickValues(items, options, initialValues, false);
     return values ? values[0] : undefined;
 }
+//#endregion internal dialog helpers

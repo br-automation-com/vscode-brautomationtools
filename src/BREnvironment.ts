@@ -30,7 +30,6 @@ export interface ASVersionInfo extends VersionInfo {
  */
 export interface AsGccVersionInfo extends VersionInfo  {
 	targetSystemData: {
-		//TODO see https://stackoverflow.com/questions/29043279/how-to-use-string-indexed-interface-of-typescript
 		[targetSystem: string]: AsGccTargetSystemInfo
 	}
 }
@@ -63,7 +62,7 @@ export async function getAvailableAutomationStudioVersions(): Promise<ASVersionI
 
 export async function updateAvailableAutomationStudioVersions(): Promise<void> {
 	_availableAutomationStudioVersions = findAvailableASVersions();
-	//TODO logic for Change baseInstallPaths
+	//TODO call when configuration value of baseInstallPaths changes
 	const versionInfos = await _availableAutomationStudioVersions;
 	if (versionInfos.length === 0) {
 		const messageItems = ['Change baseInstallPaths'];
@@ -113,7 +112,6 @@ export async function getGccTargetSystemInfo(asVersion: semver.SemVer | string, 
 
 //#region local functions
 async function findAvailableASVersions(): Promise<ASVersionInfo[]> {
-	//TODO test with getting from BRConfiguration.getAutomationStudioInstallPaths()
 	const baseInstallUris = BRConfiguration.getAutomationStudioInstallPaths();
 	const versionInfos: ASVersionInfo[] = [];
 	for (const uri of baseInstallUris) {
@@ -142,6 +140,7 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 		}
 		// get AS build executable
 		//TODO maybe language sensitive for Bin-en / Bin-de if both are available?
+		//TODO maybe hard coded like for gcc.exe and as backup if not existing, use search -> saves time
 		const asBuildExecutables = await vscode.workspace.findFiles({base: versionBaseUri.fsPath, pattern: '**/BR.AS.Build.exe'});
 		if (asBuildExecutables.length === 0) {
 			console.warn(`Cannot find BR.AS.Build.exe in URI: ${versionBaseUri.fsPath}`);
@@ -166,7 +165,6 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
  * Searches for gcc installations within asVersion.baseUri and pushes all found versions to asVersion.gccVersions
  * @param asVersion AS version info for which gcc versions are searched. asVersion.gccVersions is modified by this function
  */
-//TODO new implementation, implement test and use everywhere
 async function findAvailableGccVersions(asVersion: ASVersionInfo): Promise<void> {
 	// remove all existing gcc version
 	asVersion.gccVersions.length = 0;
@@ -202,7 +200,6 @@ async function findAvailableGccVersions(asVersion: ASVersionInfo): Promise<void>
  * Searches for gcc installations within gccVersion.baseUri and sets all found versions to gccVersion.targetSystemData
  * @param gccVersion gcc version info for which target systems are searched. gccVersion.targetSystemData is modified by this function
  */
-//TODO new implementation, implement test and use everywhere
 async function findAvailableGccTargetSystems(gccVersion: AsGccVersionInfo): Promise<void> {
 	// clear existing data
 	for (const key in gccVersion.targetSystemData) {
@@ -214,6 +211,7 @@ async function findAvailableGccTargetSystems(gccVersion: AsGccVersionInfo): Prom
 	//         uriTools.pathJoin(gccUri, 'i386-elf/include/'),              --> required for most system headers and B&R specific bur/plc.h...
 	//         uriTools.pathJoin(gccUri, 'lib/gcc/i386-elf/4.1.2/include/') --> required for some system headers, e.g. stddef.h, stdbool.h
 	//     ]
+	// another solution might be searching for plc.h and stddef.h to get the header locations automatically
 	//TODO Find which gcc.exe is the right one. Maybe by selecting the right gcc.exe, C/C++ extension can find the system includes without defining
 	const gccUri = gccVersion.baseUri;
 	// gcc V2.95.3

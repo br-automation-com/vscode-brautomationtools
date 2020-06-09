@@ -87,6 +87,7 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         // task for undefined configuration
         const taskBuildWithDialogs = await BrAsBuildTaskProvider.definitionToTask({
             type:            BrAsBuildTaskType,
+            asProjectFile:   BrAsBuildUseDialog,
             asBuildMode:     BrAsBuildUseDialog,
             asConfiguration: BrAsBuildUseDialog
         }, 'Build with dialogs');
@@ -94,6 +95,7 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         // task to build cross reference
         const taskBuildCrossRef = await BrAsBuildTaskProvider.definitionToTask({
             type:                BrAsBuildTaskType,
+            asProjectFile:       BrAsBuildUseDialog,
             asConfiguration:     BrAsBuildUseDialog,
             buildCrossReferences: true
         }, 'Build cross reference');
@@ -101,6 +103,7 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         // task to clean project
         const taskCleanProject = await BrAsBuildTaskProvider.definitionToTask({
             type:            BrAsBuildTaskType,
+            asProjectFile:   BrAsBuildUseDialog,
             asConfiguration: BrAsBuildUseDialog,
             cleanTemporary:  true,
             cleanBinary:     true,
@@ -158,10 +161,14 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
      * @param dialogsAllowed If set to true, undefined values will directly prompt a dialog for the user to select a value
      */
     private static async definitionToTask(definition: BrAsBuildTaskDefinition, name?: string): Promise<vscode.Task | undefined> {
+        //TODO maybe custom task handler, so dialogs can be handled more well (use outputs of one as input for other...)
         Helpers.logTimedHeader('createAsBuildTask');
         console.log(definition);
         // get defined properties and use default values / dialogs for undefined properties
-        let usedAsProjectPath = definition.asProjectFile ?? (await getAsProjectFile())?.fsPath;
+        let usedAsProjectPath = definition.asProjectFile;
+        if (usedAsProjectPath && usedAsProjectPath === BrAsBuildUseDialog) {
+            usedAsProjectPath = '${command:vscode-brautomationtools.dialogSelectAsProjectFile}';
+        }
         if (!usedAsProjectPath) {
             return undefined;
         }
@@ -247,10 +254,5 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
 async function getRequiredAsBuildExe(projectFile: vscode.Uri): Promise<string | undefined> {
     //TODO move to proper place and implement poperly, in case Br.As.Build.exe is not found, return undefined
     return 'C:/BrAutomation/AS46/Bin-en/BR.AS.Build.exe';
-}
-
-async function getAsProjectFile(): Promise<vscode.Uri | undefined> {
-    //TODO move to proper place and implement poperly, in case no project file is found, return undefined
-    return vscode.Uri.file('C:\\Data\\Project\\Own\\VSCode\\vscode-brAutomationToolsTest\\AsTestPrj.apj');
 }
 //#endregion getter functions for environment which need to be moved and properly implemented

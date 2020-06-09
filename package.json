@@ -101,7 +101,10 @@
 				"properties": {
 					"asProjectFile": {
 						"description": "The (absolute?) path of the Automation Studio project file, e.g. 'C:\\projects\\MyFirstProject\\MyFirstProject.apj'. If not set, the first .apj file in the workspace will be used.",
-						"type": "string"
+						"type": "string",
+						"examples": [
+							"$dialog"
+						]
 					},
 					"asBuildMode": {
 						"description": "The build mode for this task. If set to \"$dialog\", a selection needs to be made on each execution",

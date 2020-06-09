@@ -27,7 +27,32 @@ export function pathJoin(baseUri: vscode.Uri, ...append: string[]): vscode.Uri {
 }
 
 export function pathRelative(from: vscode.Uri, to: vscode.Uri): string {
-    return posix.relative(from.path, to.path);
+    // workaround to normalize file paths on windows (c:/ and C:/ get only normalized on uri.fspath, but not on vscode.Uri.file())
+    const usedFrom = (from.scheme !== 'file') ? from : vscode.Uri.file(from.fsPath);
+    const usedTo   = (to.scheme !== 'file')   ? to   : vscode.Uri.file(to.fsPath);
+    return posix.relative(usedFrom.path, usedTo.path);
+}
+
+/**
+ * Returns an array of URIs which represent all relatives from one uri to another URI.
+ * from and to are included in the result. If from and to are same, it results in only one
+ * array member.
+ * @param replaceFrom If set, the URI of from is replaced with this value in the result.
+ */
+export function pathsFromTo(from: vscode.Uri, to: vscode.Uri, replaceFrom?: vscode.Uri): vscode.Uri[] {
+    // split relative path to single path entries
+    const splitRelatives = pathRelative(from, to).split('/');
+    // create all URIs relative to Temp/Includes
+    const paths = [replaceFrom?.with({}) ?? from.with({})];
+    let currentUri = paths[0];
+    for (const actSplit of splitRelatives) {
+        if (actSplit.length === 0) {
+            continue; // skip empty segments -> if from and to are same, the URI is only entered once
+        }
+        currentUri = pathJoin(currentUri, actSplit);
+        paths.push(currentUri);
+    }
+    return paths;
 }
 
 export function pathParsedUri(uri: vscode.Uri): ParsedPathUri {
@@ -61,6 +86,29 @@ export interface ParsedPathUri {
 //#endregion implementations of path.posix for vscode.Uri
 
 /**
+ * Checks if an URI is a sub URI of a base URI
+ * @example ```isSubOf(file:///C:/Temp, file:///C:/Temp/Test/Test1.txt) === true```
+ * @example ```isSubOf(file:///C:/Temp, file:///C:/User/Test/Test1.txt) === false```
+ * @param base Base for checking of sub
+ * @param uri URI which is checked to be a sub of base
+ */
+export function isSubOf(base: vscode.Uri, uri: vscode.Uri): boolean {
+    if (base.scheme !== uri.scheme) {
+        return false;
+    }
+    if (base.authority !== uri.authority) {
+        return false;
+    }
+    const relative = pathRelative(base, uri);
+    if (relative.startsWith('..')) {
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+/**
  * Checks if an URI exists
  * @param uri URI which is checked
  */
@@ -91,17 +139,26 @@ export async function isDirectory(uri: vscode.Uri): Promise<boolean> {
     }
 }
 
-async function listSubsOfType(baseUri: vscode.Uri, fileType: vscode.FileType): Promise<string[]> {
-    const subs = await vscode.workspace.fs.readDirectory(baseUri);
-    const subsOfType = subs.filter(sub => sub[1] === fileType);
-    const subNames = subsOfType.map(sub => sub[0]);
-    return subNames;
-}
-
 /**
  * Lists the names of all subdirectories of a base.
  * @param baseUri The base for the list
  */
 export async function listSubDirectoryNames(baseUri: vscode.Uri) {
     return await listSubsOfType(baseUri, vscode.FileType.Directory);
+}
+
+/**
+ * Lists the full URIs of all the files within a base URI
+ * @param baseUri The base for the list.
+ */
+export async function listSubFiles(baseUri: vscode.Uri): Promise<vscode.Uri[]> {
+    const fileNames = await listSubsOfType(baseUri, vscode.FileType.File);
+    return fileNames.map(name => pathJoin(baseUri, name));
+}
+
+async function listSubsOfType(baseUri: vscode.Uri, fileType: vscode.FileType): Promise<string[]> {
+    const subs = await vscode.workspace.fs.readDirectory(baseUri);
+    const subsOfType = subs.filter(sub => sub[1] === fileType);
+    const subNames = subsOfType.map(sub => sub[0]);
+    return subNames;
 }
