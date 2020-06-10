@@ -8,41 +8,50 @@ import * as BRAsProjectWorkspace from './BRAsProjectWorkspace';
 import * as BRConfiguration from './BRConfiguration';
 
 
-export async function selectAsProjectFile(): Promise<string | undefined> {
+/**
+ * Dialog to select a project from all projects within the workspace.
+ */
+export async function selectAsProjectFromWorkspace(): Promise<BRAsProjectWorkspace.AsProjectInfo | undefined> {
+    // get items
     const projectsData = await BRAsProjectWorkspace.getWorkspaceProjects();
-    if (projectsData.length === 0) {
-        return undefined;
-    } else if (projectsData.length === 1) {
-        return projectsData[0].projectFile.fsPath;
-    } else {
-        const projectItems = projectsData.map(data => {
-            const item: ValueQuickPickItem<vscode.Uri> = {label: data.projectFile.fsPath, value: data.projectFile};
-            return item;
-        });
-        return (await getQuickPickSingleValue(projectItems))?.fsPath;
-    }
+    const projectItems = projectsData.map(data => {
+        const item: ValueQuickPickItem<BRAsProjectWorkspace.AsProjectInfo> = {
+            label: data.projectFile.fsPath,
+            value: data
+        };
+        return item;
+    });
+    // set options and get value
+    const pickOptions: ValueQuickPickOptions = {
+        title: 'Select project',
+        autoSelectSingleValue: true
+    };
+    const pickInitial = undefined;
+    return await getQuickPickSingleValue(projectItems, pickOptions, pickInitial);
 }
+
 
 /**
  * Dialog to select an AS configuration out of all available AS configurations in the AS project
  */
-export async function selectASProjectConfiguration(): Promise<string | undefined> {
-    //TODO depending on AS project?
-    //TODO get also description of configurations and use it in quick pick
-    // get items and options
-    const configurationValues = await BRAsProjectWorkspace.getAvailableConfigurations() ?? [];
+export async function selectASProjectConfiguration(asProject: BRAsProjectWorkspace.AsProjectInfo): Promise<BRAsProjectWorkspace.AsConfigurationInfo | undefined> {
+    // get items and initial value
+    const configurationValues = asProject.configurations;
     const configurationItems = configurationValues.map(c => {
-        const item: ValueQuickPickItem<string> = { label: c, value: c };
+        const item: ValueQuickPickItem<BRAsProjectWorkspace.AsConfigurationInfo> = {
+            label: c.name,
+            detail: c.description,
+            value: c
+        };
         return item;
     });
-    const activeConfigurationValue = ''; //TODO implement BRAsProjectWorkspace.getActiveConfiguration()
-    const activeConfigurationItem = configurationItems.find(item => item.value === activeConfigurationValue);
-    // set options and initial values
+    const activeConfigurationValue = await BRAsProjectWorkspace.getActiveConfiguration(asProject);
+    const activeConfigurationItem = configurationItems.find(item => item.value.baseUri.toString() === activeConfigurationValue?.baseUri.toString());
+    // set options and get value
     const pickOptions: ValueQuickPickOptions = { title: 'Select configuration' };
-    const pickInitial: ValueQuickPickInitialValues<string> = { activeItems: activeConfigurationItem };
+    const pickInitial: ValueQuickPickInitialValues<BRAsProjectWorkspace.AsConfigurationInfo> = { activeItems: activeConfigurationItem };
     // get selected value
-    const selectedConfiguration = await getQuickPickSingleValue(configurationItems, pickOptions, pickInitial);
-    return selectedConfiguration;
+    return await getQuickPickSingleValue(configurationItems, pickOptions, pickInitial);
 }
 
 /**
@@ -87,6 +96,8 @@ interface ValueQuickPickOptions {
     ignoreFocusOut?: boolean;
     matchOnDescription?: boolean;
     matchOnDetail?: boolean;
+    /** If the items array only contains one value, this value is automatically selected without prompting a dialog */
+    autoSelectSingleValue?: boolean;
 }
 
 /**
@@ -109,6 +120,16 @@ interface ValueQuickPickInitialValues<T> {
  * @param multiSelect Allow selection of multiple values. Defaults to true.
  */
 async function getQuickPickValues<T>(items: ValueQuickPickItem<T>[], options?: ValueQuickPickOptions, initialValues?: ValueQuickPickInitialValues<T>, multiSelect = true): Promise<T[] | undefined> {
+    // direct return on empty items
+    if (items.length === 0) {
+        return undefined;
+    }
+    // auto select single value
+    if (options?.autoSelectSingleValue) {
+        if (items.length === 1) {
+            return [items[0].value];
+        }
+    }
     // set dialog options
     const picker = vscode.window.createQuickPick<ValueQuickPickItem<T>>();
     // apply input parameters to picker

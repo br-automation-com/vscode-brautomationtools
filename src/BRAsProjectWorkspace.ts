@@ -11,11 +11,15 @@ export interface AsProjectInfo {
     physical: vscode.Uri,
     temporary: vscode.Uri,
     temporaryIncludes: vscode.Uri
+    configurations: AsConfigurationInfo[];
+    description?: string; //TODO implement here and in dialogs
+    name?: string; //TODO implement as mandatory here and in dialogs
 }
 
 export interface AsConfigurationInfo {
-    baseUri: vscode.Uri,
-    name: string
+    baseUri: vscode.Uri;
+    name: string;
+    description?: string;
 }
 
 //#region project directories parsing
@@ -105,7 +109,7 @@ export async function getWorkspaceProjects(): Promise<AsProjectInfo[]> {
  * Update all AS project data within the workspace folders.
  */
 export async function updateWorkspaceProjects(): Promise<Number> {
-    _workspaceProjects = findAsProjectData();
+    _workspaceProjects = findAsProjectInfo();
     return (await _workspaceProjects).length;
 }
 /**
@@ -120,6 +124,15 @@ export async function getProjectForUri(uri: vscode.Uri): Promise<AsProjectInfo |
     // sort projects so the longest path is first -> when an AS project is within an AS project the proper one is found
     const projectsSorted = projects.sort((a, b) => (b.baseUri.path.length - a.baseUri.path.length));
     return projectsSorted.find(p => uriTools.isSubOf(p.baseUri, uri));
+}
+
+
+/**
+ * Gets the active configuration of an AS project
+ */
+export async function getActiveConfiguration(asProject: AsProjectInfo): Promise<AsConfigurationInfo | undefined> {
+    //TODO implement
+    return undefined;
 }
 
 //TODO use in C/C++ provider
@@ -147,27 +160,47 @@ export async function getProjectHeaderIncludeDirs(codeFile: vscode.Uri): Promise
 //#endregion exported functions
 
 //#region local variables
-let _workspaceProjects: Promise<AsProjectInfo[]> = findAsProjectData();
+let _workspaceProjects: Promise<AsProjectInfo[]> = findAsProjectInfo();
 //#endregion local variables
 
 //#region workspace directories parsing
-async function findAsProjectData(baseUri?: vscode.Uri): Promise<AsProjectInfo[]> {
+async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]> {
     const searchPattern: vscode.GlobPattern = baseUri ? {base: baseUri.fsPath, pattern: '**/*.apj'} : '**/*.apj';
     const projectUris  = await vscode.workspace.findFiles(searchPattern);
     const projectUrisParsed = projectUris.map(uri => uriTools.pathParsedUri(uri));
-    const projectsData = projectUrisParsed.map(parsed => {
+    const projectsData: AsProjectInfo[] = [];
+    for (const parsed of projectUrisParsed) {
         const data: AsProjectInfo = {
             baseUri:           parsed.dir,
             projectFile:       uriTools.pathJoin(parsed.dir, parsed.base),
-            asVersion:         'V4.6.5.78 SP',
+            asVersion:         'V4.6.5.78 SP',//TODO
             logical:           uriTools.pathJoin(parsed.dir, 'Logical'),
             physical:          uriTools.pathJoin(parsed.dir, 'Physical'),
             temporary:         uriTools.pathJoin(parsed.dir, 'Temp'),
-            temporaryIncludes: uriTools.pathJoin(parsed.dir, 'Temp/Includes')
+            temporaryIncludes: uriTools.pathJoin(parsed.dir, 'Temp/Includes'),
+            configurations:    []
         };
-        return data;
-    });
+        await findAsConfigurationInfo(data);
+        projectsData.push(data);
+    }
     return projectsData;
+}
+
+/**
+ * Searches for configurations within asProject.physical and pushes all found versions to asProject.configurations
+ * @param asProject AS project info for which configurations are searched. asVersion.configurations is modified by this function
+ */
+async function findAsConfigurationInfo(asProject: AsProjectInfo): Promise<void> {
+    const configDirNames = await uriTools.listSubDirectoryNames(asProject.physical);
+    for (const dirName of configDirNames) {
+        const dirUri = uriTools.pathJoin(asProject.physical, dirName);
+        const configInfo: AsConfigurationInfo = {
+            name: dirName,
+            baseUri: dirUri,
+            description: undefined //TODO implement getting of configuration description
+        };
+        asProject.configurations.push(configInfo);
+    }
 }
 
 /**
@@ -319,24 +352,6 @@ export async function getProjectUriType(uri: vscode.Uri) : Promise<ProjectUriTyp
 
     //TODO
     return ProjectUriType.Undefined;
-}
-
-/**
- * Get all available AS configurations in the AS project
- */
-//TODO implement properly for multi AS project
-export async function getAvailableConfigurations(): Promise<string[] | undefined> {
-    //TODO maybe get in context of an AS project file to support workspaces with multiple projects or where the Physical dir is not the in the root of the workspace
-    if (vscode.workspace.workspaceFolders !== undefined) {
-        //TODO get from Physical.xml
-        const projectUri = vscode.workspace.workspaceFolders[0].uri;
-        const physicalUri = uriTools.pathJoin(projectUri, 'Physical');
-        const configFolders = uriTools.listSubDirectoryNames(physicalUri);
-        return configFolders;
-    }
-    else {
-        return undefined;
-    }
 }
 
 export async function getUserSettings() {

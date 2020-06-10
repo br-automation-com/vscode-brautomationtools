@@ -100,17 +100,14 @@
 				"type": "BrAsBuild",
 				"properties": {
 					"asProjectFile": {
-						"description": "The (absolute?) path of the Automation Studio project file, e.g. 'C:\\projects\\MyFirstProject\\MyFirstProject.apj'. If not set, the first .apj file in the workspace will be used.",
-						"type": "string",
-						"examples": [
-							"$dialog"
-						]
+						"description": "The (absolute?) path of the Automation Studio project file, e.g. 'C:\\projects\\MyFirstProject\\MyFirstProject.apj'. If not set, a dialog will ask for the project on every execution.",
+						"type": "string"
 					},
 					"asBuildMode": {
-						"description": "The build mode for this task. If set to \"$dialog\", a selection needs to be made on each execution",
+						"description": "The build mode for this task. If not set, a dialog will ask for the build mode on every execution. If set to \"$useSettings\", the default build mode from the extension settings is used.",
 						"type": "string",
 						"enum": [
-							"$dialog",
+							"$useSettings",
 							"Build",
 							"Rebuild",
 							"BuildAndTransfer",
@@ -118,11 +115,8 @@
 						]
 					},
 					"asConfiguration": {
-						"description": "The AS configuration which will be built. If set to \"$dialog\", a selection needs to be made on each execution",
-						"type": "string",
-						"examples": [
-							"$dialog"
-						]
+						"description": "The AS configuration which will be built. If not set, a dialog will ask for the configuration on every execution.",
+						"type": "string"
 					},
 					"buildForSimulation": {
 						"description": "Always build project for ArSim target. If not set or set to false, the setting of the Automation Studio project configuration is used",
