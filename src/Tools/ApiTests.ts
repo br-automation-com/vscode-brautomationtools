@@ -45,6 +45,18 @@ async function testVarious(arg1: any, arg2: any)
 	console.log('arg1 and arg2:');
 	console.log(arg1);
 	console.log(arg2);
+	// console timer tests
+	console.log('Timer tests');
+	console.time('testVarious_timer');
+	console.timeStamp('testVarious_timestamp'); // -> cannot be seen in the debug console
+	await Helpers.delay(200);
+	console.timeLog('testVarious_timer', 'timeLog() 1');
+	await Helpers.delay(200);
+	console.timeLog('testVarious_timer', 'timeLog() 2');
+	await Helpers.delay(200);
+	console.timeEnd('testVarious_timer');
+	await Helpers.delay(200);
+	console.timeLog('testVarious_timer', 'timeLog() after timeEnd()'); // -> Warning: No such label 'testVarious_timer' for console.timeLog()
 	// end
 	console.warn('Test various end');
 }
@@ -89,7 +101,9 @@ async function testBREnvironment() {
 	// Update AS versions
 	if (await yesNoDialog('Update AS versions?')) {
 		console.log('BREnvironment.updateAvailableAutomationStudioVersions');
+		console.time('BREnvironment.updateAvailableAutomationStudioVersions');
 		await BREnvironment.updateAvailableAutomationStudioVersions();
+		console.timeEnd('BREnvironment.updateAvailableAutomationStudioVersions');
 	}
 	// get AS version info
 	console.log('BREnvironment.getAvailableAutomationStudioVersions');
@@ -135,8 +149,10 @@ async function testBRAsProjectWorkspace() {
 	console.warn('Test BRAsProjectWorkspace start');
 	// Update AS projects
 	if (await yesNoDialog('Update AS projects in workspace?')) {
-		console.log('BRAsProjectWorkspace.updateAvailableAutomationStudioVersions');
+		console.log('BRAsProjectWorkspace.updateWorkspaceProjects');
+		console.time('BRAsProjectWorkspace.updateWorkspaceProjects');
 		const numProjects = await BRAsProjectWorkspace.updateWorkspaceProjects();
+		console.timeEnd('BRAsProjectWorkspace.updateWorkspaceProjects');
 		console.log(`${numProjects} found`);
 	}
 	// Get AS projects info

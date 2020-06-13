@@ -140,11 +140,22 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 		}
 		// get AS build executable
 		//TODO maybe language sensitive for Bin-en / Bin-de if both are available?
-		//TODO maybe hard coded like for gcc.exe and as backup if not existing, use search -> saves time
-		const asBuildExecutables = await vscode.workspace.findFiles({base: versionBaseUri.fsPath, pattern: '**/BR.AS.Build.exe'});
+		const asBuildExecutables: vscode.Uri[] = [];
+		const buildExeUriEn = uriTools.pathJoin(versionBaseUri, 'Bin-en/BR.AS.Build.exe');
+		if (await uriTools.exists(buildExeUriEn)) {
+			asBuildExecutables.push(buildExeUriEn);
+		}
+		const buildExeUriDe = uriTools.pathJoin(versionBaseUri, 'Bin-de/BR.AS.Build.exe');
+		if (await uriTools.exists(buildExeUriDe)) {
+			asBuildExecutables.push(buildExeUriDe);
+		}
 		if (asBuildExecutables.length === 0) {
-			console.warn(`Cannot find BR.AS.Build.exe in URI: ${versionBaseUri.fsPath}`);
-			continue;
+			// much slower backup solution if folder structure changes in future AS versions
+			asBuildExecutables.push(...await vscode.workspace.findFiles({base: versionBaseUri.fsPath, pattern: '**/BR.AS.Build.exe'}));
+			if (asBuildExecutables.length === 0) {
+				console.warn(`Cannot find BR.AS.Build.exe in URI: ${versionBaseUri.fsPath}`);
+				continue;
+			}
 		}
 		const buildExecutable = asBuildExecutables[0];
 		// create version information and push to array

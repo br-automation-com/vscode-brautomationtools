@@ -20,3 +20,12 @@ export function pushDefined<T>(array: T[], item: T | undefined | null) {
         array.push(item!);
     }
 }
+
+
+/**
+ * Creates a delay, which can be awaited.
+ * @param ms Delay time in milliseconds
+ */
+export function delay(ms: number) {
+    return new Promise( resolve => setTimeout(resolve, ms) );
+}
