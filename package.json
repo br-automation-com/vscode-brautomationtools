@@ -4,6 +4,10 @@
 	"description": "Tools to edit B&R Automation Studio projects in VS Code",
 	"version": "0.0.1",
 	"publisher": "Radeonmann",
+	"repository": {
+		"url": "https://github.com/Radeonmann/vscode-brAutomationTools"
+	},
+	"license": "MIT",
 	"engines": {
 		"vscode": "^1.44.0"
 	},
@@ -182,6 +186,7 @@
 	"dependencies": {
 		"semver": "^7.3.2",
 		"vscode-cpptools": "^4.0.1",
-		"vscode-jsonrpc": "^5.0.1"
+		"vscode-jsonrpc": "^5.0.1",
+		"xmlbuilder2": "^2.1.3"
 	}
 }

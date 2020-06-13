@@ -1,9 +1,12 @@
 import * as vscode from 'vscode';
+import * as BrAsProjectFiles from './BrAsProjectFiles';
 import * as uriTools from './Tools/UriTools';
 
 
 //#region interfaces
 export interface AsProjectInfo {
+    name: string;
+    description?: string;
     baseUri: vscode.Uri,
     projectFile: vscode.Uri,
     asVersion: string;
@@ -12,15 +15,14 @@ export interface AsProjectInfo {
     temporary: vscode.Uri,
     temporaryIncludes: vscode.Uri
     configurations: AsConfigurationInfo[];
-    description?: string; //TODO implement here and in dialogs
-    name?: string; //TODO implement as mandatory here and in dialogs
 }
 
 export interface AsConfigurationInfo {
-    baseUri: vscode.Uri;
     name: string;
     description?: string;
+    baseUri: vscode.Uri;
 }
+//#endregion interfaces
 
 //#region project directories parsing
 /** Describes the context of an URI within AS project diractory and file types */
@@ -170,10 +172,17 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
     const projectUrisParsed = projectUris.map(uri => uriTools.pathParsedUri(uri));
     const projectsData: AsProjectInfo[] = [];
     for (const parsed of projectUrisParsed) {
+        const projectFileUri = uriTools.pathJoin(parsed.dir, parsed.base);
+        const projectFileInfo = await BrAsProjectFiles.getProjectFileInfo(projectFileUri);
+        if (!projectFileInfo) {
+            continue;
+        }
         const data: AsProjectInfo = {
+            name:              parsed.name,
+            description:       projectFileInfo.description,
             baseUri:           parsed.dir,
-            projectFile:       uriTools.pathJoin(parsed.dir, parsed.base),
-            asVersion:         'V4.6.5.78 SP',//TODO
+            projectFile:       projectFileUri,
+            asVersion:         projectFileInfo.asVersion,
             logical:           uriTools.pathJoin(parsed.dir, 'Logical'),
             physical:          uriTools.pathJoin(parsed.dir, 'Physical'),
             temporary:         uriTools.pathJoin(parsed.dir, 'Temp'),
@@ -191,15 +200,17 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
  * @param asProject AS project info for which configurations are searched. asVersion.configurations is modified by this function
  */
 async function findAsConfigurationInfo(asProject: AsProjectInfo): Promise<void> {
-    const configDirNames = await uriTools.listSubDirectoryNames(asProject.physical);
-    for (const dirName of configDirNames) {
-        const dirUri = uriTools.pathJoin(asProject.physical, dirName);
-        const configInfo: AsConfigurationInfo = {
-            name: dirName,
-            baseUri: dirUri,
-            description: undefined //TODO implement getting of configuration description
-        };
-        asProject.configurations.push(configInfo);
+    const packageUri = uriTools.pathJoin(asProject.physical, 'Physical.pkg');
+    const physicalInfo = await BrAsProjectFiles.getPhysicalPackageInfo(packageUri);
+    if (!physicalInfo) {
+        return;
+    }
+    for (const config of physicalInfo.configurations) {
+        asProject.configurations.push({
+            name: config.relativePath,
+            description: config.description,
+            baseUri: uriTools.pathJoin(asProject.physical, config.relativePath)
+        });
     }
 }
 

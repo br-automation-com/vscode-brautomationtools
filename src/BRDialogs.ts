@@ -16,8 +16,9 @@ export async function selectAsProjectFromWorkspace(): Promise<BRAsProjectWorkspa
     const projectsData = await BRAsProjectWorkspace.getWorkspaceProjects();
     const projectItems = projectsData.map(data => {
         const item: ValueQuickPickItem<BRAsProjectWorkspace.AsProjectInfo> = {
-            label: data.projectFile.fsPath,
-            value: data
+            label:  `${data.name} in ${data.baseUri.fsPath}`,
+            detail: data.description,
+            value:  data
         };
         return item;
     });
@@ -37,11 +38,11 @@ export async function selectAsProjectFromWorkspace(): Promise<BRAsProjectWorkspa
 export async function selectASProjectConfiguration(asProject: BRAsProjectWorkspace.AsProjectInfo): Promise<BRAsProjectWorkspace.AsConfigurationInfo | undefined> {
     // get items and initial value
     const configurationValues = asProject.configurations;
-    const configurationItems = configurationValues.map(c => {
+    const configurationItems = configurationValues.map(config => {
         const item: ValueQuickPickItem<BRAsProjectWorkspace.AsConfigurationInfo> = {
-            label: c.name,
-            detail: c.description,
-            value: c
+            label:  config.name,
+            detail: config.description,
+            value:  config
         };
         return item;
     });

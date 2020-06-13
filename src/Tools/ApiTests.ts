@@ -4,6 +4,9 @@ import * as BRConfiguration from '../BRConfiguration';
 import * as Helpers from './Helpers';
 import * as uriTools from './UriTools';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
+import * as BrAsProjectFiles from '../BrAsProjectFiles';
+import * as xmlbuilder from 'xmlbuilder2';
+import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
 //import * as NAME from '../BRxxxxxx';
 
 export function registerApiTests(context: vscode.ExtensionContext) {
@@ -34,6 +37,9 @@ async function testCommand(arg1: any, arg2: any) {
 	if (await yesNoDialog('Run tests for BRAsProjectWorkspace?')) {
 		await testBRAsProjectWorkspace();
 	}
+	if (await yesNoDialog('Run tests for BrAsProjectFiles?')) {
+		await testBrAsProjectFiles();
+	}
 	// end
 	Helpers.logTimedHeader('Test command end');
 }
@@ -57,6 +63,35 @@ async function testVarious(arg1: any, arg2: any)
 	console.timeEnd('testVarious_timer');
 	await Helpers.delay(200);
 	console.timeLog('testVarious_timer', 'timeLog() after timeEnd()'); // -> Warning: No such label 'testVarious_timer' for console.timeLog()
+	// xmlbuilder tests
+	console.log('xmlbuilder tests');
+	const xmlTextNormal =          `<?xml version="1.0" encoding="utf-8"?>
+									<?AutomationStudio Version=4.6.5.78 SP?>
+									<Physical xmlns="http://br-automation.co.at/AS/Physical">
+									<Objects>
+										<Object Type="Configuration" Description="No errors and no warnings">NoErrNoWrn</Object>
+										<Object Type="Configuration">Warnings</Object>
+										<Object Type="Configuration">Errors</Object>
+									</Objects>
+									</Physical>`;
+	const xmlTextNoRootCont =    `<?xml version="1.0" encoding="utf-8"?>
+								  <?AutomationStudio Version=4.6.5.78 SP?>
+								  </root>`;
+	const xmlTextNoRoot =        `<?xml version="1.0" encoding="utf-8"?>
+					        	  <?AutomationStudio Version=4.6.5.78 SP?>`;
+	const xmlTextMultiRoot =     `<?xml version="1.0" encoding="utf-8"?>
+								  <?AutomationStudio Version=4.6.5.78 SP?>
+								  <root1>Hello1</root1>
+								  <root2>Hello2</root2>`;
+	try {
+		const builder = xmlbuilder.create(xmlTextNormal); // throws on invalid XML (xmlTextNoRootCont, xmlTextMultiRoot)
+		const rootBld = builder.root(); // throws when no root is available (xmlTextNoRoot)
+		const rootNode = rootBld.node as xmlDom.Element;
+		console.log(rootNode);
+	} catch (error) {
+		console.log('xmlbuilder error');
+		console.log(error);
+	}
 	// end
 	console.warn('Test various end');
 }
@@ -235,6 +270,27 @@ async function testBRAsProjectWorkspace() {
 	*/
 	// end
 	console.warn('Test BRAsProjectWorkspace end');
+}
+
+
+export async function testBrAsProjectFiles(): Promise<void> {
+	console.warn('Test BrAsProjectFiles start');
+	// get AS project for further tests
+    const asProjects = await BRAsProjectWorkspace.getWorkspaceProjects();
+    if (asProjects.length === 0) {
+        return;
+    }
+	const asProject = asProjects[0];
+	// test *.apj info
+	console.log(`BrAsProjectFiles.getProjectFileInfo`);
+	const projectInfo = await BrAsProjectFiles.getProjectFileInfo(asProject.projectFile);
+	console.log(projectInfo);
+	// test Physical.pkg info
+	console.log('BrAsProjectFiles.getPhysicalPackageInfo');
+	const physicalInfo = await BrAsProjectFiles.getPhysicalPackageInfo(uriTools.pathJoin(asProject.physical, 'Physical.pkg'));
+	console.log(physicalInfo);
+	//end
+    console.warn('Test BrAsProjectFiles end');
 }
 
 async function yesNoDialog(prompt?: string): Promise<boolean> {
