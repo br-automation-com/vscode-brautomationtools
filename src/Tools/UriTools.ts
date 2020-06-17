@@ -1,7 +1,13 @@
+/**
+ * Tools for URI handling
+ * @packageDocumentation
+ */
+
 import * as vscode from 'vscode';
-import {posix, ParsedPath} from 'path'; // always use posix style path for vscode.Uri.path: https://github.com/microsoft/vscode-extension-samples/blob/master/fsconsumer-sample/README.md
+import {posix} from 'path'; // always use posix style path for vscode.Uri.path: https://github.com/microsoft/vscode-extension-samples/blob/master/fsconsumer-sample/README.md
 
 //#region implementations of path.posix for vscode.Uri
+// see also https://nodejs.org/docs/latest/api/path.html
 
 /**
  * Return the last portion of a path. Similar to the Unix basename command.
@@ -13,6 +19,7 @@ import {posix, ParsedPath} from 'path'; // always use posix style path for vscod
 export function pathBasename(uri: vscode.Uri, extension?: string): string {
     return posix.basename(uri.path, extension);
 }
+
 
 /**
  * Uses path.posix.join to derive a new URI with a joined path
@@ -26,12 +33,14 @@ export function pathJoin(baseUri: vscode.Uri, ...append: string[]): vscode.Uri {
     return joinedUri;
 }
 
+
 export function pathRelative(from: vscode.Uri, to: vscode.Uri): string {
     // workaround to normalize file paths on windows (c:/ and C:/ get only normalized on uri.fspath, but not on vscode.Uri.file())
     const usedFrom = (from.scheme !== 'file') ? from : vscode.Uri.file(from.fsPath);
     const usedTo   = (to.scheme !== 'file')   ? to   : vscode.Uri.file(to.fsPath);
     return posix.relative(usedFrom.path, usedTo.path);
 }
+
 
 /**
  * Returns an array of URIs which represent all relatives from one uri to another URI.
@@ -55,6 +64,10 @@ export function pathsFromTo(from: vscode.Uri, to: vscode.Uri, replaceFrom?: vsco
     return paths;
 }
 
+/**
+ * Returns a parsed object for the URI, similar to path.parse.
+ * @param uri The URI which is parsed
+ */
 export function pathParsedUri(uri: vscode.Uri): ParsedPathUri {
     const parsedPath = posix.parse(uri.path);
     return {
@@ -66,6 +79,10 @@ export function pathParsedUri(uri: vscode.Uri): ParsedPathUri {
     };
 }
 
+
+/**
+ * A parsed URI path object.
+ */
 export interface ParsedPathUri {
     /** The root of the path such as '/' or 'c:\' */
     //TODO does it work with file://c:/...
@@ -83,7 +100,9 @@ export interface ParsedPathUri {
     /** The file name without extension (if any) such as 'index' */
     name: string;
 }
+
 //#endregion implementations of path.posix for vscode.Uri
+
 
 /**
  * Checks if an URI is a sub URI of a base URI
@@ -108,6 +127,7 @@ export function isSubOf(base: vscode.Uri, uri: vscode.Uri): boolean {
     }
 }
 
+
 /**
  * Checks if an URI exists
  * @param uri URI which is checked
@@ -121,6 +141,11 @@ export async function exists(uri: vscode.Uri): Promise<boolean> {
     }
 }
 
+
+/**
+ * Checks if a URI points to a file
+ * @param uri URI which is checked
+ */
 export async function isFile(uri: vscode.Uri): Promise<boolean> {
     try {
         const info = await vscode.workspace.fs.stat(uri);
@@ -130,6 +155,11 @@ export async function isFile(uri: vscode.Uri): Promise<boolean> {
     }
 }
 
+
+/**
+ * Checks if a URI points to a directory
+ * @param uri URI which is checked
+ */
 export async function isDirectory(uri: vscode.Uri): Promise<boolean> {
     try {
         const info = await vscode.workspace.fs.stat(uri);
@@ -139,16 +169,18 @@ export async function isDirectory(uri: vscode.Uri): Promise<boolean> {
     }
 }
 
+
 /**
- * Lists the names of all subdirectories of a base.
+ * Lists the names of all subdirectories within a base URI.
  * @param baseUri The base for the list
  */
-export async function listSubDirectoryNames(baseUri: vscode.Uri) {
+export async function listSubDirectoryNames(baseUri: vscode.Uri): Promise<string[]> {
     return await listSubsOfType(baseUri, vscode.FileType.Directory);
 }
 
+
 /**
- * Lists the full URIs of all the files within a base URI
+ * Lists the full URIs of all the files within a base URI.
  * @param baseUri The base for the list.
  */
 export async function listSubFiles(baseUri: vscode.Uri): Promise<vscode.Uri[]> {
@@ -156,6 +188,12 @@ export async function listSubFiles(baseUri: vscode.Uri): Promise<vscode.Uri[]> {
     return fileNames.map(name => pathJoin(baseUri, name));
 }
 
+
+/**
+ * Lists the names of all sub filesystem objects of a specified type within a base URI.
+ * @param baseUri The base URI to search in.
+ * @param fileType The file type to search for.
+ */
 async function listSubsOfType(baseUri: vscode.Uri, fileType: vscode.FileType): Promise<string[]> {
     const subs = await vscode.workspace.fs.readDirectory(baseUri);
     const subsOfType = subs.filter(sub => sub[1] === fileType);

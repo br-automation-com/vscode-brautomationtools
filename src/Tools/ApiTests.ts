@@ -1,14 +1,24 @@
+/**
+ * Tests for APIs by invoking a test command
+ * @packageDocumentation
+ */
+
 import * as vscode from 'vscode';
-import * as BREnvironment from '../BREnvironment';
-import * as BRConfiguration from '../BRConfiguration';
-import * as Helpers from './Helpers';
-import * as uriTools from './UriTools';
-import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
-import * as BrAsProjectFiles from '../BrAsProjectFiles';
 import * as xmlbuilder from 'xmlbuilder2';
 import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
+import * as Helpers from './Helpers';
+import * as uriTools from './UriTools';
+import * as BREnvironment from '../BREnvironment';
+import * as BRConfiguration from '../BRConfiguration';
+import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
+import * as BrAsProjectFiles from '../BrAsProjectFiles';
 //import * as NAME from '../BRxxxxxx';
 
+
+/**
+ * Register test functionality
+ * @param context The extension context
+ */
 export function registerApiTests(context: vscode.ExtensionContext) {
 	let disposable: vscode.Disposable | undefined;
 	
@@ -27,6 +37,9 @@ async function testCommand(arg1: any, arg2: any) {
 	}
 	if (await yesNoDialog('Run tests for UriTools?')) {
 		await testUriTools();
+	}
+	if (await yesNoDialog('Run tests for Helpers?')) {
+		await testHelpers();
 	}
 	if (await yesNoDialog('Run tests for BREnvironment?')) {
 		await testBREnvironment();
@@ -131,6 +144,21 @@ async function testUriTools() {
 	console.warn('Test UriTools end');
 }
 
+
+async function testHelpers() {
+	// test pushDefined
+	console.log('Helpers.pushDefined');
+	const mixedValues = [true, false, undefined, null];
+	const result: boolean[] = [];
+	Helpers.pushDefined(result, ...mixedValues);
+	Helpers.pushDefined(result, undefined);
+	Helpers.pushDefined(result, null);
+	Helpers.pushDefined(result, true);
+	Helpers.pushDefined(result, false);
+	console.log(result);
+}
+
+
 async function testBREnvironment() {
 	console.warn('Test BREnvironment start');
 	// Update AS versions
@@ -162,6 +190,7 @@ async function testBREnvironment() {
 	console.warn('Test BREnvironment end');
 }
 
+
 async function testBRConfiguration() {
 	console.warn('Test BRConfiguration start');
 	// Get AS install paths
@@ -172,13 +201,10 @@ async function testBRConfiguration() {
 	console.log('BRConfiguration.getDefaultBuildMode');
 	const defaultBuildMode = BRConfiguration.getDefaultBuildMode();
 	console.log(defaultBuildMode);
-	// get allowed build modes
-	console.log('BRConfiguration.getAllowedBuildModes');
-	const allowedBuildModes = BRConfiguration.getAllowedBuildModes();
-	console.log(allowedBuildModes);
 	// end
 	console.warn('Test BRConfiguration end');
 }
+
 
 async function testBRAsProjectWorkspace() {
 	console.warn('Test BRAsProjectWorkspace start');
@@ -292,6 +318,7 @@ export async function testBrAsProjectFiles(): Promise<void> {
 	//end
     console.warn('Test BrAsProjectFiles end');
 }
+
 
 async function yesNoDialog(prompt?: string): Promise<boolean> {
 	const selected = await vscode.window.showQuickPick(['no', 'yes'], {placeHolder: prompt});

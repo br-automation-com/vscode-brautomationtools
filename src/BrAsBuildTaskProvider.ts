@@ -10,26 +10,39 @@ import * as BrEnvironment from './BREnvironment';
 import * as BrDialogs from './BRDialogs';
 import * as BrConfiguration from './BRConfiguration';
 
+
+/**
+ * Registers all task providers
+ * @param context Extension context to push disposables
+ */
+export function registerTaskProviders(context: vscode.ExtensionContext) {
+    let disposable: vscode.Disposable | undefined;
+    disposable = vscode.tasks.registerTaskProvider(BrAsBuildTaskTypeName, new BrAsBuildTaskProvider());
+    context.subscriptions.push(disposable);
+}
+
+
 //#region definitions and types from package.json contribution points
+
 
 /**
  * Task type name of BrAsBuild task provider
  */
-// Needs to be in synch with package.json/contributes/taskDefinitions/[n]/type
+//SYNC Needs to be in sync with package.json/contributes/taskDefinitions/[n]/type
 const BrAsBuildTaskTypeName = 'BrAsBuild';
 
 
 /**
  * Problem matchers for BrAsBuild task
  */
-// Needs to be in synch with package.json/contributes/problemMatchers/[n]/name
+//SYNC Needs to be in sync with package.json/contributes/problemMatchers/[n]/name
 const BrAsBuildTaskProblemMatchers = ['$BrAsBuild'];
 
 
 /**
  * Literals to specify which can be used in BrAsBuildTaskDefinition for special functionality
  */
-// Needs to be in synch with package.json/contributes/taskDefinitions/[n]/ description and enums
+//SYNC Needs to be in sync with package.json/contributes/taskDefinitions/[n]/ description and enums
 enum BrAsBuildLiterals{
     UseSettings = '$useSettings',
 }
@@ -38,7 +51,7 @@ enum BrAsBuildLiterals{
 /**
  * Task definition properties of BrAsBuild task provider
  */
-// Needs to be in synch with defined properties of package.json/contributes/taskDefinitions/[n]/
+//SYNC Needs to be in sync with defined properties of package.json/contributes/taskDefinitions/[n]/
 interface BrAsBuildTaskDefinition extends vscode.TaskDefinition {
     /** The (absolute?) path of the Automation Studio project file */
     readonly asProjectFile?: string;
@@ -74,18 +87,11 @@ interface BrAsBuildTaskDefinition extends vscode.TaskDefinition {
     readonly additionalArguments?: string[];
 }
 
+
 //#endregion definitions and types from package.json contribution points
 
 
-/**
- * Registers all task providers
- * @param context Extension context to push disposables
- */
-export function registerTaskProviders(context: vscode.ExtensionContext) {
-    let disposable: vscode.Disposable | undefined;
-    disposable = vscode.tasks.registerTaskProvider(BrAsBuildTaskTypeName, new BrAsBuildTaskProvider());
-    context.subscriptions.push(disposable);
-}
+//#region classes
 
 
 /**
@@ -137,10 +143,8 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         buildTask.definition = task.definition; // resolveTask requires that the original definition object is used. Otherwise a new call to provideTasks is done.
         return buildTask;
     }
-    //#endregion vscode.TaskProvider interface implementation
 
 
-    //#region internal helper functions
     /**
      * Extracts a BrAsBuildTaskDefinition from a task
      * @param task The task containing the definition
@@ -153,6 +157,7 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         const asBuildDefinition: BrAsBuildTaskDefinition = task.definition as BrAsBuildTaskDefinition;
         return asBuildDefinition;
     }
+
 
     /**
      * Creates a build task for Br.As.Build.exe by using the task definition values.
@@ -172,6 +177,7 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         );
         return task;
     }
+
 
     /**
      * Generates a task name from a task definition.
@@ -215,8 +221,131 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         // return
         return nameContents.join(' ');
     }
-    //#endregion internal helper functions
 }
+
+
+/**
+ * A Pseudoterminal which starts BR.AS.Build.exe on opening
+ */
+class BrAsBuildTerminal implements vscode.Pseudoterminal {
+    private taskDefinition: BrAsBuildTaskDefinition;
+    /** Event emitter for write events */
+    private writeEmitter = new vscode.EventEmitter<string>();
+    /** Event emitter for done signalling */
+    private doneEmitter = new vscode.EventEmitter<number | void>();
+    /** If set, a child process is active. Kill on user cancellation! */
+    private buildProcess?: childProcess.ChildProcessWithoutNullStreams;
+
+
+    /**
+     * Creates a pseudoterminal which starts BR.AS.Build.exe on opening with the specified task definition.
+     * Required but undefined task definition properties will prompt a user dialog for selection.
+     * @param taskDefinition The task definition for the execution of BR.AS.Build.exe.
+     */
+    constructor(taskDefinition: BrAsBuildTaskDefinition) {
+        this.taskDefinition = taskDefinition;
+    }
+
+
+    // The task should wait to do further execution until [Pseudoterminal.open](#Pseudoterminal.open) is called.
+    async open(initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
+        this.executeBuild();
+    }
+
+
+    // Task cancellation should be handled using [Pseudoterminal.close](#Pseudoterminal.close).
+    close(): void {
+        if (this.buildProcess) {
+            const killed = this.buildProcess.kill();
+            if (!killed) {
+                console.warn('BR.AS.Build.exe kill was not successful.');
+            }
+        }
+    }
+
+
+    // events to invoke for writing to UI and closing terminal
+    onDidWrite = this.writeEmitter.event;
+    onDidClose = this.doneEmitter.event;
+
+
+    /**
+     * Executes BR.AS.Build.exe and writes output to the terminal.
+     */
+    private async executeBuild(): Promise<void> {
+
+        this.writeLine('Preparing Automation Studio build task');
+        // get undefined values by dialog
+        const usedDefinition = await processTaskDefinition(this.taskDefinition);
+        if (!usedDefinition) {
+            this.writeLine('Dialog cancelled by user or setting not found.');
+            this.writeLine('No build will be executed.');
+            this.done(1);
+            return;
+        }
+        // Get project data to get BR.AS.Build.exe in matching version
+        if (!usedDefinition.asProjectFile) {
+            this.writeLine(`ERROR: No project file selected for build`);
+            this.done(1);
+            return;
+        }
+        const asProject = await BrAsProjectWorkspace.getProjectForUri(vscode.Uri.file(usedDefinition.asProjectFile));
+        if (!asProject) {
+            this.writeLine(`ERROR: Project ${usedDefinition.asProjectFile} not found`);
+            this.done(2);
+            return;
+        }
+        const buildExe = await BrEnvironment.getBrAsBuilExe(asProject.asVersion);
+        if (!buildExe) {
+            this.writeLine(`ERROR: BR.AS.Build.exe not found for AS Version: ${asProject.asVersion}`);
+            this.done(2);
+            return;
+        }
+        // start build process
+        this.writeLine('Starting Automation Studio build task');
+        const buildArgs = taskDefinitionToBuildArgs(usedDefinition);
+        this.writeLine(`${buildExe.fsPath} ${buildArgs.join(' ')}`);
+        this.writeLine();
+        this.buildProcess = childProcess.spawn(buildExe.fsPath, buildArgs);
+        this.buildProcess.stdout.on('data', (data) => this.write(data));
+        this.buildProcess.stderr.on('data', (data) => this.write(data));//TODO write in different color?
+        this.buildProcess.on('exit', (code) => this.done(code ?? 0));
+    }
+
+
+    /**
+     * Writes to the terminal
+     * @param text Text to write
+     */
+    private write(text?: string) {
+        this.writeEmitter.fire(text);
+    }
+
+    /**
+     * Writes to the terminal and appends a new line
+     * @param text Text to write
+     */
+    private writeLine(text?: string) {
+        this.write(text);
+        this.write('\r\n');
+    }
+
+
+    /**
+     * Signals that the terminals execution is done.
+     * @param exitCode The exit code of the terminal
+     */
+    private done(exitCode?: number | void) {
+        this.buildProcess = undefined;
+        this.doneEmitter.fire(exitCode);
+    }
+}
+
+
+//#endregion classes
+
+
+//#region local functions
 
 
 /**
@@ -248,6 +377,7 @@ function taskDefinitionWith(baseDef: BrAsBuildTaskDefinition, withDef: BrAsBuild
  * @returns A new BrAsBuildTaskDefinition with additional and modified properties, or undefined if processing failed.
  */
 async function processTaskDefinition(baseDefinition: BrAsBuildTaskDefinition): Promise<BrAsBuildTaskDefinition | undefined> {
+    //TODO add evaluation of VS Code variables. e.g. "asProjectFile": "${workspaceFolder}/AsTestPrj.apj
     const withSettings = processTaskDefinitionWithSettings(baseDefinition);
     if (!withSettings) {
         return undefined;
@@ -375,105 +505,4 @@ function taskDefinitionToBuildArgs(definition: BrAsBuildTaskDefinition): string[
 }
 
 
-/**
- * A Pseudoterminal which starts BR.AS.Build.exe on opening
- */
-class BrAsBuildTerminal implements vscode.Pseudoterminal {
-    private taskDefinition: BrAsBuildTaskDefinition;
-    private writeEmitter = new vscode.EventEmitter<string>();
-    private doneEmitter = new vscode.EventEmitter<number | void>();
-    private buildProcess?: childProcess.ChildProcessWithoutNullStreams;
-
-
-    constructor(taskDefinition: BrAsBuildTaskDefinition) {
-        this.taskDefinition = taskDefinition;
-    }
-
-
-    // The task should wait to do further execution until [Pseudoterminal.open](#Pseudoterminal.open) is called.
-    async open(initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
-        this.executeBuild();
-    }
-
-    // Task cancellation should be handled using [Pseudoterminal.close](#Pseudoterminal.close).
-    close(): void {
-        if (this.buildProcess) {
-            const killed = this.buildProcess.kill();
-            if (!killed) {
-                console.warn('BR.AS.Build.exe kill was not successful.');
-            }
-        }
-    }
-
-    onDidWrite = this.writeEmitter.event;
-    onDidClose = this.doneEmitter.event;
-
-    /**
-     * Executes BR.AS.Build.exe and writes output to the terminal.
-     */
-    private async executeBuild(): Promise<void> {
-
-        this.writeLine('Preparing Automation Studio build task');
-        // get undefined values by dialog
-        const usedDefinition = await processTaskDefinition(this.taskDefinition);
-        if (!usedDefinition) {
-            this.writeLine('Dialog cancelled by user or setting not found.');
-            this.writeLine('No build will be executed.');
-            this.done(1);
-            return;
-        }
-        // Get project data to get BR.AS.Build.exe in matching version
-        if (!usedDefinition.asProjectFile) {
-            this.writeLine(`ERROR: No project file selected for build`);
-            this.done(1);
-            return;
-        }
-        const asProject = await BrAsProjectWorkspace.getProjectForUri(vscode.Uri.file(usedDefinition.asProjectFile));
-        if (!asProject) {
-            this.writeLine(`ERROR: Project ${usedDefinition.asProjectFile} not found`);
-            this.done(2);
-            return;
-        }
-        const buildExe = await BrEnvironment.getBrAsBuilExe(asProject.asVersion);
-        if (!buildExe) {
-            this.writeLine(`ERROR: BR.AS.Build.exe not found for AS Version: ${asProject.asVersion}`);
-            this.done(2);
-            return;
-        }
-        // start build process
-        this.writeLine('Starting Automation Studio build task');
-        const buildArgs = taskDefinitionToBuildArgs(usedDefinition);
-        this.writeLine(`${buildExe.fsPath} ${buildArgs.join(' ')}`);
-        this.writeLine();
-        this.buildProcess = childProcess.spawn(buildExe.fsPath, buildArgs);
-        this.buildProcess.stdout.on('data', (data) => this.write(data));
-        this.buildProcess.stderr.on('data', (data) => this.write(data));//TODO write in different color?
-        this.buildProcess.on('exit', (code) => this.done(code ?? 0));
-    }
-
-    /**
-     * Write on the terminal
-     * @param text Text to write
-     */
-    private write(text?: string) {
-        this.writeEmitter.fire(text);
-    }
-
-    /**
-     * Write on the terminal and append a new line
-     * @param text Text to write
-     */
-    private writeLine(text?: string) {
-        this.write(text);
-        this.write('\r\n');
-    }
-
-    /**
-     * Signal that the terminals execution is done.
-     * @param exitCode The exit code of the terminal
-     */
-    private done(exitCode?: number | void) {
-        this.buildProcess = undefined;
-        this.doneEmitter.fire(exitCode);
-    }
-}
+//#endregion local functions

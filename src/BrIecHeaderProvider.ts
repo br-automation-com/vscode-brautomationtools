@@ -1,3 +1,8 @@
+/**
+ * Provide headers for IEC files as virtual documents. Not yet implemented!
+ * @packageDocumentation
+ */
+
 import * as vscode from 'vscode';
 
 

@@ -1,38 +1,162 @@
+/**
+ * Receive information for the AS projects within the workspaces
+ * @packageDocumentation
+ */
+
 import * as vscode from 'vscode';
 import * as BrAsProjectFiles from './BrAsProjectFiles';
 import * as uriTools from './Tools/UriTools';
 
 
-//#region interfaces
+//#region exported types
+
+
+/**
+ * Information for an AS project
+ */
 export interface AsProjectInfo {
+    /** Name of the AS project */
     name: string;
+    /** Description of the AS project */
     description?: string;
+    /** Absolute URI to the project base directory */
     baseUri: vscode.Uri,
+    /** Absolute URI to the project file (*.apj) */
     projectFile: vscode.Uri,
+    /** AS version used in the project */
     asVersion: string;
+    /** Absolute URI to the Logical directory */
     logical: vscode.Uri,
+    /** Absolute URI to the Physical directory */
     physical: vscode.Uri,
+    /** Absolute URI to the temporary directory */
     temporary: vscode.Uri,
+    /** Absolute URI to the temporary includes directory */
     temporaryIncludes: vscode.Uri
+    /** Information for all configurations within this project */
     configurations: AsConfigurationInfo[];
 }
 
+
+/**
+ * Information for a configuration within an AS project
+ */
 export interface AsConfigurationInfo {
+    /** Name of the configuration */
     name: string;
+    /** Description of the configuration */
     description?: string;
+    /** Absolute URI to the configuration base directory */
     baseUri: vscode.Uri;
 }
-//#endregion interfaces
 
-//#region project directories parsing
-/** Describes the context of an URI within AS project diractory and file types */
-export interface ProjectUriWithType { //TODO there are two difficulties in programming: 1. cache invalidation, 2. naming things, 3. of by one errors
-    uri: vscode.Uri;
-    type: ProjectUriType;
+
+//#endregion exported types
+
+
+//#region exported functions
+
+
+/**
+ * Activation of AS project workspace
+ * @param context context to register disposables
+ */
+export async function registerProjectWorkspace(context: vscode.ExtensionContext) {
+    updateWorkspaceProjects();
+    // register to update on change of workspace folders
+    let disposable: vscode.Disposable;
+    disposable = vscode.workspace.onDidChangeWorkspaceFolders(() => updateWorkspaceProjects());
+    context.subscriptions.push(disposable);
 }
 
+
+/**
+ * Get all AS project data within the workspace folders.
+ */
+export async function getWorkspaceProjects(): Promise<AsProjectInfo[]> {
+    return await _workspaceProjects;
+}
+
+
+/**
+ * Update all AS project data within the workspace folders.
+ * @returns The number of projects found within the workspace folders.
+ */
+export async function updateWorkspaceProjects(): Promise<Number> {
+    _workspaceProjects = findAsProjectInfo();
+    return (await _workspaceProjects).length;
+}
+
+
+/**
+ * Gets the AS project to which the given URI belongs.
+ * @param uri URI which is checked to be within a project
+ * @returns `undefined` if no AS project was found for the given URI.
+ */
+export async function getProjectForUri(uri: vscode.Uri): Promise<AsProjectInfo | undefined> {
+    // get projects
+    const projects = await getWorkspaceProjects();
+    // sort projects so the longest path is first -> when an AS project is within an AS project the right one is found
+    const projectsSorted = projects.sort((a, b) => (b.baseUri.path.length - a.baseUri.path.length));
+    return projectsSorted.find(p => uriTools.isSubOf(p.baseUri, uri));
+}
+
+
+/**
+ * Gets the active configuration of an AS project
+ */
+export async function getActiveConfiguration(asProject: AsProjectInfo): Promise<AsConfigurationInfo | undefined> {
+    //TODO implement
+    return undefined;
+}
+
+
+/**
+ * Gets the header include directories for a code file within an AS projects logical directory.
+ * @param codeFile A URI to the code file to get the header includes for
+ */
+export async function getProjectHeaderIncludeDirs(codeFile: vscode.Uri): Promise<vscode.Uri[]> {
+    const project = await getProjectForUri(codeFile);
+    // check requirements to provide header include directories
+    if (!project) {
+        return [];
+    }
+    if (!uriTools.isSubOf(project.logical, codeFile)) {
+        return [];
+    }
+    if (!await uriTools.isFile(codeFile)) {
+        return [];
+    }
+    // get headers for program or library code files
+    if (await isInLibrary(project, codeFile)) {
+        return getHeaderIncludeDirsForLibrary(project, codeFile);
+    } else {
+        //TODO isInProgram(project, codeFile) -> no special includes otherwise
+        return getHeaderIncludeDirsForProgram(project, codeFile);
+    }
+    //TODO get standard headers also here?
+}
+
+
+//#endregion exported functions
+
+
+//#region local variables
+
+
+/** An array containing all project information within the workspace folders. */
+//TODO put functionality in a class to save state, or are local variables like this OK?
+let _workspaceProjects: Promise<AsProjectInfo[]> = findAsProjectInfo();
+
+
+//#endregion local variables
+
+
+//#region local types
+
+
 /** The type of an URI object within the Automation Studio context */
-export enum ProjectUriType {
+enum ProjectUriType {
     /** The URI is undefined in context of the AS project  */
     Undefined,
     /** The URI is the base directory of an AS project */
@@ -86,86 +210,18 @@ export enum ProjectUriType {
     /** The URI is a C header file */
     CHeaderFile
 }
-//#endregion interfaces
 
-//#region exported functions
-/**
- * Activation of AS project workspace
- * @param context context to register disposables
- */
-export async function registerProjectWorkspace(context: vscode.ExtensionContext) {
-    let disposable: vscode.Disposable;
-    updateWorkspaceProjects();
-    disposable = vscode.workspace.onDidChangeWorkspaceFolders(() => updateWorkspaceProjects());
-    context.subscriptions.push(disposable);
-}
 
-/**
- * Get all AS project data within the workspace folders.
- */
-export async function getWorkspaceProjects(): Promise<AsProjectInfo[]> {
-    return await _workspaceProjects;
-}
+//#endregion local types
 
-/**
- * Update all AS project data within the workspace folders.
- */
-export async function updateWorkspaceProjects(): Promise<Number> {
-    _workspaceProjects = findAsProjectInfo();
-    return (await _workspaceProjects).length;
-}
-/**
- * Gets to which the given URI belongs. The URI belongs to an AS project if it is a subpath of the
- * AS project URI.
- * @param uri URI which is checked to be within a project
- * @returns `undefined` if no AS project was found.
- */
-export async function getProjectForUri(uri: vscode.Uri): Promise<AsProjectInfo | undefined> {
-    // get projects
-    const projects = await getWorkspaceProjects();
-    // sort projects so the longest path is first -> when an AS project is within an AS project the proper one is found
-    const projectsSorted = projects.sort((a, b) => (b.baseUri.path.length - a.baseUri.path.length));
-    return projectsSorted.find(p => uriTools.isSubOf(p.baseUri, uri));
-}
+
+//#region local functions
 
 
 /**
- * Gets the active configuration of an AS project
+ * Searches for AS projects (*.apj files) within all workspace folders and subfolders and collects information about the projects.
+ * @param baseUri If set, projects are only searched within this URI.
  */
-export async function getActiveConfiguration(asProject: AsProjectInfo): Promise<AsConfigurationInfo | undefined> {
-    //TODO implement
-    return undefined;
-}
-
-//TODO use in C/C++ provider
-export async function getProjectHeaderIncludeDirs(codeFile: vscode.Uri): Promise<vscode.Uri[]> {
-    const project = await getProjectForUri(codeFile);
-    // check requirements to provide header include directories
-    if (!project) {
-        return [];
-    }
-    if (!uriTools.isSubOf(project.logical, codeFile)) {
-        return [];
-    }
-    if (!await uriTools.isFile(codeFile)) {
-        return [];
-    }
-    // get headers for program or library code files
-    if (await isInLibrary(project, codeFile)) {
-        return getHeaderIncludeDirsForLibrary(project, codeFile);
-    } else {
-        //TODO isInProgram(project, codeFile) -> no special includes otherwise
-        return getHeaderIncludeDirsForProgram(project, codeFile);
-    }
-    //TODO get standard headers also here?
-}
-//#endregion exported functions
-
-//#region local variables
-let _workspaceProjects: Promise<AsProjectInfo[]> = findAsProjectInfo();
-//#endregion local variables
-
-//#region workspace directories parsing
 async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]> {
     const searchPattern: vscode.GlobPattern = baseUri ? {base: baseUri.fsPath, pattern: '**/*.apj'} : '**/*.apj';
     const projectUris  = await vscode.workspace.findFiles(searchPattern);
@@ -195,6 +251,7 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
     return projectsData;
 }
 
+
 /**
  * Searches for configurations within asProject.physical and pushes all found versions to asProject.configurations
  * @param asProject AS project info for which configurations are searched. asVersion.configurations is modified by this function
@@ -214,18 +271,13 @@ async function findAsConfigurationInfo(asProject: AsProjectInfo): Promise<void> 
     }
 }
 
-/**
- * Get header includes for files within a program. No additional checks are done within. Checks need to
- * be done before calling.
- * @param asProject the project to which the code file belongs to
- * @param codeFile the code files for which the header includes are listed. This needs to be an URI to a file.
- */
-function getHeaderIncludeDirsForProgram(asProject: AsProjectInfo, codeFile: vscode.Uri): vscode.Uri[] {
-    const includeDirs = uriTools.pathsFromTo(asProject.logical, codeFile, asProject.temporaryIncludes);
-    includeDirs.pop(); // remove file name
-    return includeDirs.reverse(); // highest folder level needs to be searched first on include
-}
 
+/**
+ * Checks if the given URI is within a library (C, IEC and binary) of the AS project.
+ * @param asProject The AS project to use
+ * @param uri The URI which is checked to be within a library
+ * @returns `true` if the uri is within a library directory or any of its subdirectories, `false` otherwise.
+ */
 async function isInLibrary(asProject: AsProjectInfo, uri: vscode.Uri): Promise<boolean> {
     if (!uriTools.isSubOf(asProject.logical, uri)) {
         return false; // not content of logical
@@ -250,6 +302,20 @@ async function isInLibrary(asProject: AsProjectInfo, uri: vscode.Uri): Promise<b
     return false;
 }
 
+
+/**
+ * Get header includes for files within a program. No additional checks are done within. Checks need to
+ * be done before calling.
+ * @param asProject the project to which the code file belongs to
+ * @param codeFile the code files for which the header includes are listed. This needs to be an URI to a file.
+ */
+function getHeaderIncludeDirsForProgram(asProject: AsProjectInfo, codeFile: vscode.Uri): vscode.Uri[] {
+    const includeDirs = uriTools.pathsFromTo(asProject.logical, codeFile, asProject.temporaryIncludes);
+    includeDirs.pop(); // remove file name
+    return includeDirs.reverse(); // highest folder level needs to be searched first on include
+}
+
+
 /**
  * Get header includes for files within a library. No additional checks are done within. Checks need to
  * be done before calling.
@@ -260,7 +326,13 @@ function getHeaderIncludeDirsForLibrary(asProject: AsProjectInfo, codeFile: vsco
     return [asProject.temporaryIncludes];
 }
 
-export async function getProjectUriType(uri: vscode.Uri) : Promise<ProjectUriType> {
+
+/**
+ * Gets the type of an URI within an AS project context.
+ * @param uri The URI to evaluate type
+ */
+async function getProjectUriType(uri: vscode.Uri) : Promise<ProjectUriType> {
+    //TODO review implementation and consider to also change input parameters to  (asProject: AsProjectInfo, uri: vscode.Uri)
     if (await uriTools.isFile(uri)) {
         const info = uriTools.pathParsedUri(uri);
         // project organisation files
@@ -360,13 +432,20 @@ export async function getProjectUriType(uri: vscode.Uri) : Promise<ProjectUriTyp
             return ProjectUriType.ProjectBaseDirectory;
         }
     }
-
-    //TODO
+    // no match until now -> undefined
     return ProjectUriType.Undefined;
 }
 
-export async function getUserSettings() {
+
+/**
+ * NOT YET IMPLEMENTED
+ * Get the settings from the LastUser.set file of the AS project.
+ * @param asProject The AS project to get the settings for
+ */
+export async function getUserSettings(asProject: AsProjectInfo) {
     vscode.workspace.textDocuments;
+    //TODO implement properly. File parsing of *.set files should be implemented in module BrAsProjectFiles
+    //TODO maybe create new interface for settings and add property to interface AsProjectInfo
     //const settingUris = await vscode.workspace.findFiles('*.set');
     const settingUris = await vscode.workspace.findFiles('LastUser.set');
     if (settingUris.length === 0) {
@@ -375,7 +454,8 @@ export async function getUserSettings() {
     const usedSettingUri = settingUris[0]; //TODO get username.set if possible
     const settingDocument = await vscode.workspace.openTextDocument(usedSettingUri);
     const text = settingDocument.getText();
-    //TODO XML parsing
-
-    return text;
+    throw new Error('NOT IMPLEMENTED');
 }
+
+
+//#endregion local functions

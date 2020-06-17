@@ -18,6 +18,9 @@
 		"workspaceContains:/*.apj",
 		"onCommand:vscode-brautomationtools.forceActivate"
 	],
+	"extensionDependencies": [
+		"ms-vscode.cpptools"
+	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [

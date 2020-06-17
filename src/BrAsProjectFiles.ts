@@ -7,8 +7,11 @@ import * as vscode from 'vscode';
 import * as xmlbuilder2 from 'xmlbuilder2';
 import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
 import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
+import * as Helpers from './Tools/Helpers';
+
 
 //#region exported interfaces
+
 
 /**
  * Contains information from the AS project file (*.apj)
@@ -33,10 +36,13 @@ export interface PhysicalPackageInfo {
         description?: string;
     }[];
 }
+
+
 //#endregion exported interfaces
 
 
 //#region exported functions
+
 
 /**
  * Gets information from a specified project file (*.apj)
@@ -100,11 +106,7 @@ export async function getPhysicalPackageInfo(projectFile: vscode.Uri): Promise<P
         }
     });
     const configData: {relativePath: string, description?: string}[] = [];
-    for (const data of configDataRaw) {
-        if (data) {
-            configData.push(data); //filter is not recognised by compiler, so using for of with push
-        }
-    }
+    Helpers.pushDefined(configData, ...configDataRaw);
     // return info data
     return {
         asVersion: asVersion,
@@ -112,10 +114,12 @@ export async function getPhysicalPackageInfo(projectFile: vscode.Uri): Promise<P
     };
 }
 
+
 //#endregion exported functions
 
 
 //#region local functions
+
 
 /**
  * Creates an XMLBuilder from an XML file URI.
@@ -134,6 +138,10 @@ async function xmlCreateFromUri(fileUri: vscode.Uri): Promise<XMLBuilder | undef
 }
 
 
+/**
+ * Gets the AS version from the XML processing instruction `<?AutomationStudio Version=4.6.5.78 SP?>` or `<?AutomationStudio Version="4.6.5.78 SP"?>`
+ * @param xmlBase The base XMLBuilder
+ */
 function getAsVersionFromXml(xmlBase: XMLBuilder): string | undefined {
     const asVersionNode = xmlBase.find(child => {
         const node = child.node;
@@ -168,6 +176,13 @@ function getRootElement(xmlBase: XMLBuilder, requiredName?: string): xmlDom.Elem
     }
 }
 
+
+/**
+ * Gets all children of an XML element node which are also element nodes. Filters can be applied.
+ * @param baseElement The base XML element nod for which the children are listed.
+ * @param nodeName 
+ * @param hasAttribute 
+ */
 function getChildElements(baseElement: xmlDom.Element, nodeName?: string, hasAttribute?: {name: string, value?: string}): xmlDom.Element[] {
     const result: xmlDom.Element[] = [];
     // iterate all child elements
@@ -196,4 +211,6 @@ function getChildElements(baseElement: xmlDom.Element, nodeName?: string, hasAtt
     }
     return result;
 }
+
+
 //#endregion local functions

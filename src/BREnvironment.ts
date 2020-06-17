@@ -1,11 +1,17 @@
+/**
+ * Handling of the installation environment of B&R programs on the developer computer.
+ * @packageDocumentation
+ */
+//TODO get version information once on startup, only specify an array of base install paths in the configuration
+
 import * as vscode from 'vscode';
 import * as BRConfiguration from './BRConfiguration';
 import * as uriTools from './Tools/UriTools';
 import * as semver from 'semver';
-import { type } from 'os';
+
 
 //#region exported interfaces
-//TODO get version information once on startup, only specify an array of base install paths in the configuration
+
 
 /**
  * Base interface for version information
@@ -17,18 +23,22 @@ export interface VersionInfo {
 	baseUri: vscode.Uri;
 }
 
+
 /**
  * B&R Automation Studio version and installation information
  */
 export interface ASVersionInfo extends VersionInfo {
+	/** URI of the BR.AS.Build.exe file */
 	brAsBuildExe: vscode.Uri;
-    gccVersions: Array<AsGccVersionInfo>;
+	/** Array containing all information of all available gcc versions within this AS version */
+    gccVersions: AsGccVersionInfo[];
 }
 
 /**
  * Information of gcc installation within B&R Automation Studio
  */
 export interface AsGccVersionInfo extends VersionInfo  {
+	/** Data for all supported target systems. Access by `targetSystemData['<target> <hardware architecture>']`  */
 	targetSystemData: {
 		[targetSystem: string]: AsGccTargetSystemInfo
 	}
@@ -40,29 +50,38 @@ export interface AsGccVersionInfo extends VersionInfo  {
 //TODO maybe use for AsGccVersionInfo.targetSystemData[targetSystem: TargetSystemType], but it gives errors
 export type TargetSystemType = 'SG3 M68k' | 'SGC M68k' | 'SG4 Ia32' | 'SG4 Arm';
 
+
+/**
+ * Information of target systems within a gcc installation.
+ */
 export interface AsGccTargetSystemInfo {
+	/** URI to gcc.exe for this target system */
 	gccExe: vscode.Uri;
+	/** URIs to the standard include paths for this target system */
 	cStandardIncludePaths: vscode.Uri[];
 }
+
+
 //#endregion exported interfaces
 
-//#region local variables
-/** Array of all available AS versions. The array is sorted, so that the highest version is always the first array element */
-//TODO put functionality in a class to save state, or are local variables like this OK?
-let _availableAutomationStudioVersions: Promise<ASVersionInfo[]> = findAvailableASVersions();
-//#endregion local variables
-
 //#region exported functions
+
+
 /**
- * Gets all available Automation Studio versions from 'C:/BrAutomation'. Ther versions are sorted, so the first entry contains the highest version.
+ * Gets all available Automation Studio versions in the configured installation paths. The versions are sorted, so the first entry contains the highest version.
  */
 export async function getAvailableAutomationStudioVersions(): Promise<ASVersionInfo[]> {
 	return await _availableAutomationStudioVersions;
 }
 
+
+/**
+ * Updates the installed Automation Studio Version from the configured installation paths.
+ */
 export async function updateAvailableAutomationStudioVersions(): Promise<void> {
-	_availableAutomationStudioVersions = findAvailableASVersions();
+	//TODO return number like in BrAsProjectWorkspace
 	//TODO call when configuration value of baseInstallPaths changes
+	_availableAutomationStudioVersions = findAvailableASVersions();
 	const versionInfos = await _availableAutomationStudioVersions;
 	if (versionInfos.length === 0) {
 		const messageItems = ['Change baseInstallPaths'];
@@ -71,6 +90,7 @@ export async function updateAvailableAutomationStudioVersions(): Promise<void> {
 	}
 	vscode.window.showInformationMessage(`${versionInfos.length} Automation Studio versions found`);
 }
+
 
 /**
  * Gets the version information for a specified AS version.
@@ -87,6 +107,7 @@ export async function getAsVersionInfo(versionRequest: semver.SemVer | string): 
 	return asVersions.find(v => semver.satisfies(v.version, fitBugfix));
 }
 
+
 /**
  * Gets the BR.AS.Build.exe URI for a specified AS version.
  * @param versionRequest The AS version of the project as a string or semantic version object.
@@ -95,6 +116,7 @@ export async function getAsVersionInfo(versionRequest: semver.SemVer | string): 
 export async function getBrAsBuilExe(versionRequest: semver.SemVer | string): Promise<vscode.Uri | undefined> {
 	return (await getAsVersionInfo(versionRequest))?.brAsBuildExe;
 }
+
 
 /**
  * Gets the target system information for the specified versions and target system type
@@ -108,9 +130,28 @@ export async function getGccTargetSystemInfo(asVersion: semver.SemVer | string, 
 	}
 	return gccVersionInfo.targetSystemData[targetSystem];
 }
+
+
 //#endregion exported functions
 
+
+//#region local variables
+
+
+/** Array of all available AS versions. The array is sorted, so that the highest version is always the first array element */
+//TODO put functionality in a class to save state, or are local variables like this OK?
+let _availableAutomationStudioVersions: Promise<ASVersionInfo[]> = findAvailableASVersions();
+
+
+//#endregion local variables
+
+
 //#region local functions
+
+
+/**
+ * Searches for AS installations within the configured installation paths. Search is not recursive!
+ */
 async function findAvailableASVersions(): Promise<ASVersionInfo[]> {
 	const baseInstallUris = BRConfiguration.getAutomationStudioInstallPaths();
 	const versionInfos: ASVersionInfo[] = [];
@@ -122,6 +163,10 @@ async function findAvailableASVersions(): Promise<ASVersionInfo[]> {
 	return versionInfos;
 }
 
+
+/**
+ * Searches for AS installations within the given URI. Search is not recursive!
+ */
 async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionInfo[]> {
 	// filter subdirectories with regular expression for AS version
 	const subDirectories = await uriTools.listSubDirectoryNames(uri);
@@ -172,6 +217,7 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 	return versionInfos;
 }
 
+
 /**
  * Searches for gcc installations within asVersion.baseUri and pushes all found versions to asVersion.gccVersions
  * @param asVersion AS version info for which gcc versions are searched. asVersion.gccVersions is modified by this function
@@ -206,6 +252,7 @@ async function findAvailableGccVersions(asVersion: ASVersionInfo): Promise<void>
 	// sort
 	asVersion.gccVersions.sort((a, b) => semver.compare(a.version, b.version));
 }
+
 
 /**
  * Searches for gcc installations within gccVersion.baseUri and sets all found versions to gccVersion.targetSystemData
@@ -291,4 +338,6 @@ async function findAvailableGccTargetSystems(gccVersion: AsGccVersionInfo): Prom
 		};
 	}
 }
+
+
 //#endregion local functions

@@ -1,3 +1,8 @@
+/**
+ * Interface to the [ms-vscode.cpptools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) extension.
+ * @packageDocumentation
+ */
+
 import * as vscode from 'vscode';
 import * as cppTools from 'vscode-cpptools';
 import * as BRAsProjectWorkspace from './BRAsProjectWorkspace';
@@ -11,6 +16,7 @@ to use the proper compiler path... definitions so the C++ Extension automaticall
 includes, defines... from the compiler command. In the tests it did not work so far, maybe
 related to https://github.com/microsoft/vscode-cpptools/issues/5512
 */
+
 
 /**
  * Register the custom configuration provider on the C/C++ Tools extension
@@ -38,12 +44,15 @@ export async function registerCppToolsConfigurationProvider(context: vscode.Exte
  * should be used.
  */
 export class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
-    //TODO currently only basic implementation, maybe check how CMake did it to get a more professional solution
+    //TODO currently only basic implementation, review and maybe check how CMake did it https://github.com/microsoft/vscode-cmake-tools/blob/develop/src/cpptools.ts
+
 
     //#region cppTools.CustomConfigurationProvider interface implementation
-    /* Our name and extension ID visible to cpptools */
+    // Our name and extension ID visible to cpptools
+    //SYNC needs to be in sync with package.json/name and package.json/displayName
     readonly name = 'B&R Automation Tools';
     readonly extensionId = 'vscode-brautomationtools';
+
 
     async canProvideConfiguration(uri: vscode.Uri): Promise<boolean> {
         Helpers.logTimedHeader('canProvideConfiguration');
@@ -55,6 +64,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
             return false;
         }
     }
+
 
     async provideConfigurations(uris: vscode.Uri[], token?: vscode.CancellationToken): Promise<cppTools.SourceFileConfigurationItem[]> {
         Helpers.logTimedHeader('provideConfigurations');
@@ -71,11 +81,13 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         return configurations;
     }
 
+
     async canProvideBrowseConfiguration(): Promise<boolean> {
         Helpers.logTimedHeader('canProvideBrowseConfiguration');
         //TODO
         return false;
     }
+
 
     async provideBrowseConfiguration(): Promise<cppTools.WorkspaceBrowseConfiguration> {
         Helpers.logTimedHeader('provideBrowseConfiguration');
@@ -83,23 +95,29 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         return this._workspaceBrowseConfiguration;
     }
 
+
     async canProvideBrowseConfigurationsPerFolder(): Promise<boolean> {
         Helpers.logTimedHeader('canProvideBrowseConfigurationsPerFolder');
         //TODO
         return false;
     }
 
+
     async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cppTools.WorkspaceBrowseConfiguration> {
         Helpers.logTimedHeader('provideFolderBrowseConfiguration');
         return this.provideBrowseConfiguration();
         //return this._workspaceBrowseConfigurations.get(util.platformNormalizePath(_uri.fsPath)) ?? this._workspaceBrowseConfiguration;
     }
+
+
     //#endregion cppTools.CustomConfigurationProvider interface implementation
 
+
     //#region fields
+
+
     private _workspaceBrowseConfiguration: cppTools.WorkspaceBrowseConfiguration = { browsePath: [] };
     private readonly _workspaceBrowseConfigurations = new Map<string, cppTools.WorkspaceBrowseConfiguration>();
-
     /** Standard compiler arguments */
     private readonly defaultCompilerArgs = [
         '-fPIC',
@@ -112,18 +130,17 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         '-D',
         '_SG4'
     ];
-
     private readonly defaultDefines = [
         '_DEFAULT_INCLUDES',
         '_SG4'
     ];
-
     private readonly defaultIntelliSenseMode = 'gcc-x86';
-
     private readonly defaultCStandard = 'gnu99';
-
     private readonly defaultCompilerPath = 'C:\\BrAutomation\\AS46\\AS\\gnuinst\\V4.1.2\\i386-elf\\bin\\gcc.exe';
+
+
     //#endregion fields
+
 
     /**
      * Get the SourceFileConfigurationItem for the given URI
@@ -140,6 +157,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         if (!asProjectInfo) {
             return undefined;
         }
+        //TODO get all compiler data (e.g. path) from BREnvironment.getGccTargetSystemInfo
         const standardIncludes = (await BREnvironment.getGccTargetSystemInfo(asProjectInfo?.asVersion, '4.1.2', 'SG4 Ia32'))?.cStandardIncludePaths.map(uri => uri.fsPath);
         if (!standardIncludes) {
             return undefined;
@@ -161,13 +179,16 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         return config;
     }
 
+
     /** No-op */
     dispose() { }
+
 
     /**
      * Version of Cpptools API
      */
     private _cpptoolsVersion: cppTools.Version = cppTools.Version.latest;
+
 
     /**
      * Index of files to configurations, using the normalized path to the file
@@ -175,10 +196,12 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
      */
     private readonly _fileIndex = new Map<string, Map<string, cppTools.SourceFileConfigurationItem>>();
 
+
     /**
      * If a source file configuration exists for the active target, we will prefer that one when asked.
      */
     private _activeTarget: string | null = null;
+
 
     /**
      * Create a source file configuration for the given file group.
@@ -242,6 +265,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         return a;
     }
 
+
     /**
      * Update the configuration index for the files in the given file group
      * @param sourceDir The source directory where the file group was defined. Used to resolve
@@ -280,9 +304,10 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         */
     }
 
+
     /**
-   * Gets the version of Cpptools API.
-   */
+     * Gets the version of Cpptools API.
+     */
     get cpptoolsVersion(): cppTools.Version {
         return this._cpptoolsVersion;
     }
@@ -294,6 +319,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         this._cpptoolsVersion = value;
     }
 
+    
     /**
      * Update the file index and code model
      * @param opts Update parameters

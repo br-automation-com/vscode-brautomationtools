@@ -4,3 +4,8 @@ https://regex101.com/r/YzUyhH/2
 TypeScript Links:
 https://typedoc.org/guides/doccomments/
 https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html
+
+How to use multiple commands in one task of tasks.json?
+https://stackoverflow.com/questions/31702041/multiple-commands-tasks-with-visual-studio-code
+
+TODO centralize Extension ID and name from package.json as exported const in some module, e.g. packageContributes.ts
