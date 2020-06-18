@@ -1,11 +1,30 @@
-# vscode-brAutomationTools
-VS Code extension to edit B&amp;R Automation Studio projects. This is extension was not created officially be B&R Automation, but is a private experiment.
+# B&R Automation Tools
 
-# vscode-brautomationtools README
+B&R Automation Tools is an extension for [Visual Studio Code](https://code.visualstudio.com) to program and build B&R Automation Studio prjects.
 
-This is the README for your extension "vscode-brautomationtools". After writing up a brief description, we recommend including the following sections.
+The B&R Automation Tools extension is NOT a product of [B&R Industrial Automation GmbH](https://www.br-automation.com), it is a privately written and inofficial experiment.
+
+For most of the functionality a B&R Automation Studio needs to be installed on the develeoper PC currently.
 
 ## Features
+
+### Detecting installed B&R Automation Studio versions
+
+TODO
+
+### Detecting B&R Automation Studio projects in the workspace folders
+
+TODO
+
+### Build B&R Automation Studio projects
+
+TODO
+
+### Auto completion for C/C++ programs and libraries
+
+TODO
+
+# Standard VS Code readme contents TODO write for the extension
 
 Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
 
