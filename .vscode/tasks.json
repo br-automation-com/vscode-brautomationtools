@@ -15,6 +15,12 @@
 				"kind": "build",
 				"isDefault": true
 			}
+		},
+		{
+			"label": "Create VSIX package",
+			"type": "npm",
+			"script": "vscode:vsixPackage",
+			"problemMatcher": []
 		}
 	]
 }
