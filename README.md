@@ -12,7 +12,9 @@ For most of the functionality a B&R Automation Studio needs to be installed on t
 
 1. Download a VSIX from one of the [_releases_](https://github.com/br-automation-com/vscode-brAutomationTools/releases)
 2. [_Install the extension from the VSIX file_](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix)
+   
    ![Install from VSIX file](Doc/Screenshots/InstallFromVsix.png)
+
    > Do not double click the VSIX file, as it will try to install the extension to the full Visual Studio IDE.
 
 If you don't want to test the extension in your productive VS Code environment, consider to have a separate [_portable VS Code instance_](https://code.visualstudio.com/docs/editor/portable).
@@ -21,9 +23,9 @@ If you don't want to test the extension in your productive VS Code environment, 
 
 ### Build B&R Automation Studio projects
 
-> Build functionality is only available, if an Automation Studio installation with a Version matching the project version was detected by the B&R Automation Tools extension. See [Detecting installed B&R Automation Studio versions](#detecting-installed-br-automation-studio-versions).
+> Build functionality is only available, if an Automation Studio installation with a version matching the project version was detected by the B&R Automation Tools extension. See [Detecting installed B&R Automation Studio versions](#detecting-installed-br-automation-studio-versions).
 
-The B&R Automation Tools extension provides tasks which execute BR.AS.Build.exe. This makes it possible to build the project directly within VS Code. The tasks can be configured to build, build for a simulation target, create a RUC package, clean the configuration and build the cross reference.
+The B&R Automation Tools extension provides tasks which execute BR.AS.Build.exe. This makes it possible to build the project directly within VS Code. The tasks can be configured to for a normal build, a build for a simulation target, creating an RUC package, cleaning the configuration and building the cross reference.
 
 You can start the tasks by executing the `Run Task...` command in the `Terminal` Menu. If you want to configure the task as a standard build task, you can also select `Run Build Task...`.
 
@@ -77,7 +79,7 @@ A configured _tasks.json_ file could look like this:
 }
 ```
 
->Tip: You don't have to enter unused options. Some options will show a dialog on execution of the task, if they are not set (e.g. the build mode).
+>Tip: You don't have to enter unused options. Some options will show a dialog on execution of the task if they are not set (e.g. the build mode).
 
 Check out the [_VS Code documentation_](https://code.visualstudio.com/docs/editor/tasks) for further information about tasks.
 
@@ -142,13 +144,13 @@ When adding or removing a folder to the workspace, the information is automatica
 
 ## Requirements
 
-The B&R Automation Tools extension requires the [_C/C++ extension_](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) for auto completion. It will be automatically installed during installation fo the B&R Automation Tools extension.
+The B&R Automation Tools extension requires the [_C/C++ extension_](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) for auto completion. It will be automatically installed during installation of the B&R Automation Tools extension.
 
 ## Known Issues
 
 ### Auto completion for C/C++
 
-Auto completion for C/C++ programs and libraries does not consider the properties of configurations in the Configuration View. Therefore following Automation Studio configuration settings are not supported by the auto completion:
+Code completion for C/C++ programs and libraries does not consider the properties of configurations in the Configuration View. Therefore following Automation Studio configuration settings are not supported by the auto completion:
 *  Defines used by `-D` compiler switches (e.g. `-D MY_DEFINE`)
 *  Additional include directories
 
