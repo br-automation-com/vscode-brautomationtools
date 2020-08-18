@@ -22,6 +22,17 @@ export function pathBasename(uri: vscode.Uri, extension?: string): string {
 
 
 /**
+ * Return the directory name of a path. Similar to the Unix dirname command.
+ * @param uri the path to evaluate.
+ */
+export function pathDirname(uri: vscode.Uri): vscode.Uri
+{
+    const dirPath = posix.dirname(uri.path);
+    return uri.with({path: dirPath});
+}
+
+
+/**
  * Uses path.posix.join to derive a new URI with a joined path
  * @param baseUri URI base
  * @param append paths to append

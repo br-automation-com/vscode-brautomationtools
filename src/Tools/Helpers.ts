@@ -15,11 +15,8 @@ import * as vscode from 'vscode';
  */
 export function logTimedHeader(message: string, lineLength: number = 150): void {
     const time = new Date().toLocaleTimeString();
-    const separator = ' - ';
-    const messageWithTime = time + separator + message + ' ';
-    const fillLength = lineLength - messageWithTime.length;
-    const fill = (fillLength > 0) ? '*'.repeat(fillLength) : '';
-    console.warn(messageWithTime + fill);
+    const messageWithTime = `${time} - ${message} `;
+    console.warn(messageWithTime.padEnd(lineLength, '*'));
 }
 
 

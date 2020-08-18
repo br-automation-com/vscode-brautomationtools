@@ -318,7 +318,7 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
      * @param text Text to write
      */
     private write(text?: string) {
-        this.writeEmitter.fire(text);
+        this.writeEmitter.fire(text ?? '');
     }
 
     /**
