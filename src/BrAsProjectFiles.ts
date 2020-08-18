@@ -54,6 +54,29 @@ export interface UserSettingsInfo {
 }
 
 
+/**
+ * Contains information from CPU package of the configuration (Cpu.pkg)
+ */
+export interface CpuPackageInfo {
+    /** Automation Studio version used in the file */
+    asVersion: string;
+    /** Automation Runtime version used in the configuration */
+    arVersion: string;
+    /** Configurations for build */
+    build?: {
+        /** Used gcc version */
+        gccVersion?: string;
+        /** General additional build options */
+        additionalBuildOptions?: string;
+        /** Additional build options for ANSI C programs */
+        ansiCAdditionalBuildOptions?: string;
+        /** Additional build options for IEC programs */
+        iecAdditionalBuildOptions?: string;
+        /** ANSI C include directories as paths in posix style (absolute or relative to AS project base) */
+        ansiCIncludeDirectories?: string[];
+    }
+}
+
 //#endregion exported interfaces
 
 
@@ -159,6 +182,65 @@ export async function getUserSettingsInfo(settingsFile: vscode.Uri): Promise<Use
         asVersion: asVersion,
         activeConfiguration: activeConfiguration,
         deploymentTarget: deploymentTarget
+    };
+}
+
+
+/**
+ * Gets information from a specified CPU package file.
+ * @param cpuFile URI to the CPU package file (Cpu.pkg)
+ */
+export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackageInfo | undefined> {
+    // getting of basic XML content
+    const xmlBase = await xmlCreateFromUri(cpuFile);
+    if (!xmlBase) {
+        return undefined;
+    }
+    const asVersion = getAsVersionFromXml(xmlBase);
+    if (!asVersion) {
+        return undefined;
+    }
+    const rootElement = getRootElement(xmlBase, 'Cpu');
+    if (!rootElement) {
+        return undefined;
+    }
+    const configElement = getChildElements(rootElement, 'Configuration').pop();
+    if (!configElement) {
+        return undefined;
+    }
+    // get Automation Runtime configuration values
+    const arConfigElement = getChildElements(configElement, 'AutomationRuntime').pop();
+    const arVersion = arConfigElement?.getAttribute('Version') ?? undefined;
+    if (!arVersion) {
+        return undefined;
+    }
+    // get build configuration values
+    const buildConfigElement = getChildElements(configElement, 'Build').pop();
+    const gccVersion                  = buildConfigElement?.getAttribute('GccVersion') ?? undefined;
+    const additionalBuildOptions      = buildConfigElement?.getAttribute('AdditionalBuildOptions') ?? undefined;
+    const ansiCAdditionalBuildOptions = buildConfigElement?.getAttribute('AnsicAdditionalBuildOptions') ?? undefined;
+    const iecAdditionalBuildOptions   = buildConfigElement?.getAttribute('IecAdditionalBuildOptions') ?? undefined;
+    const ansiCIncludeDirectoriesRaw  = buildConfigElement?.getAttribute('AnsicIncludeDirectories')?.split(',');
+    const ansiCIncludeDirectories     = ansiCIncludeDirectoriesRaw?.map(winPath => {
+        const isRelative = winPath.startsWith('\\');
+        if (isRelative) {
+            const posixPath = './' + winPath.substr(1).replace('\\', '/');
+            return posixPath;
+        } else {
+            return vscode.Uri.file(winPath).path;
+        }
+    });
+    // return info data
+    return {
+        asVersion: asVersion,
+        arVersion: arVersion,
+        build: {
+            gccVersion:                  gccVersion,
+            additionalBuildOptions:      additionalBuildOptions,
+            ansiCAdditionalBuildOptions: ansiCAdditionalBuildOptions,
+            iecAdditionalBuildOptions:   iecAdditionalBuildOptions,
+            ansiCIncludeDirectories:     ansiCIncludeDirectories
+        }
     };
 }
 

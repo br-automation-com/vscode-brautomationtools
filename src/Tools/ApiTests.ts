@@ -324,6 +324,16 @@ export async function testBrAsProjectFiles(): Promise<void> {
 			})
 		);
 	console.log(settingsInfos);
+	// test Cpu.pkg info
+	console.log('BrAsProjectFiles.getCpuPackageInfo');
+	const cpuPkgFiles = await vscode.workspace.findFiles({base: asProject.physical.fsPath, pattern: '*/*/Cpu.pkg'});
+	//BrAsProjectFiles.getCpuPackageInfo(uriTools.pathJoin(asProject.physical, 'AdditionalDefinesAndIncludes/X20CP1586/Cpu.pkg'));
+	const cpuPkgInfos = await Promise.all(
+		cpuPkgFiles.map(async file => {
+			return {uri: file, settings: await BrAsProjectFiles.getCpuPackageInfo(file)};
+		})
+	);
+	console.log(cpuPkgInfos);
 	//end
     console.warn('Test BrAsProjectFiles end');
 }
