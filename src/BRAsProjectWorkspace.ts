@@ -19,12 +19,12 @@ export interface AsProjectInfo {
     name: string;
     /** Description of the AS project */
     description?: string;
+    /** AS version used in the project */
+    asVersion: string;
     /** Absolute URI to the project base directory */
     baseUri: vscode.Uri,
     /** Absolute URI to the project file (*.apj) */
     projectFile: vscode.Uri,
-    /** AS version used in the project */
-    asVersion: string;
     /** Absolute URI to the Logical directory */
     logical: vscode.Uri,
     /** Absolute URI to the Physical directory */
@@ -225,48 +225,70 @@ enum ProjectUriType {
 async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]> {
     const searchPattern: vscode.GlobPattern = baseUri ? {base: baseUri.fsPath, pattern: '**/*.apj'} : '**/*.apj';
     const projectUris  = await vscode.workspace.findFiles(searchPattern);
-    const projectUrisParsed = projectUris.map(uri => uriTools.pathParsedUri(uri));
-    const projectsData: AsProjectInfo[] = [];
-    for (const parsed of projectUrisParsed) {
-        const projectFileUri = uriTools.pathJoin(parsed.dir, parsed.base);
-        const projectFileInfo = await BrAsProjectFiles.getProjectFileInfo(projectFileUri);
-        if (!projectFileInfo) {
+    const result: AsProjectInfo[] = [];
+    for (const uri of projectUris) {
+        // collect data
+        const uriData = deriveAsProjectUriData(uri);
+        const projectFileData = await BrAsProjectFiles.getProjectFileInfo(uriData.projectFileUri);
+        if (!projectFileData) {
             continue;
         }
-        const data: AsProjectInfo = {
-            name:              parsed.name,
-            description:       projectFileInfo.description,
-            baseUri:           parsed.dir,
-            projectFile:       projectFileUri,
-            asVersion:         projectFileInfo.asVersion,
-            logical:           uriTools.pathJoin(parsed.dir, 'Logical'),
-            physical:          uriTools.pathJoin(parsed.dir, 'Physical'),
-            temporary:         uriTools.pathJoin(parsed.dir, 'Temp'),
-            temporaryIncludes: uriTools.pathJoin(parsed.dir, 'Temp/Includes'),
-            configurations:    []
+        const configurationsData = await findAsConfigurationInfo(uriData.physicalUri);
+        // push to result
+        const projectData: AsProjectInfo = {
+            name:                     uriData.projectName,
+            description:              projectFileData.description,
+            asVersion:                projectFileData.asVersion,
+            baseUri:                  uriData.baseUri,
+            projectFile:              uriData.projectFileUri,
+            logical:                  uriData.logicalUri,
+            physical:                 uriData.physicalUri,
+            temporary:                uriData.temporaryUri,
+            temporaryIncludes:        uriData.temporaryIncludesUri,
+            configurations:           configurationsData,
         };
-        await findAsConfigurationInfo(data);
-        projectsData.push(data);
+        result.push(projectData);
+        };
+    return result;
     }
-    return projectsData;
+
+
+/**
+ * Derives information data from an AS project file URI
+ * @param projectFileUri URI to the AS project file (*.apj)
+ */
+function deriveAsProjectUriData(projectFileUri: vscode.Uri) {
+    const parsedUri = uriTools.pathParsedUri(projectFileUri);
+    return {
+        projectName:          parsedUri.name,
+        projectFileUri:       projectFileUri,
+        baseUri:              parsedUri.dir,
+        logicalUri:           uriTools.pathJoin(parsedUri.dir, 'Logical'),
+        physicalUri:          uriTools.pathJoin(parsedUri.dir, 'Physical'),
+        temporaryUri:         uriTools.pathJoin(parsedUri.dir, 'Temp'),
+        temporaryIncludesUri: uriTools.pathJoin(parsedUri.dir, 'Temp/Includes'),
+        userSettingsUri:      uriTools.pathJoin(parsedUri.dir, 'LastUser.set')
+    };
 }
 
 
 /**
- * Searches for configurations within asProject.physical and pushes all found versions to asProject.configurations
- * @param asProject AS project info for which configurations are searched. asVersion.configurations is modified by this function
+ * Searches for configurations within the physical path of an AS project.
+ * @param physicalUri The URI to the physical path of the AS project
+ * @returns An array containing the information of all found configurations
  */
-async function findAsConfigurationInfo(asProject: AsProjectInfo): Promise<void> {
-    const packageUri = uriTools.pathJoin(asProject.physical, 'Physical.pkg');
+async function findAsConfigurationInfo(physicalUri: vscode.Uri): Promise<AsConfigurationInfo[]> {
+    const packageUri = uriTools.pathJoin(physicalUri, 'Physical.pkg');
     const physicalInfo = await BrAsProjectFiles.getPhysicalPackageInfo(packageUri);
     if (!physicalInfo) {
-        return;
+        return [];
     }
-    for (const config of physicalInfo.configurations) {
-        asProject.configurations.push({
-            name: config.relativePath,
+    return physicalInfo.configurations.map(config => {
+        return {
+            name:        config.relativePath,
             description: config.description,
-            baseUri: uriTools.pathJoin(asProject.physical, config.relativePath)
+            baseUri:     uriTools.pathJoin(physicalUri, config.relativePath)
+        };
         });
     }
 }

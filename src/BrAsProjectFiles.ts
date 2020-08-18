@@ -10,6 +10,9 @@ import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import * as Helpers from './Tools/Helpers';
 
 
+// TODO const result = rootElement.querySelector() // not yet implemented by 'dom' module, so I implemented my own solution getChildElements()
+
+
 //#region exported interfaces
 
 
@@ -74,12 +77,12 @@ export async function getProjectFileInfo(projectFile: vscode.Uri): Promise<Proje
 
 
 /**
- * Gets information from a specified project file
- * @param projectFile URI to the AS project file
+ * Gets information from a specified physical package file.
+ * @param physicalPackageFile URI to the Physical.pkg
  */
-export async function getPhysicalPackageInfo(projectFile: vscode.Uri): Promise<PhysicalPackageInfo | undefined> {
+export async function getPhysicalPackageInfo(physicalPackageFile: vscode.Uri): Promise<PhysicalPackageInfo | undefined> {
     // getting of basic XML content
-    const xmlBase = await xmlCreateFromUri(projectFile);
+    const xmlBase = await xmlCreateFromUri(physicalPackageFile);
     if (!xmlBase) {
         return undefined;
     }
@@ -92,7 +95,6 @@ export async function getPhysicalPackageInfo(projectFile: vscode.Uri): Promise<P
         return undefined;
     }
     // get configurations
-    // const result = rootElement.querySelector() // not yet implemented by 'dom' module, so I implemented my own solution
     const objectsElement = getChildElements(rootElement, 'Objects');
     if (objectsElement.length === 0) {
         return undefined;
