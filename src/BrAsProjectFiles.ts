@@ -41,6 +41,19 @@ export interface PhysicalPackageInfo {
 }
 
 
+/**
+ * Contains information from project user settings (LastUser.set, <username>.set)
+ */
+export interface UserSettingsInfo {
+    /** Automation Studio version used in the file */
+    asVersion: string;
+    /** Name of the active configuration */
+    activeConfiguration?: string;
+    /** Deployment target for newly added programs (e.g. active configuration) */
+    deploymentTarget?: string;
+}
+
+
 //#endregion exported interfaces
 
 
@@ -113,6 +126,39 @@ export async function getPhysicalPackageInfo(physicalPackageFile: vscode.Uri): P
     return {
         asVersion: asVersion,
         configurations: configData
+    };
+}
+
+
+/**
+ * Gets information from a specified user settings file.
+ * @param settingsFile URI to the user settings file (*.set)
+ */
+export async function getUserSettingsInfo(settingsFile: vscode.Uri): Promise<UserSettingsInfo | undefined> {
+    // getting of basic XML content
+    const xmlBase = await xmlCreateFromUri(settingsFile);
+    if (!xmlBase) {
+        return undefined;
+    }
+    const asVersion = getAsVersionFromXml(xmlBase);
+    if (!asVersion) {
+        return undefined;
+    }
+    const rootElement = getRootElement(xmlBase, 'ProjectSettings');
+    if (!rootElement) {
+        return undefined;
+    }
+    // get active configuration
+    const configMngElement = getChildElements(rootElement, 'ConfigurationManager').pop();
+    const activeConfiguration = configMngElement?.getAttribute('ActiveConfigurationName') ?? undefined;
+    // get deployment target
+    const deploymentElement = getChildElements(rootElement, 'Deployment').pop();
+    const deploymentTarget = deploymentElement?.getAttribute('Value') ?? undefined;
+    // return info data
+    return {
+        asVersion: asVersion,
+        activeConfiguration: activeConfiguration,
+        deploymentTarget: deploymentTarget
     };
 }
 

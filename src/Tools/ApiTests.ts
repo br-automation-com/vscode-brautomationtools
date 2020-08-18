@@ -315,6 +315,15 @@ export async function testBrAsProjectFiles(): Promise<void> {
 	console.log('BrAsProjectFiles.getPhysicalPackageInfo');
 	const physicalInfo = await BrAsProjectFiles.getPhysicalPackageInfo(uriTools.pathJoin(asProject.physical, 'Physical.pkg'));
 	console.log(physicalInfo);
+	// test *.set info
+	console.log('BrAsProjectFiles.getUserSettingsInfo');
+	const settingFiles = await vscode.workspace.findFiles({base: asProject.baseUri.fsPath, pattern: '*.set'});
+	const settingsInfos = await Promise.all(
+			settingFiles.map(async file => {
+				return {uri: file, settings: await BrAsProjectFiles.getUserSettingsInfo(file)};
+			})
+		);
+	console.log(settingsInfos);
 	//end
     console.warn('Test BrAsProjectFiles end');
 }
