@@ -224,7 +224,7 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
     const ansiCIncludeDirectories     = ansiCIncludeDirectoriesRaw?.map(winPath => {
         const isRelative = winPath.startsWith('\\');
         if (isRelative) {
-            const posixPath = './' + winPath.substr(1).replace('\\', '/');
+            const posixPath = './' + winPath.substr(1).split('\\').join('/');
             return posixPath;
         } else {
             return vscode.Uri.file(winPath).path;

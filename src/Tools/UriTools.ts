@@ -54,6 +54,19 @@ export function pathRelative(from: vscode.Uri, to: vscode.Uri): string {
 
 
 /**
+ * Uses path.posix.resolve to derive a new URI with a resolved path
+ * @param baseUri URI base
+ * @param append paths to resolve
+ */
+export function pathResolve(baseUri: vscode.Uri, ...resolve: string[]): vscode.Uri {
+    const basePath = baseUri.path;
+    const resolvedPath = posix.resolve(basePath, ...resolve);
+    const resolvedUri = baseUri.with({path: resolvedPath});
+    return resolvedUri;
+}
+
+
+/**
  * Returns an array of URIs which represent all relatives from one uri to another URI.
  * from and to are included in the result. If from and to are same, it results in only one
  * array member.

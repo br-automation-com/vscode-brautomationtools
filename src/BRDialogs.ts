@@ -46,8 +46,7 @@ export async function selectASProjectConfiguration(asProject: BRAsProjectWorkspa
         };
         return item;
     });
-    const activeConfigurationValue = await BRAsProjectWorkspace.getActiveConfiguration(asProject);
-    const activeConfigurationItem = configurationItems.find(item => item.value.baseUri.toString() === activeConfigurationValue?.baseUri.toString());
+    const activeConfigurationItem = configurationItems.find(item => item.value.baseUri.toString() === asProject.activeConfiguration?.baseUri.toString());
     // set options and get value
     const pickOptions: ValueQuickPickOptions = { title: 'Select configuration' };
     const pickInitial: ValueQuickPickInitialValues<BRAsProjectWorkspace.AsConfigurationInfo> = { activeItems: activeConfigurationItem };

@@ -35,6 +35,8 @@ export interface AsProjectInfo {
     temporaryIncludes: vscode.Uri
     /** Information for all configurations within this project */
     configurations: AsConfigurationInfo[];
+    /** The currently active configuration */
+    activeConfiguration?: AsConfigurationInfo;
 }
 
 
@@ -48,6 +50,25 @@ export interface AsConfigurationInfo {
     description?: string;
     /** Absolute URI to the configuration base directory */
     baseUri: vscode.Uri;
+    /** Build settings of the configuration */
+    buildSettings: AsConfigurationBuildSettings;
+}
+
+
+/**
+ * Configuration specific build options data
+ */
+export interface AsConfigurationBuildSettings {
+    /** Used gcc version */
+    gccVersion?: string;
+    /** Additional build options for all languages */
+    additionalBuildOptions?: string;
+    /** Additional build options for ANSI C */
+    ansiCAdditionalBuildOptions?: string;
+    /** Additional build options for IEC languages */
+    iecAdditionalBuildOptions?: string;
+    /** Include directories for ANSI C */
+    ansiCIncludeDirectories?: vscode.Uri[];
 }
 
 
@@ -103,15 +124,6 @@ export async function getProjectForUri(uri: vscode.Uri): Promise<AsProjectInfo |
 
 
 /**
- * Gets the active configuration of an AS project
- */
-export async function getActiveConfiguration(asProject: AsProjectInfo): Promise<AsConfigurationInfo | undefined> {
-    //TODO implement
-    return undefined;
-}
-
-
-/**
  * Gets the header include directories for a code file within an AS projects logical directory.
  * @param codeFile A URI to the code file to get the header includes for
  */
@@ -134,6 +146,8 @@ export async function getProjectHeaderIncludeDirs(codeFile: vscode.Uri): Promise
         //TODO isInProgram(project, codeFile) -> no special includes otherwise
         return getHeaderIncludeDirsForProgram(project, codeFile);
     }
+    //TODO get additonal includes defined in configuration
+    //TODO get additonal includes defined in configuration of programs
     //TODO get standard headers also here?
 }
 
@@ -233,24 +247,26 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
         if (!projectFileData) {
             continue;
         }
-        const configurationsData = await findAsConfigurationInfo(uriData.physicalUri);
+        const configurationsData = await findAsConfigurationInfo(uriData.physicalUri, uriData.baseUri);
+        const userSettingsData   = await BrAsProjectFiles.getUserSettingsInfo(uriData.userSettingsUri);
         // push to result
         const projectData: AsProjectInfo = {
-            name:                     uriData.projectName,
-            description:              projectFileData.description,
-            asVersion:                projectFileData.asVersion,
-            baseUri:                  uriData.baseUri,
-            projectFile:              uriData.projectFileUri,
-            logical:                  uriData.logicalUri,
-            physical:                 uriData.physicalUri,
-            temporary:                uriData.temporaryUri,
-            temporaryIncludes:        uriData.temporaryIncludesUri,
-            configurations:           configurationsData,
+            name:                uriData.projectName,
+            description:         projectFileData.description,
+            asVersion:           projectFileData.asVersion,
+            baseUri:             uriData.baseUri,
+            projectFile:         uriData.projectFileUri,
+            logical:             uriData.logicalUri,
+            physical:            uriData.physicalUri,
+            temporary:           uriData.temporaryUri,
+            temporaryIncludes:   uriData.temporaryIncludesUri,
+            configurations:      configurationsData,
+            activeConfiguration: configurationsData.find(config => config.name === userSettingsData?.activeConfiguration)
         };
         result.push(projectData);
-        };
+    };
     return result;
-    }
+}
 
 
 /**
@@ -275,22 +291,40 @@ function deriveAsProjectUriData(projectFileUri: vscode.Uri) {
 /**
  * Searches for configurations within the physical path of an AS project.
  * @param physicalUri The URI to the physical path of the AS project
+ * @param projectBaseUri The URI to the AS project root directory
  * @returns An array containing the information of all found configurations
  */
-async function findAsConfigurationInfo(physicalUri: vscode.Uri): Promise<AsConfigurationInfo[]> {
+async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: vscode.Uri): Promise<AsConfigurationInfo[]> {
+    const result: AsConfigurationInfo[] = [];
+    // get available configurations from Physical.pkg
     const packageUri = uriTools.pathJoin(physicalUri, 'Physical.pkg');
     const physicalInfo = await BrAsProjectFiles.getPhysicalPackageInfo(packageUri);
     if (!physicalInfo) {
         return [];
     }
-    return physicalInfo.configurations.map(config => {
-        return {
+    // get detail information of all found configurations
+    for (const config of physicalInfo.configurations) {
+        const configBaseUri = uriTools.pathJoin(physicalUri, config.relativePath);
+        // get data from Cpu.pkg
+        const cpuPkgUri = (await vscode.workspace.findFiles({base: configBaseUri.fsPath, pattern: '*/Cpu.pkg'})).pop();
+        const cpuPkgInfo = cpuPkgUri ? await BrAsProjectFiles.getCpuPackageInfo(cpuPkgUri) : undefined;
+        const ansiCIncludeDirs = cpuPkgInfo?.build?.ansiCIncludeDirectories?.map(path => uriTools.pathResolve(projectRootUri, path));
+        // push to result
+        const configData: AsConfigurationInfo = {
             name:        config.relativePath,
             description: config.description,
-            baseUri:     uriTools.pathJoin(physicalUri, config.relativePath)
+            baseUri:     configBaseUri,
+            buildSettings: {
+                gccVersion:                  cpuPkgInfo?.build?.gccVersion,
+                additionalBuildOptions:      cpuPkgInfo?.build?.additionalBuildOptions,
+                ansiCAdditionalBuildOptions: cpuPkgInfo?.build?.ansiCAdditionalBuildOptions,
+                iecAdditionalBuildOptions:   cpuPkgInfo?.build?.iecAdditionalBuildOptions,
+                ansiCIncludeDirectories:     ansiCIncludeDirs
+            }
         };
-        });
+        result.push(configData);
     }
+    return result;
 }
 
 
