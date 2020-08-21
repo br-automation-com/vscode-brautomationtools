@@ -146,8 +146,7 @@ export async function getProjectHeaderIncludeDirs(codeFile: vscode.Uri): Promise
         //TODO isInProgram(project, codeFile) -> no special includes otherwise
         return getHeaderIncludeDirsForProgram(project, codeFile);
     }
-    //TODO get additonal includes defined in configuration
-    //TODO get additonal includes defined in configuration of programs
+    //TODO get additonal includes defined in configuration of programs and libraries (Cpu.sw)
     //TODO get standard headers also here?
 }
 
@@ -249,6 +248,7 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
         }
         const configurationsData = await findAsConfigurationInfo(uriData.physicalUri, uriData.baseUri);
         const userSettingsData   = await BrAsProjectFiles.getUserSettingsInfo(uriData.userSettingsUri);
+        //TODO add file system watcher to update on changed active configuration
         // push to result
         const projectData: AsProjectInfo = {
             name:                uriData.projectName,
@@ -366,9 +366,11 @@ async function isInLibrary(asProject: AsProjectInfo, uri: vscode.Uri): Promise<b
  * @param codeFile the code files for which the header includes are listed. This needs to be an URI to a file.
  */
 function getHeaderIncludeDirsForProgram(asProject: AsProjectInfo, codeFile: vscode.Uri): vscode.Uri[] {
-    const includeDirs = uriTools.pathsFromTo(asProject.logical, codeFile, asProject.temporaryIncludes);
-    includeDirs.pop(); // remove file name
-    return includeDirs.reverse(); // highest folder level needs to be searched first on include
+    const configIncludeDirs = asProject.activeConfiguration?.buildSettings.ansiCIncludeDirectories ?? [];
+    const iecIncludeDirs = uriTools.pathsFromTo(asProject.logical, codeFile, asProject.temporaryIncludes);
+    iecIncludeDirs.pop(); // remove file name
+    iecIncludeDirs.reverse(); // highest folder level needs to be searched first on include
+    return [...configIncludeDirs, ...iecIncludeDirs];
 }
 
 
@@ -379,7 +381,8 @@ function getHeaderIncludeDirsForProgram(asProject: AsProjectInfo, codeFile: vsco
  * @param codeFile the code files for which the header includes are listed. This needs to be an URI to a file.
  */
 function getHeaderIncludeDirsForLibrary(asProject: AsProjectInfo, codeFile: vscode.Uri): vscode.Uri[] {
-    return [asProject.temporaryIncludes];
+    const configIncludeDirs = asProject.activeConfiguration?.buildSettings.ansiCIncludeDirectories ?? [];
+    return [asProject.temporaryIncludes, ...configIncludeDirs];
 }
 
 
