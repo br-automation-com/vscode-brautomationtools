@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 Add new but unreleased features, fixes... here during development
+- Read active configuration from the LastUser.set file
+- Provide include directories defined in the Cpu.pkg file to the C/C++ extension
 
 ## [0.0.2] - 2020-06-19
 This release contains only documentation changes.
