@@ -6,6 +6,7 @@
 import * as vscode from 'vscode';
 import * as BrAsProjectFiles from './BrAsProjectFiles';
 import * as uriTools from './Tools/UriTools';
+import * as BrCppToolsApi from './BrCppToolsApi'; // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
 
 
 //#region exported types
@@ -14,7 +15,7 @@ import * as uriTools from './Tools/UriTools';
 /**
  * Information for an AS project
  */
-export interface AsProjectInfo {
+export interface AsProjectInfo extends vscode.Disposable {
     /** Name of the AS project */
     name: string;
     /** Description of the AS project */
@@ -37,6 +38,7 @@ export interface AsProjectInfo {
     configurations: AsConfigurationInfo[];
     /** The currently active configuration */
     activeConfiguration?: AsConfigurationInfo;
+    //TODO add changed event? Figure out in #5 architectural changes.
 }
 
 
@@ -83,11 +85,11 @@ export interface AsConfigurationBuildSettings {
  * @param context context to register disposables
  */
 export async function registerProjectWorkspace(context: vscode.ExtensionContext) {
-    updateWorkspaceProjects();
     // register to update on change of workspace folders
     let disposable: vscode.Disposable;
     disposable = vscode.workspace.onDidChangeWorkspaceFolders(() => updateWorkspaceProjects());
     context.subscriptions.push(disposable);
+    //TODO also push internal disposables (FileSystemWatcher...)? How? Figure out in #5 architectural changes.
 }
 
 
@@ -104,6 +106,10 @@ export async function getWorkspaceProjects(): Promise<AsProjectInfo[]> {
  * @returns The number of projects found within the workspace folders.
  */
 export async function updateWorkspaceProjects(): Promise<Number> {
+    const projectsOld = await _workspaceProjects;
+    for (const project of projectsOld) {
+        project.dispose();
+    }
     _workspaceProjects = findAsProjectInfo();
     return (await _workspaceProjects).length;
 }
@@ -248,7 +254,7 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
         }
         const configurationsData = await findAsConfigurationInfo(uriData.physicalUri, uriData.baseUri);
         const userSettingsData   = await BrAsProjectFiles.getUserSettingsInfo(uriData.userSettingsUri);
-        //TODO add file system watcher to update on changed active configuration
+        const userSettingsWatcher = vscode.workspace.createFileSystemWatcher(uriTools.uriToSingleFilePattern(uriData.userSettingsUri));
         // push to result
         const projectData: AsProjectInfo = {
             name:                uriData.projectName,
@@ -261,10 +267,28 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
             temporary:           uriData.temporaryUri,
             temporaryIncludes:   uriData.temporaryIncludesUri,
             configurations:      configurationsData,
-            activeConfiguration: configurationsData.find(config => config.name === userSettingsData?.activeConfiguration)
+            activeConfiguration: configurationsData.find(config => config.name === userSettingsData?.activeConfiguration),
+            dispose: () => {
+                userSettingsWatcher.dispose();
+            }
         };
         result.push(projectData);
+        // Register file system events for LastUser.set -> change active configuration
+        userSettingsWatcher.onDidChange(async (uri) => {
+            const newUserSettingsData = await BrAsProjectFiles.getUserSettingsInfo(uriData.userSettingsUri);
+            projectData.activeConfiguration = configurationsData.find(config => config.name === newUserSettingsData?.activeConfiguration);
+            await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+        });
+        userSettingsWatcher.onDidCreate(async (uri) => {
+            const newUserSettingsData = await BrAsProjectFiles.getUserSettingsInfo(uriData.userSettingsUri);
+            projectData.activeConfiguration = configurationsData.find(config => config.name === newUserSettingsData?.activeConfiguration);
+            await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+        });
+        userSettingsWatcher.onDidDelete(async (uri) => {
+            projectData.activeConfiguration = undefined;
+        });
     };
+    await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
     return result;
 }
 

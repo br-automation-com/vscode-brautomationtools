@@ -41,6 +41,9 @@ async function testCommand(arg1: any, arg2: any) {
 	if (await yesNoDialog('Run tests for Helpers?')) {
 		await testHelpers();
 	}
+	if (await yesNoDialog('Run tests for file system events?')) {
+		await testFileSystemEvents();
+	}
 	if (await yesNoDialog('Run tests for BREnvironment?')) {
 		await testBREnvironment();
 	}
@@ -107,6 +110,55 @@ async function testVarious(arg1: any, arg2: any)
 	}
 	// end
 	console.warn('Test various end');
+}
+
+async function testFileSystemEvents() {
+	console.warn('Test file system events start');
+	/** 
+	 * #### Test FileSystemWatcher:
+	 * - All events are registered, also events triggered by outside programs
+	 * - Rename is registered as create -> delete
+	 * - Rename / adding / deleting of files is also registered by the containing directory
+	 * - No details of the event are available, only the URI -> hard to distinguish a rename from a create / delete
+	 * - Patterns can be set to only register some files / events
+	 * #### Conclusion:
+	 * - Will be useful to watch changes to specific file contents (onDidChange)
+	 * - e.g. change of active configuration
+	 */
+	const pattern = '**';
+	console.log('createFileSystemWatcher:');
+	console.log(pattern);
+	const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+	watcher.onDidChange(uri => {
+		console.log('File changed:');
+		console.log(uri);
+	});
+	watcher.onDidCreate(uri => {
+		console.log('File created:');
+		console.log(uri);
+	});
+	watcher.onDidDelete(uri => {
+		console.log('File deleted:');
+		console.log(uri);
+	});
+	/**
+	 * #### Test vscode.workspace.onDidXxxxFiles:
+	 * - Only events triggered by the user within VS Code are registered
+	 * - vscode.workspace.fs API events do not trigger this event
+	 * - No patterns can be set to filter the results -> needs own implementation
+	 * - Information of old / new data available
+	 * - Moving files is registered as a rename
+	 * #### Conclusion:
+	 * - Will be useful to watch moving / deleting / creating files in the general AS workspace
+	 * - Can be used e.g. for a feature to automatically adjust package files
+	 */
+	const renameSubscript = vscode.workspace.onDidRenameFiles(event => {
+		console.log('Files renamed from -> to:');
+		for (const file of event.files) {
+			console.log(`${file.oldUri.fsPath} -> ${file.newUri.fsPath}`);
+		}
+	});
+	console.warn('Test file system events end');
 }
 
 async function testUriTools() {

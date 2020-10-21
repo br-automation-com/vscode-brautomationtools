@@ -23,18 +23,33 @@ related to https://github.com/microsoft/vscode-cpptools/issues/5512
  */
 export async function registerCppToolsConfigurationProvider(context: vscode.ExtensionContext): Promise<void> {
     
-    const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v3);
+    const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v4);
     if (!cppToolsApi) {
         return;
     }
     context.subscriptions.push(cppToolsApi);
     const provider = new CppConfigurationProvider();
+    usedProvider = provider; //HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
     context.subscriptions.push(provider);
     cppToolsApi?.registerCustomConfigurationProvider(provider);
     // Ready only parsing of workspace and environment (required for proper includes)
     await BREnvironment.getAvailableAutomationStudioVersions();
     await BRAsProjectWorkspace.getWorkspaceProjects();
     cppToolsApi?.notifyReady(provider);
+}
+
+
+// HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+// Works well -> implement properly
+let usedProvider: CppConfigurationProvider;
+export async function didChangeCppToolsConfig() {
+    const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v4);
+    if (!cppToolsApi) {
+        return;
+    }
+    if (usedProvider) {
+        cppToolsApi.didChangeCustomConfiguration(usedProvider);
+    }
 }
 
 

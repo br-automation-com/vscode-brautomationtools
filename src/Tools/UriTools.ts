@@ -224,3 +224,15 @@ async function listSubsOfType(baseUri: vscode.Uri, fileType: vscode.FileType): P
     const subNames = subsOfType.map(sub => sub[0]);
     return subNames;
 }
+
+
+/**
+ * Creates a `vscode.RelativePattern` which matches only the specified file URI.
+ * @param uri URI to create the pattern from
+ */
+export function uriToSingleFilePattern(uri: vscode.Uri): vscode.RelativePattern
+{
+    const fileName = pathBasename(uri);
+    const dirName = pathDirname(uri).fsPath;
+    return {base: dirName, pattern: fileName};
+}
