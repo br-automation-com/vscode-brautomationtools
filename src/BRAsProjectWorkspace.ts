@@ -34,6 +34,8 @@ export interface AsProjectInfo extends vscode.Disposable {
     temporary: vscode.Uri,
     /** Absolute URI to the temporary includes directory */
     temporaryIncludes: vscode.Uri
+    /** Absolute URI to the binaries directory */
+    binaries: vscode.Uri;
     /** Information for all configurations within this project */
     configurations: AsConfigurationInfo[];
     /** The currently active configuration */
@@ -52,6 +54,10 @@ export interface AsConfigurationInfo {
     description?: string;
     /** Absolute URI to the configuration base directory */
     baseUri: vscode.Uri;
+    /** Absolute URI to the configurations CPU package, which contains most of the files */
+    cpuPackageUri: vscode.Uri;
+    /** Name of the CPU package */
+    cpuPackageName: string;
     /** Build settings of the configuration */
     buildSettings: AsConfigurationBuildSettings;
 }
@@ -266,6 +272,7 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
             physical:            uriData.physicalUri,
             temporary:           uriData.temporaryUri,
             temporaryIncludes:   uriData.temporaryIncludesUri,
+            binaries:            uriData.binariesUri,
             configurations:      configurationsData,
             activeConfiguration: configurationsData.find(config => config.name === userSettingsData?.activeConfiguration),
             dispose: () => {
@@ -307,6 +314,7 @@ function deriveAsProjectUriData(projectFileUri: vscode.Uri) {
         physicalUri:          uriTools.pathJoin(parsedUri.dir, 'Physical'),
         temporaryUri:         uriTools.pathJoin(parsedUri.dir, 'Temp'),
         temporaryIncludesUri: uriTools.pathJoin(parsedUri.dir, 'Temp/Includes'),
+        binariesUri:          uriTools.pathJoin(parsedUri.dir, 'Binaries'),
         userSettingsUri:      uriTools.pathJoin(parsedUri.dir, 'LastUser.set')
     };
 }
@@ -329,15 +337,25 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
     // get detail information of all found configurations
     for (const config of physicalInfo.configurations) {
         const configBaseUri = uriTools.pathJoin(physicalUri, config.relativePath);
+        // get data from Config.pkg
+        const configPkgUri  = uriTools.pathJoin(configBaseUri, 'Config.pkg');
+        const configPkgInfo = await BrAsProjectFiles.getConfigPackageInfo(configPkgUri);
+        if (!configPkgInfo) {
+            console.log(`No data found in ${configPkgUri.fsPath}. Configuration will be skipped!`);
+            continue;
+        }
+        const cpuPkgDirUri = uriTools.pathJoin(configBaseUri, configPkgInfo.cpuPackageName);
         // get data from Cpu.pkg
-        const cpuPkgUri = (await vscode.workspace.findFiles({base: configBaseUri.fsPath, pattern: '*/Cpu.pkg'})).pop();
+        const cpuPkgUri  = uriTools.pathJoin(cpuPkgDirUri, 'Cpu.pkg');
         const cpuPkgInfo = cpuPkgUri ? await BrAsProjectFiles.getCpuPackageInfo(cpuPkgUri) : undefined;
         const ansiCIncludeDirs = cpuPkgInfo?.build?.ansiCIncludeDirectories?.map(path => uriTools.pathResolve(projectRootUri, path));
         // push to result
         const configData: AsConfigurationInfo = {
-            name:        config.relativePath,
-            description: config.description,
-            baseUri:     configBaseUri,
+            name:           config.relativePath,
+            description:    config.description,
+            baseUri:        configBaseUri,
+            cpuPackageUri:  cpuPkgDirUri,
+            cpuPackageName: configPkgInfo.cpuPackageName,
             buildSettings: {
                 gccVersion:                  cpuPkgInfo?.build?.gccVersion,
                 additionalBuildOptions:      cpuPkgInfo?.build?.additionalBuildOptions,

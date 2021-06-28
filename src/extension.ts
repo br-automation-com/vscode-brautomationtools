@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 import {registerCommands} from './BRCommands';
 import {registerCppToolsConfigurationProvider} from './BrCppToolsApi';
-import {registerTaskProviders} from './BrAsBuildTaskProvider';
+import {registerTaskProviders as registerBuildTaskProviders} from './BrAsBuildTaskProvider';
 import {registerApiTests} from './Tools/ApiTests';
 import {registerProjectWorkspace} from './BRAsProjectWorkspace';
 
@@ -16,7 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.window.showInformationMessage('Extension B&R Automation Tools is now active');
 	registerApiTests(context);
 	registerCommands(context);
-	registerTaskProviders(context);
+	registerBuildTaskProviders(context);
 	registerCppToolsConfigurationProvider(context);
 	registerProjectWorkspace(context);
 }

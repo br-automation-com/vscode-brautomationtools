@@ -8,4 +8,5 @@ https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html
 How to use multiple commands in one task of tasks.json?
 https://stackoverflow.com/questions/31702041/multiple-commands-tasks-with-visual-studio-code
 
-TODO centralize Extension ID and name from package.json as exported const in some module, e.g. packageContributes.ts
+TODO Centralize Extension ID and name from package.json as exported const in some module, e.g. packageContributes.ts
+TODO Make a proper logging concept (e.g. with setting for extension) see https://www.npmjs.com/package/loglevel

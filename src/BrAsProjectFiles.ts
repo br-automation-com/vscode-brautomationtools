@@ -62,6 +62,8 @@ export interface CpuPackageInfo {
     asVersion: string;
     /** Automation Runtime version used in the configuration */
     arVersion: string;
+    /** Module ID of the CPU module */
+    cpuModuleId: string;
     /** Configurations for build */
     build?: {
         /** Used gcc version */
@@ -75,6 +77,19 @@ export interface CpuPackageInfo {
         /** ANSI C include directories as paths in posix style (absolute or relative to AS project base) */
         ansiCIncludeDirectories?: string[];
     }
+}
+
+
+/**
+ * Contains information from the root package of the configuration (Config.pkg)
+ */
+export interface ConfigPackageInfo {
+    /** Automation Studio version used in the file */
+    asVersion: string;
+    /** Name of the CPU package (package which contains most files of the configuration) */
+    cpuPackageName: string;
+    /** Description of the CPU package */
+    cpuPackageDescription?: string;
 }
 
 //#endregion exported interfaces
@@ -208,6 +223,11 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
     if (!configElement) {
         return undefined;
     }
+    // Get CPU module ID
+    const cpuModuleId = configElement.getAttribute("ModuleId");
+    if (!cpuModuleId) {
+        return undefined;
+    }
     // get Automation Runtime configuration values
     const arConfigElement = getChildElements(configElement, 'AutomationRuntime').pop();
     const arVersion = arConfigElement?.getAttribute('Version') ?? undefined;
@@ -232,8 +252,9 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
     });
     // return info data
     return {
-        asVersion: asVersion,
-        arVersion: arVersion,
+        asVersion:   asVersion,
+        arVersion:   arVersion,
+        cpuModuleId: cpuModuleId,
         build: {
             gccVersion:                  gccVersion,
             additionalBuildOptions:      additionalBuildOptions,
@@ -241,6 +262,48 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
             iecAdditionalBuildOptions:   iecAdditionalBuildOptions,
             ansiCIncludeDirectories:     ansiCIncludeDirectories
         }
+    };
+}
+
+
+/**
+ * Gets information from a specified physical package file.
+ * @param configPackageFile URI to the Physical.pkg
+ */
+export async function getConfigPackageInfo(configPackageFile: vscode.Uri): Promise<ConfigPackageInfo | undefined> {
+    // getting of basic XML content
+    const xmlBase = await xmlCreateFromUri(configPackageFile);
+    if (!xmlBase) {
+        return undefined;
+    }
+    const asVersion = getAsVersionFromXml(xmlBase);
+    if (!asVersion) {
+        return undefined;
+    }
+    const rootElement = getRootElement(xmlBase, 'Configuration');
+    if (!rootElement) {
+        return undefined;
+    }
+    // get configurations
+    const objectsElement = getChildElements(rootElement, 'Objects');
+    if (objectsElement.length === 0) {
+        return undefined;
+    }
+    const cpuElements = getChildElements(objectsElement[0], 'Object', {name: 'Type', value: 'Cpu'});
+    if (cpuElements.length !== 1) {
+        console.log(`None or multiple Cpu objects found in ${configPackageFile.fsPath}. Number of elements: ${cpuElements.length}`);
+        return undefined;
+    }
+    const cpuElement = cpuElements[0];
+    const cpuPackageName = cpuElement.textContent ?? undefined;
+    const cpuPackageDescription = cpuElement.getAttribute('Description') ?? undefined;
+    if (!cpuPackageName) {
+        return undefined;
+    }
+    return {
+        asVersion:             asVersion,
+        cpuPackageName:        cpuPackageName,
+        cpuPackageDescription: cpuPackageDescription
     };
 }
 

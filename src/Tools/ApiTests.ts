@@ -8,6 +8,7 @@ import * as xmlbuilder from 'xmlbuilder2';
 import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
 import * as Helpers from './Helpers';
 import * as uriTools from './UriTools';
+import * as fileTools from './FileTools';
 import * as BREnvironment from '../BREnvironment';
 import * as BRConfiguration from '../BRConfiguration';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
@@ -37,6 +38,9 @@ async function testCommand(arg1: any, arg2: any) {
 	}
 	if (await yesNoDialog('Run tests for UriTools?')) {
 		await testUriTools();
+	}
+	if (await yesNoDialog('Run tests for FileTools?')) {
+		await testFileTools();
 	}
 	if (await yesNoDialog('Run tests for Helpers?')) {
 		await testHelpers();
@@ -161,6 +165,7 @@ async function testFileSystemEvents() {
 	console.warn('Test file system events end');
 }
 
+
 async function testUriTools() {
 	console.warn('Test UriTools start');
 	// test pathRelative and isSubOf
@@ -197,6 +202,22 @@ async function testUriTools() {
 }
 
 
+async function testFileTools() {
+	console.warn('Test FileTools start');
+	if (!vscode.workspace.workspaceFolders) {
+		console.log('No workspace folder defined');
+		return;
+	}
+	const wsUri = vscode.workspace.workspaceFolders[0].uri;
+	const fileUri = uriTools.pathJoin(wsUri, 'MyTempFile.txt');
+	console.log(`Creating file ${fileUri.fsPath}`);
+	await fileTools.createFile(fileUri, {overwrite: true});
+	console.log(`Insert text into file ${fileUri.fsPath}`);
+	await fileTools.insertTextInFile(fileUri, new vscode.Position(0, 0), 'asdf');
+	console.warn('Test FileTools end');
+}
+
+
 async function testHelpers() {
 	// test pushDefined
 	console.log('Helpers.pushDefined');
@@ -225,10 +246,10 @@ async function testBREnvironment() {
 	const asVersions = await BREnvironment.getAvailableAutomationStudioVersions();
 	console.log(asVersions);
 	// get BR.AS.Build.exe
-	const inputVersion = await vscode.window.showInputBox({prompt: 'Enter a version to find BR.AS.Build.exe'});
-	if (inputVersion) {
-		console.log(`BREnvironment.getBrAsBuilExe for version: ${inputVersion}`);
-		const buildExe = await BREnvironment.getBrAsBuilExe(inputVersion);
+	const inputAsVersion = await vscode.window.showInputBox({prompt: 'Enter an AS version to find BR.AS.Build.exe'});
+	if (inputAsVersion) {
+		console.log(`BREnvironment.getBrAsBuilExe for version: ${inputAsVersion}`);
+		const buildExe = await BREnvironment.getBrAsBuilExe(inputAsVersion);
 		console.log(buildExe);
 	}
 	// get gcc target system info
@@ -238,6 +259,23 @@ async function testBREnvironment() {
 	console.log(`BREnvironment.getGccTargetSystemInfo for AS: ${getTargetInfoAsVersion}; gcc: ${getTargetInfoGccVersion}; type: ${getTargetSystemType}`);
 	const targetSystemInfo = await BREnvironment.getGccTargetSystemInfo(getTargetInfoAsVersion, getTargetInfoGccVersion, getTargetSystemType);
 	console.log(targetSystemInfo);
+	// Update PVI versions
+	if (await yesNoDialog('Update PVI versions?')) {
+		console.log('BREnvironment.updateAvailablePviVersions');
+		console.time('BREnvironment.updateAvailablePviVersions');
+		await BREnvironment.updateAvailablePviVersions();
+		console.timeEnd('BREnvironment.updateAvailablePviVersions');
+	}
+	// get PVI version info
+	console.log('BREnvironment.getAvailablePviVersions');
+	const pviVersions = await BREnvironment.getAvailablePviVersions();
+	console.log(pviVersions);
+	// get PVITransfer.exe
+	const inputPviVersion = await vscode.window.showInputBox({prompt: 'Enter a PVI version to find PVITransfer.exe'});
+	console.log(`BREnvironment.getPviTransferExe for version: ${inputPviVersion}`);
+	const transferExe = await BREnvironment.getPviTransferExe(inputPviVersion);
+	console.log(transferExe);
+
 	// end
 	console.warn('Test BREnvironment end');
 }
@@ -372,17 +410,25 @@ export async function testBrAsProjectFiles(): Promise<void> {
 	const settingFiles = await vscode.workspace.findFiles({base: asProject.baseUri.fsPath, pattern: '*.set'});
 	const settingsInfos = await Promise.all(
 			settingFiles.map(async file => {
-				return {uri: file, settings: await BrAsProjectFiles.getUserSettingsInfo(file)};
+				return {uri: file, data: await BrAsProjectFiles.getUserSettingsInfo(file)};
 			})
 		);
 	console.log(settingsInfos);
+	// test Config.pkg info
+	console.log('BrAsProjectFiles.getConfigPackageInfo');
+	const configPkgFiles = await vscode.workspace.findFiles({base: asProject.physical.fsPath, pattern: '*/Config.pkg'});
+	const configPkgInfos = await Promise.all(
+		configPkgFiles.map(async file => {
+			return {uri: file, data: await BrAsProjectFiles.getConfigPackageInfo(file)};
+		})
+	);
+	console.log(configPkgInfos);
 	// test Cpu.pkg info
 	console.log('BrAsProjectFiles.getCpuPackageInfo');
 	const cpuPkgFiles = await vscode.workspace.findFiles({base: asProject.physical.fsPath, pattern: '*/*/Cpu.pkg'});
-	//BrAsProjectFiles.getCpuPackageInfo(uriTools.pathJoin(asProject.physical, 'AdditionalDefinesAndIncludes/X20CP1586/Cpu.pkg'));
 	const cpuPkgInfos = await Promise.all(
 		cpuPkgFiles.map(async file => {
-			return {uri: file, settings: await BrAsProjectFiles.getCpuPackageInfo(file)};
+			return {uri: file, data: await BrAsProjectFiles.getCpuPackageInfo(file)};
 		})
 	);
 	console.log(cpuPkgInfos);

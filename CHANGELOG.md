@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Add new but unreleased features, fixes... here during development
 - Read active configuration from the LastUser.set file
 - Provide include directories defined in the Cpu.pkg file to the C/C++ extension
+- Provide tasks to transfer the AS project
+- New setting `vscode-brautomationtools.environment.pviInstallPaths` to find PVITransfer.exe
 
 ## [0.0.2] - 2020-06-19
 This release contains only documentation changes.

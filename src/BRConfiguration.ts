@@ -36,6 +36,22 @@ export function getAutomationStudioInstallPaths(): vscode.Uri[] {
 
 
 /**
+ * Gets the configured PVI install paths.
+ */
+export function getPviInstallPaths(): vscode.Uri[] {
+    //TODO error checking if types do not match (both directions read and write) -> is this possible somehow?
+    const config = getConfiguration();
+    const configValue = config.get<string[]>('environment.pviInstallPaths');
+    if (configValue) {
+        return configValue.map(fsPath => vscode.Uri.file(fsPath));
+    }
+    else {
+        return [];
+    }
+}
+
+
+/**
  * Gets the default build mode.
  */
 export function getDefaultBuildMode() {

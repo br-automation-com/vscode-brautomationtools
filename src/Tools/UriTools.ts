@@ -204,6 +204,16 @@ export async function listSubDirectoryNames(baseUri: vscode.Uri): Promise<string
 
 
 /**
+ * Lists the full URIs of all subdirectories within a base URI.
+ * @param baseUri The base for the list.
+ */
+export async function listSubDirectories(baseUri: vscode.Uri) {
+    const dirNames = await listSubDirectoryNames(baseUri);
+    return dirNames.map(name => pathJoin(baseUri, name));
+}
+
+
+/**
  * Lists the full URIs of all the files within a base URI.
  * @param baseUri The base for the list.
  */

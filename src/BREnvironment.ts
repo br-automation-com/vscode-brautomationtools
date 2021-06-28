@@ -62,6 +62,14 @@ export interface AsGccTargetSystemInfo {
 }
 
 
+/**
+ * B&R Process Variable Interface (PVI) version and installation information
+ */
+export interface PviVersionInfo extends VersionInfo {
+	pviTransferExe: vscode.Uri;
+}
+
+
 //#endregion exported interfaces
 
 //#region exported functions
@@ -132,6 +140,61 @@ export async function getGccTargetSystemInfo(asVersion: semver.SemVer | string, 
 }
 
 
+/**
+ * Get all available PVI versions in the configured installation paths. The versions are sorted, so the first entry contains the highest version.
+ */
+export async function getAvailablePviVersions(): Promise<PviVersionInfo[]> {
+	return await _availablePviVersions;
+}
+
+
+/**
+ * Gets the version information for a specified PVI version.
+ * @param versionRequest The requested PVI version as a string or semantic version object. If not set, the highest available version will be returned.
+ * @returns `undefined` if no fitting version was found.
+ */
+export async function getPviVersionInfo(versionRequest?: semver.SemVer | string): Promise<PviVersionInfo | undefined> {
+	const pviVersions = await getAvailablePviVersions();
+	// direct return if no versions available
+	if (pviVersions.length <= 0) {
+		return undefined;
+	}
+	// find version depending on versionRequest
+	if (versionRequest !== undefined) {
+		// search specific version
+		const semanticRequest = semver.coerce(versionRequest);
+		if (!semanticRequest) {
+			return undefined;
+		}
+		const fitBugfix = `${semanticRequest.major}.${semanticRequest.minor}.x`;
+		return pviVersions.find(v => semver.satisfies(v.version, fitBugfix));
+	} else {
+		// newest version
+		return pviVersions[0];
+	}
+}
+
+
+/**
+ * Updates the installed PVI Version from the configured installation paths.
+ */
+export async function updateAvailablePviVersions(): Promise<number> {
+	_availablePviVersions = findAvailablePviVersions();
+	const versions = await _availablePviVersions;
+	return versions.length;
+}
+
+
+/**
+ * Gets the PVITransfer.exe URI for a specified PVI version.
+ * @param versionRequest The requested PVI version as a string or semantic version object. If not set, the highest available version will be returned.
+ * @returns `undefined` if no fitting version was found.
+ */
+export async function getPviTransferExe(versionRequest?: semver.SemVer | string): Promise<vscode.Uri | undefined> {
+	return (await getPviVersionInfo(versionRequest))?.pviTransferExe;
+}
+
+
 //#endregion exported functions
 
 
@@ -141,6 +204,9 @@ export async function getGccTargetSystemInfo(asVersion: semver.SemVer | string, 
 /** Array of all available AS versions. The array is sorted, so that the highest version is always the first array element */
 //TODO put functionality in a class to save state, or are local variables like this OK?
 let _availableAutomationStudioVersions: Promise<ASVersionInfo[]> = findAvailableASVersions();
+
+/** Array of all available PVI versions. The array is sorted, so that the highest version is always the first array element */
+let _availablePviVersions: Promise<PviVersionInfo[]> = findAvailablePviVersions();
 
 
 //#endregion local variables
@@ -337,6 +403,64 @@ async function findAvailableGccTargetSystems(gccVersion: AsGccVersionInfo): Prom
 			]
 		};
 	}
+}
+
+
+/**
+ * Searches for PVI installations within the configured installation paths. Search is not recursive!
+ */
+async function findAvailablePviVersions(): Promise<PviVersionInfo[]> {
+	const baseInstallUris = BRConfiguration.getPviInstallPaths();
+	const versionInfos: PviVersionInfo[] = [];
+	for (const uri of baseInstallUris) {
+		versionInfos.push(...(await findAvailablePviVersionsInUri(uri)));
+	}
+	// sort by version
+	versionInfos.sort((a, b) => semver.compare(b.version, a.version));
+	return versionInfos;
+}
+
+
+async function findAvailablePviVersionsInUri(uri: vscode.Uri): Promise<PviVersionInfo[]> {
+	const versionInfos: PviVersionInfo[] = [];
+	// filter subdirectories with regular expression for AS version
+	const subDirectoryNames = await uriTools.listSubDirectoryNames(uri);
+	for (const subDirectoryName of subDirectoryNames) {
+		const versionBaseUri = uriTools.pathJoin(uri, subDirectoryName);
+		// find PVITransfer.exe candidates and select first
+		const pviTransferExecutables: vscode.Uri[] = [];
+		const transferExeAsInstall = uriTools.pathJoin(versionBaseUri, 'PVI/Tools/PVITransfer/PVITransfer.exe'); // Standard installation path for AS installation
+		if (await uriTools.exists(transferExeAsInstall)) {
+			pviTransferExecutables.push(transferExeAsInstall);
+		}
+		const transferExeRucExport = uriTools.pathJoin(versionBaseUri, 'PVITransfer.exe'); // Directly in directory (e.g. by RUC export)
+		if (await uriTools.exists(transferExeRucExport)) {
+			pviTransferExecutables.push(transferExeRucExport);
+		}
+		if (pviTransferExecutables.length === 0) {
+			// much slower backup solution which searches recursive
+			pviTransferExecutables.push(...await vscode.workspace.findFiles({base: versionBaseUri.fsPath, pattern: '**/PVITransfer.exe'}));
+			if (pviTransferExecutables.length === 0) {
+				console.warn(`Cannot find PVITransfer.exe in URI: ${versionBaseUri.fsPath}`);
+				continue;
+			}
+		}
+		const pviTransferExecutable = pviTransferExecutables[0];
+		// get version from exe
+		const pviTransferVersion = semver.coerce(subDirectoryName);
+		if (!pviTransferVersion) {
+			console.warn(`Cannot get version of ${pviTransferExecutable.fsPath}`);
+			continue;
+		}
+		// create version information and push to array
+		const versionInfo: PviVersionInfo = {
+			version:        pviTransferVersion,
+			baseUri:        versionBaseUri,
+			pviTransferExe: pviTransferExecutable
+		};
+		versionInfos.push(versionInfo);
+	}
+	return versionInfos;
 }
 
 

@@ -9,7 +9,7 @@
 	},
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.44.0"
+		"vscode": "^1.46.0"
 	},
 	"categories": [
 		"Other"
@@ -78,6 +78,16 @@
 					},
 					"default": [
 						"C:\\BrAutomation"
+					]
+				},
+				"vscode-brautomationtools.environment.pviInstallPaths": {
+					"description": "Paths where the PVI versions are installed. E.g. if PVI V4.6.x is installed in C:\\BrAutomation\\PVI\\V4.6, the install path is C:\\BrAutomation\\PVI",
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [
+						"C:\\BrAutomation\\PVI"
 					]
 				}
 			}
