@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import {registerCommands} from './BRCommands';
 import {registerCppToolsConfigurationProvider} from './BrCppToolsApi';
 import {registerTaskProviders as registerBuildTaskProviders} from './BrAsBuildTaskProvider';
+import {registerTaskProviders as registerTransferTaskProviders} from './BrAsTransferTaskProvider';
 import {registerApiTests} from './Tools/ApiTests';
 import {registerProjectWorkspace} from './BRAsProjectWorkspace';
 
@@ -17,6 +18,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerApiTests(context);
 	registerCommands(context);
 	registerBuildTaskProviders(context);
+	registerTransferTaskProviders(context);
 	registerCppToolsConfigurationProvider(context);
 	registerProjectWorkspace(context);
 }
