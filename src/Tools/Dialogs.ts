@@ -135,4 +135,19 @@ export async function getQuickPickSingleValue<T>(items: ValueQuickPickItem<T>[],
 }
 
 
+/**
+ * A dialog which presents a "yes" and "no" option
+ * @param prompt Prompt message which will be displayed
+ * @return A promise that resolves to `true` if 'yes' was selected, to `false` if 'no' was selected and undefined if the dialog was cancelled.
+ */
+export async function yesNoDialog(prompt?: string): Promise<boolean | undefined> {
+    const selected = await vscode.window.showQuickPick(['no', 'yes'], {placeHolder: prompt});
+    if (!selected) {
+        return undefined;
+    } else {
+        return selected === 'yes';
+    }
+}
+
+
 //#endregion exported functions for a quick pick

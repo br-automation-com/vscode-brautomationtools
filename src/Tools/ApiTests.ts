@@ -9,6 +9,7 @@ import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
 import * as Helpers from './Helpers';
 import * as uriTools from './UriTools';
 import * as fileTools from './FileTools';
+import * as Dialogs from './Dialogs';
 import * as BREnvironment from '../BREnvironment';
 import * as BRConfiguration from '../BRConfiguration';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
@@ -33,31 +34,31 @@ export function registerApiTests(context: vscode.ExtensionContext) {
 async function testCommand(arg1: any, arg2: any) {
 	Helpers.logTimedHeader('Test command start');
 	// select tests to execute
-	if (await yesNoDialog('Run various tests?')) {
+	if (await Dialogs.yesNoDialog('Run various tests?')) {
 		await testVarious(arg1, arg2);
 	}
-	if (await yesNoDialog('Run tests for UriTools?')) {
+	if (await Dialogs.yesNoDialog('Run tests for UriTools?')) {
 		await testUriTools();
 	}
-	if (await yesNoDialog('Run tests for FileTools?')) {
+	if (await Dialogs.yesNoDialog('Run tests for FileTools?')) {
 		await testFileTools();
 	}
-	if (await yesNoDialog('Run tests for Helpers?')) {
+	if (await Dialogs.yesNoDialog('Run tests for Helpers?')) {
 		await testHelpers();
 	}
-	if (await yesNoDialog('Run tests for file system events?')) {
+	if (await Dialogs.yesNoDialog('Run tests for file system events?')) {
 		await testFileSystemEvents();
 	}
-	if (await yesNoDialog('Run tests for BREnvironment?')) {
+	if (await Dialogs.yesNoDialog('Run tests for BREnvironment?')) {
 		await testBREnvironment();
 	}
-	if (await yesNoDialog('Run tests for BRConfiguration?')) {
+	if (await Dialogs.yesNoDialog('Run tests for BRConfiguration?')) {
 		await testBRConfiguration();
 	}
-	if (await yesNoDialog('Run tests for BRAsProjectWorkspace?')) {
+	if (await Dialogs.yesNoDialog('Run tests for BRAsProjectWorkspace?')) {
 		await testBRAsProjectWorkspace();
 	}
-	if (await yesNoDialog('Run tests for BrAsProjectFiles?')) {
+	if (await Dialogs.yesNoDialog('Run tests for BrAsProjectFiles?')) {
 		await testBrAsProjectFiles();
 	}
 	// end
@@ -235,7 +236,7 @@ async function testHelpers() {
 async function testBREnvironment() {
 	console.warn('Test BREnvironment start');
 	// Update AS versions
-	if (await yesNoDialog('Update AS versions?')) {
+	if (await Dialogs.yesNoDialog('Update AS versions?')) {
 		console.log('BREnvironment.updateAvailableAutomationStudioVersions');
 		console.time('BREnvironment.updateAvailableAutomationStudioVersions');
 		await BREnvironment.updateAvailableAutomationStudioVersions();
@@ -260,7 +261,7 @@ async function testBREnvironment() {
 	const targetSystemInfo = await BREnvironment.getGccTargetSystemInfo(getTargetInfoAsVersion, getTargetInfoGccVersion, getTargetSystemType);
 	console.log(targetSystemInfo);
 	// Update PVI versions
-	if (await yesNoDialog('Update PVI versions?')) {
+	if (await Dialogs.yesNoDialog('Update PVI versions?')) {
 		console.log('BREnvironment.updateAvailablePviVersions');
 		console.time('BREnvironment.updateAvailablePviVersions');
 		await BREnvironment.updateAvailablePviVersions();
@@ -299,7 +300,7 @@ async function testBRConfiguration() {
 async function testBRAsProjectWorkspace() {
 	console.warn('Test BRAsProjectWorkspace start');
 	// Update AS projects
-	if (await yesNoDialog('Update AS projects in workspace?')) {
+	if (await Dialogs.yesNoDialog('Update AS projects in workspace?')) {
 		console.log('BRAsProjectWorkspace.updateWorkspaceProjects');
 		console.time('BRAsProjectWorkspace.updateWorkspaceProjects');
 		const numProjects = await BRAsProjectWorkspace.updateWorkspaceProjects();
@@ -434,10 +435,4 @@ export async function testBrAsProjectFiles(): Promise<void> {
 	console.log(cpuPkgInfos);
 	//end
     console.warn('Test BrAsProjectFiles end');
-}
-
-
-async function yesNoDialog(prompt?: string): Promise<boolean> {
-	const selected = await vscode.window.showQuickPick(['no', 'yes'], {placeHolder: prompt});
-	return selected === 'yes';
 }
