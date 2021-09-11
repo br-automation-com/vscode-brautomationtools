@@ -11,6 +11,14 @@ Add new but unreleased features, fixes... here during development
 - Provide include directories defined in the Cpu.pkg file to the C/C++ extension
 - Provide tasks to transfer the AS project
 - New setting `vscode-brautomationtools.environment.pviInstallPaths` to find PVITransfer.exe
+- Support for AS Versions >= V4.9.x
+  - New sub directories in gcc installation were introduced with AS V4.9. These subdirectories are now considered when searching for a gcc installation.
+  - The folder name in the installation directory for AS V4.10 is AS410.
+    Until now this would be parsed as V4.1.0. From this version on it will be parsed as V4.10.
+
+    This change leads to the restriction, that older pre-release AS versions cannot be used anymore. AS V4.3.3 pre-release e.g. was stored in the folder AS433 which will now be parsed as AS V4.33 instead of AS V4.3.3.
+    
+    Maybe a more robust solution than parsing directory names can be found in the future.
 
 ## [0.0.2] - 2020-06-19
 This release contains only documentation changes.

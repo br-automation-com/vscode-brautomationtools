@@ -236,7 +236,7 @@ async function findAvailableASVersions(): Promise<ASVersionInfo[]> {
 async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionInfo[]> {
 	// filter subdirectories with regular expression for AS version
 	const subDirectories = await uriTools.listSubDirectoryNames(uri);
-	const asDirRegExp = new RegExp(/^AS(\d)(\d)(\d*)$/);
+	const asDirRegExp = new RegExp(/^AS(\d)(\d+)$/);
 	const matching = subDirectories.filter(d => asDirRegExp.test(d)).map(d => asDirRegExp.exec(d));
 	// create version information from matching subdirectories
 	const versionInfos: ASVersionInfo[] = [];
@@ -244,11 +244,12 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 		// create full URI
 		const versionBaseUri = uriTools.pathJoin(uri, match![0]);
 		// create semantic version
-		const version = semver.coerce(`${match![1]}.${match![2]}.${match![3]}`);
+		const version = semver.coerce(`${match![1]}.${match![2]}.0`);
 		if (!version) {
 			console.error('Cannot create semantic version for URI: ' + versionBaseUri.fsPath);
 			continue;
 		}
+		vscode.window.showInformationMessage(`AS Version V${version.version} found in ${versionBaseUri.fsPath}`);
 		// get AS build executable
 		//TODO maybe language sensitive for Bin-en / Bin-de if both are available?
 		const asBuildExecutables: vscode.Uri[] = [];
@@ -298,15 +299,20 @@ async function findAvailableGccVersions(asVersion: ASVersionInfo): Promise<void>
 	const matching         = gccSubDirs.filter(d => gccDirRegExp.test(d)).map(d => gccDirRegExp.exec(d));
 	// create version information from matching subdirectories
 	for (const match of matching) {
-		const versionBaseUri = uriTools.pathJoin(gccContainingUri, match![0]);
-		const version        = semver.coerce(match![0]);
+		const gccVersionUri = uriTools.pathJoin(gccContainingUri, match![0]);
+		const version    = semver.coerce(match![0]);
 		if (!version) {
-			console.warn('Cannot create semantic version for URI: ' + versionBaseUri.fsPath);
+			console.warn('Cannot create semantic version for URI: ' + gccVersionUri.fsPath);
 			continue;
 		}
+		//HACK from AS V >= 4.9 there is an additional subfolder '4.9' -> do it properly with regex, so future versions can be handled
+		const gccUriAs49 = uriTools.pathJoin(gccVersionUri, '4.9');
+		const newGccPathScheme = await uriTools.exists(gccUriAs49);
+		const finalGccUri = newGccPathScheme ? gccUriAs49 : gccVersionUri;
+		// create gcc version object and push
 		const gccVersion: AsGccVersionInfo =
 		{
-			baseUri: versionBaseUri,
+			baseUri: finalGccUri,
 			version: version,
 			targetSystemData: {}
 		};
