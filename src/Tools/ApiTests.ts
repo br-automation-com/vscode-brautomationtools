@@ -26,12 +26,12 @@ export function registerApiTests(context: vscode.ExtensionContext) {
 	
 	// Command: Test
 	disposable = vscode.commands.registerCommand('vscode-brautomationtools.test',
-		(arg1, arg2) => testCommand(arg1, arg2));
+		(arg1, arg2) => testCommand(arg1, arg2, context));
     context.subscriptions.push(disposable);
 }
 
 
-async function testCommand(arg1: any, arg2: any) {
+async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContext) {
 	Helpers.logTimedHeader('Test command start');
 	// select tests to execute
 	if (await Dialogs.yesNoDialog('Run various tests?')) {
@@ -60,6 +60,9 @@ async function testCommand(arg1: any, arg2: any) {
 	}
 	if (await Dialogs.yesNoDialog('Run tests for BrAsProjectFiles?')) {
 		await testBrAsProjectFiles();
+	}
+	if (await Dialogs.yesNoDialog('Run tests for VS Code extension context?')) {
+		await testVsCodeExtensionContext(context);
 	}
 	// end
 	Helpers.logTimedHeader('Test command end');
@@ -390,7 +393,7 @@ async function testBRAsProjectWorkspace() {
 }
 
 
-export async function testBrAsProjectFiles(): Promise<void> {
+async function testBrAsProjectFiles(): Promise<void> {
 	console.warn('Test BrAsProjectFiles start');
 	// get AS project for further tests
     const asProjects = await BRAsProjectWorkspace.getWorkspaceProjects();
@@ -436,3 +439,20 @@ export async function testBrAsProjectFiles(): Promise<void> {
 	//end
     console.warn('Test BrAsProjectFiles end');
 }
+
+
+async function testVsCodeExtensionContext(context: vscode.ExtensionContext) : Promise<void> {
+	//TODO can be used for generated files, user query flags...
+	// see https://code.visualstudio.com/api/extension-capabilities/common-capabilities#data-storage
+	console.warn('Test VsCodeExtensionContext start');
+	// Storage for temporary files, e.g. generated headers, PIL files...
+	console.log('globalStoragePath, storagePath, logPath:');
+	console.log(context.globalStoragePath);
+	console.log(context.storagePath);
+	console.log(context.logPath);
+	// Temporary flags, values... e.g. last built configuration, build time...
+	context.workspaceState;
+	context.globalState;
+	console.warn('Test VsCodeExtensionContext end');
+}
+
