@@ -54,11 +54,9 @@ export type TargetSystemType = 'SG3 M68k' | 'SGC M68k' | 'SG4 Ia32' | 'SG4 Arm';
 /**
  * Information of target systems within a gcc installation.
  */
-export interface AsGccTargetSystemInfo {
+export interface AsGccTargetSystemInfo { //TODO rename? was not fully clear to me after some time not working on this...
 	/** URI to gcc.exe for this target system */
 	gccExe: vscode.Uri;
-	/** URIs to the standard include paths for this target system */
-	cStandardIncludePaths: vscode.Uri[];
 }
 
 
@@ -336,77 +334,29 @@ async function findAvailableGccTargetSystems(gccVersion: AsGccVersionInfo): Prom
 		delete gccVersion.targetSystemData[key];
 	}
 	// setting of compiler exe and includes. Currently hard coded, because structures and folder names differ on each gcc version
-	// following include paths are required (example SG4 Ia32):
-	//     cStandardIncludePaths: [
-	//         uriTools.pathJoin(gccUri, 'i386-elf/include/'),              --> required for most system headers and B&R specific bur/plc.h...
-	//         uriTools.pathJoin(gccUri, 'lib/gcc/i386-elf/4.1.2/include/') --> required for some system headers, e.g. stddef.h, stdbool.h
-	//     ]
-	// another solution might be searching for plc.h and stddef.h to get the header locations automatically
-	//TODO Find which gcc.exe is the right one. Maybe by selecting the right gcc.exe, C/C++ extension can find the system includes without defining
+	//TODO find a more generic solution
 	const gccUri = gccVersion.baseUri;
-	// gcc V2.95.3
-	if (gccVersion.version.compare('2.95.3') === 0) {
-		// SG3 M68k
-		gccVersion.targetSystemData['SG3 M68k'] = {
-			gccExe:                uriTools.pathJoin(gccUri, 'bin/m68k-elf-gcc.exe'),
-			cStandardIncludePaths: [
-				uriTools.pathJoin(gccUri, 'm68k-elf/include/'),
-				uriTools.pathJoin(gccUri, 'lib/gcc-lib/m68k-elf/2.95.3/include/')
-			]
-		};
-		// SGC M68k
-		gccVersion.targetSystemData['SGC M68k'] = {
-			gccExe:                uriTools.pathJoin(gccUri, 'bin/m68k-elf-gcc.exe'),
-			cStandardIncludePaths: [
-				uriTools.pathJoin(gccUri, 'm68k-elf/include/'),
-				uriTools.pathJoin(gccUri, 'lib/gcc-lib/m68k-elf/2.95.3/include/')
-			]
-		};
-		// SG4 Ia32
-		gccVersion.targetSystemData['SG4 Ia32'] = {
-			gccExe:                uriTools.pathJoin(gccUri, 'bin/i386-elf-gcc.exe'),
-			cStandardIncludePaths: [
-				uriTools.pathJoin(gccUri, 'i386-elf/include/'),
-				uriTools.pathJoin(gccUri, 'lib/gcc-lib/i386-elf/2.95.3/include/')
-			]
-		};
-	}
 	// gcc V4.1.2
 	if (gccVersion.version.compare('4.1.2') === 0) {
 		// SG4 Ia32
 		gccVersion.targetSystemData['SG4 Ia32'] = {
-			gccExe:                uriTools.pathJoin(gccUri, 'bin/i386-elf-gcc.exe'),
-			cStandardIncludePaths: [
-				uriTools.pathJoin(gccUri, 'i386-elf/include/'),
-				uriTools.pathJoin(gccUri, 'lib/gcc/i386-elf/4.1.2/include/')
-			]
+			//gccExe:                uriTools.pathJoin(gccUri, 'bin/i386-elf-gcc.exe'), // i386 gcc V4.1.2 does not support query from C/C++ extension
+			gccExe:                uriTools.pathJoin(gccUri, 'bin/arm-elf-gcc.exe')
 		};
 		// SG4 Arm
 		gccVersion.targetSystemData['SG4 Arm'] = {
-			gccExe:                uriTools.pathJoin(gccUri, 'bin/arm-elf-gcc.exe'),
-			cStandardIncludePaths: [
-				uriTools.pathJoin(gccUri, 'arm-elf/include/'),
-				uriTools.pathJoin(gccUri, 'lib/gcc/arm-elf/4.1.2/include/')
-			]
+			gccExe:                uriTools.pathJoin(gccUri, 'bin/arm-elf-gcc.exe')
 		};
 	}
 	// gcc V6.3.0
 	if (gccVersion.version.compare('6.3.0') === 0) {
 		// SG4 Ia32
 		gccVersion.targetSystemData['SG4 Ia32'] = {
-			gccExe:                uriTools.pathJoin(gccUri, 'bin/i686-elf-gcc.exe'),
-			cStandardIncludePaths: [
-				uriTools.pathJoin(gccUri, 'i686-elf/include/'),
-				uriTools.pathJoin(gccUri, 'lib/gcc/i686-elf/6.3.0/include')
-			]
+			gccExe:                uriTools.pathJoin(gccUri, 'bin/i686-elf-gcc.exe')
 		};
 		// SG4 Arm
 		gccVersion.targetSystemData['SG4 Arm'] = {
-			gccExe:                uriTools.pathJoin(gccUri, 'bin/arm-eabi-gcc.exe'),
-			cStandardIncludePaths: [
-				uriTools.pathJoin(gccUri, 'arm-eabi/include/'),
-				uriTools.pathJoin(gccUri, 'lib/gcc/arm-eabi/6.3.0/include')
-			]
+			gccExe:                uriTools.pathJoin(gccUri, 'bin/arm-eabi-gcc.exe')
 		};
 	}
 }

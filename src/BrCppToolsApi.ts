@@ -11,18 +11,11 @@ import * as Helpers from './Tools/Helpers';
 import * as uriTools from './Tools/UriTools';
 
 
-/* TODO currently standard includes and defines are provided from here, maybe it is possible
-to use the proper compiler path... definitions so the C++ Extension automatically parses
-includes, defines... from the compiler command. In the tests it did not work so far, maybe
-related to https://github.com/microsoft/vscode-cpptools/issues/5512
-*/
-
-
 /**
  * Register the custom configuration provider on the C/C++ Tools extension
  */
 export async function registerCppToolsConfigurationProvider(context: vscode.ExtensionContext): Promise<void> {
-    
+    //TODO adjust for https://www.npmjs.com/package/vscode-cpptools V >= 2.1.0
     const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v4);
     if (!cppToolsApi) {
         return;
@@ -59,10 +52,8 @@ export async function didChangeCppToolsConfig() {
  * should be used.
  */
 export class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
-    //TODO currently only basic implementation, review and maybe check how CMake did it https://github.com/microsoft/vscode-cmake-tools/blob/develop/src/cpptools.ts
-
-
     //#region cppTools.CustomConfigurationProvider interface implementation
+
     // Our name and extension ID visible to cpptools
     //SYNC needs to be in sync with package.json/name and package.json/displayName
     readonly name = 'B&R Automation Tools';
@@ -70,59 +61,38 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
 
 
     async canProvideConfiguration(uri: vscode.Uri): Promise<boolean> {
-        Helpers.logTimedHeader('canProvideConfiguration');
-        console.log(uri.toString(true));
+        // Check if file is within an AS project
         const asProject = await BRAsProjectWorkspace.getProjectForUri(uri);
-        if (asProject) {
-            return uriTools.isSubOf(asProject.logical, uri);
-        } else {
+        if (!asProject) {
             return false;
+        }
+        else {
+            // Only files in logical view can provide info
+            //TODO is it also required for headers in Temp?
+            return uriTools.isSubOf(asProject.logical, uri);
         }
     }
 
 
     async provideConfigurations(uris: vscode.Uri[], token?: vscode.CancellationToken): Promise<cppTools.SourceFileConfigurationItem[]> {
-        Helpers.logTimedHeader('provideConfigurations');
         for (const uri of uris) {
             console.log(uri.toString());
         }
-        let configurations: cppTools.SourceFileConfigurationItem[] = [];
-        for (const uri of uris) {
-            const config = await this._getConfiguration(uri);
-            if (config !== undefined) {
-                configurations.push(config);
-            }
-        }
-        return configurations;
+        const configs = await Promise.all( uris.map(uri => this._getConfiguration(uri) ) );
+        const validConfigs: cppTools.SourceFileConfigurationItem[] = [];
+        Helpers.pushDefined(validConfigs, ...configs);
+        return validConfigs;
     }
 
 
-    async canProvideBrowseConfiguration(): Promise<boolean> {
-        Helpers.logTimedHeader('canProvideBrowseConfiguration');
-        //TODO
-        return false;
-    }
-
-
-    async provideBrowseConfiguration(): Promise<cppTools.WorkspaceBrowseConfiguration> {
-        Helpers.logTimedHeader('provideBrowseConfiguration');
-        //TODO
-        return this._workspaceBrowseConfiguration;
-    }
-
-
-    async canProvideBrowseConfigurationsPerFolder(): Promise<boolean> {
-        Helpers.logTimedHeader('canProvideBrowseConfigurationsPerFolder');
-        //TODO
-        return false;
-    }
-
-
-    async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cppTools.WorkspaceBrowseConfiguration> {
-        Helpers.logTimedHeader('provideFolderBrowseConfiguration');
-        return this.provideBrowseConfiguration();
-        //return this._workspaceBrowseConfigurations.get(util.platformNormalizePath(_uri.fsPath)) ?? this._workspaceBrowseConfiguration;
-    }
+    //TODO Investigate if BrowseConfiguration is required or more performant than separate configurations
+    // According to https://code.visualstudio.com/docs/cpp/c-cpp-properties-schema-reference 'includePath' is used for most features.
+    // Currently 'browse.path' used is still by the C/C++ extension when no compiler is present, but in future versions 'includePath'
+    // will be also used in this situation.
+    async canProvideBrowseConfiguration(): Promise<boolean> { return false; }
+    async provideBrowseConfiguration(): Promise<cppTools.WorkspaceBrowseConfiguration> { return { browsePath: [] }; }
+    async canProvideBrowseConfigurationsPerFolder(): Promise<boolean> { return false; }
+    async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cppTools.WorkspaceBrowseConfiguration> { return { browsePath: [] }; }
 
 
     //#endregion cppTools.CustomConfigurationProvider interface implementation
@@ -130,11 +100,9 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
 
     //#region fields
 
-
-    private _workspaceBrowseConfiguration: cppTools.WorkspaceBrowseConfiguration = { browsePath: [] };
-    private readonly _workspaceBrowseConfigurations = new Map<string, cppTools.WorkspaceBrowseConfiguration>();
     /** Standard compiler arguments */
     private readonly defaultCompilerArgs = [
+        //TODO are the default args somwhere in a config file?
         '-fPIC',
         '-O0',
         '-g',
@@ -143,15 +111,12 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         '-D',
         '_DEFAULT_INCLUDES',
         '-D',
-        '_SG4'
-    ];
-    private readonly defaultDefines = [
-        '_DEFAULT_INCLUDES',
-        '_SG4'
+        '_SG4',
+        '-D',
+        '_BUR_FORMAT_BRELF' //TODO investigate if this define needs to be called for all gcc versions (bur/plc.h)
     ];
     private readonly defaultIntelliSenseMode = 'gcc-x86';
     private readonly defaultCStandard = 'gnu99';
-    private readonly defaultCompilerPath = 'C:\\BrAutomation\\AS46\\AS\\gnuinst\\V4.1.2\\i386-elf\\bin\\gcc.exe';
 
 
     //#endregion fields
@@ -162,32 +127,40 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
      * @param uri The uri to get the configuration from
      */
     private async _getConfiguration(uri: vscode.Uri): Promise<cppTools.SourceFileConfigurationItem | undefined> {
+        //TODO will it also work for C++? Maybe need specific implementation for C++
         Helpers.logTimedHeader('_getConfiguration');
         console.log(uri.toString(true));
         // get project include directories
         const headerUris = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri);
         const headerPaths = headerUris.map(u => u.fsPath);
-        // get standard includes
+        // get project info for further queries and check required properties
         const asProjectInfo = await BRAsProjectWorkspace.getProjectForUri(uri);
         if (!asProjectInfo) {
             return undefined;
         }
-        //TODO get all compiler data (e.g. path) from BREnvironment.getGccTargetSystemInfo
-        const standardIncludes = (await BREnvironment.getGccTargetSystemInfo(asProjectInfo?.asVersion, '4.1.2', 'SG4 Ia32'))?.cStandardIncludePaths.map(uri => uri.fsPath);
-        if (!standardIncludes) {
+        const activeCfg = asProjectInfo.activeConfiguration;
+        if (!activeCfg?.buildSettings.gccVersion) {
             return undefined;
         }
-        headerPaths.push(...standardIncludes);
-        //TODO get all settings properly
+        // get gcc data
+        const gccInfo = await BREnvironment.getGccTargetSystemInfo(asProjectInfo.asVersion, activeCfg.buildSettings.gccVersion, 'SG4 Ia32'); //TODO parameter targetSystem not hard coded (#11)
+        if (!gccInfo) {
+            return undefined;
+        }
+        // get compiler arguments
+        const compilerArgs = this.defaultCompilerArgs;
+        Helpers.pushDefined(compilerArgs, activeCfg.buildSettings.additionalBuildOptions);
+        Helpers.pushDefined(compilerArgs, activeCfg.buildSettings.ansiCAdditionalBuildOptions);
+        // create and return C/C++ configuration
         const config: cppTools.SourceFileConfigurationItem = {
             uri: uri,
             configuration: {
                 includePath:      headerPaths,
-                defines:          this.defaultDefines,
-                intelliSenseMode: this.defaultIntelliSenseMode,
-                standard:         this.defaultCStandard,
-                compilerArgs:     this.defaultCompilerArgs,
-                compilerPath:     this.defaultCompilerPath,
+                defines:          [],
+                intelliSenseMode: this.defaultIntelliSenseMode, //TODO set correct value (#10)
+                standard:         this.defaultCStandard, //TODO set correct value (#10)
+                compilerArgs:     compilerArgs,
+                compilerPath:     gccInfo.gccExe.fsPath,
             }
         };
         console.log(config);
@@ -203,123 +176,6 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
      * Version of Cpptools API
      */
     private _cpptoolsVersion: cppTools.Version = cppTools.Version.latest;
-
-
-    /**
-     * Index of files to configurations, using the normalized path to the file
-     * as the key to the <target,configuration>.
-     */
-    private readonly _fileIndex = new Map<string, Map<string, cppTools.SourceFileConfigurationItem>>();
-
-
-    /**
-     * If a source file configuration exists for the active target, we will prefer that one when asked.
-     */
-    private _activeTarget: string | null = null;
-
-
-    /**
-     * Create a source file configuration for the given file group.
-     * @param fileGroup The file group from the code model to create config data for
-     * @param opts Index update options
-     */
-    private _buildConfigurationData(/*fileGroup: codemodel_api.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string*/):
-        cppTools.SourceFileConfiguration {
-        /*
-        // If the file didn't have a language, default to C++
-        const lang = fileGroup.language;
-        // Try the group's language's compiler, then the C++ compiler, then the C compiler.
-        const comp_cache = opts.cache.get(`CMAKE_${lang}_COMPILER`) || opts.cache.get('CMAKE_CXX_COMPILER')
-            || opts.cache.get('CMAKE_C_COMPILER');
-        // Try to get the path to the compiler we want to use
-        const comp_path = comp_cache ? comp_cache.as<string>() : opts.clCompilerPath;
-        if (!comp_path) {
-            throw new MissingCompilerException();
-        }
-        const normalizedCompilerPath = util.platformNormalizePath(comp_path);
-        const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
-        const { standard, extraDefinitions, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang);
-        const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
-        const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
-        const normalizedIncludePath = includePath.map(p => util.platformNormalizePath(p));
- 
-        const newBrowsePath = this._workspaceBrowseConfiguration.browsePath;
-        for (const includePathItem of normalizedIncludePath) {
-            if (newBrowsePath.indexOf(includePathItem) < 0) {
-                newBrowsePath.push(includePathItem);
-            }
-        }
- 
-        if (sysroot) {
-            flags.push(`--sysroot=${sysroot}`);
-        }
- 
-        this._workspaceBrowseConfiguration = {
-            browsePath: newBrowsePath,
-            standard,
-            compilerPath: normalizedCompilerPath || undefined,
-            compilerArgs: flags || undefined
-        };
- 
-        this._workspaceBrowseConfigurations.set(util.platformNormalizePath(opts.folder), this._workspaceBrowseConfiguration);
-        return {
-            defines,
-            standard,
-            includePath: normalizedIncludePath,
-            intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, comp_path, targetArch),
-            compilerPath: normalizedCompilerPath || undefined,
-            compilerArgs: flags || undefined
-        };
-        */
-        let a: cppTools.SourceFileConfiguration = {
-            includePath: ['TODO'],
-            defines: ['TODO'],
-            intelliSenseMode: 'gcc-x86',
-            standard: 'c11'
-        };
-        return a;
-    }
-
-
-    /**
-     * Update the configuration index for the files in the given file group
-     * @param sourceDir The source directory where the file group was defined. Used to resolve
-     * relative paths
-     * @param grp The file group
-     * @param opts Index update options
-     */
-    private _updateFileGroup(/*sourceDir: string,
-        grp: codemodel_api.CodeModelFileGroup,
-        opts: CodeModelParams,
-        target: TargetDefaults,
-        sysroot: string*/) {
-        /*
-        const configuration = this._buildConfigurationData(grp, opts, target, sysroot);
-        for (const src of grp.sources) {
-            const abs = path.isAbsolute(src) ? src : path.join(sourceDir, src);
-            const abs_norm = util.platformNormalizePath(abs);
-            if (this._fileIndex.has(abs_norm)) {
-                this._fileIndex.get(abs_norm)!.set(target.name, {
-                    uri: vscode.Uri.file(abs).toString(),
-                    configuration
-                });
-            } else {
-                const data = new Map<string, cppTools.SourceFileConfigurationItem>();
-                data.set(target.name, {
-                    uri: vscode.Uri.file(abs).toString(),
-                    configuration,
-                });
-                this._fileIndex.set(abs_norm, data);
-            }
-            const dir = path.dirname(abs_norm);
-            if (this._workspaceBrowseConfiguration.browsePath.indexOf(dir) < 0) {
-                this._workspaceBrowseConfiguration.browsePath.push(dir);
-            }
-        }
-        */
-    }
-
-
     /**
      * Gets the version of Cpptools API.
      */
@@ -332,60 +188,5 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
      */
     set cpptoolsVersion(value: cppTools.Version) {
         this._cpptoolsVersion = value;
-    }
-
-    
-    /**
-     * Update the file index and code model
-     * @param opts Update parameters
-     */
-    updateConfigurationData(/*opts: CodeModelParams*/) {
-        /*
-        let hadMissingCompilers = false;
-        this._workspaceBrowseConfiguration = { browsePath: [] };
-        this._activeTarget = opts.activeTarget;
-        for (const config of opts.codeModel.configurations) {
-            for (const project of config.projects) {
-                for (const target of project.targets) {
-                    /// Now some shenanigans since header files don't have config data:
-                    /// 1. Accumulate some "defaults" based on the set of all options for each file group
-                    /// 2. Pass these "defaults" down when rebuilding the config data
-                    /// 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
-                    const grps = target.fileGroups || [];
-                    const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-                    const compileFlags = [...new Set(util.flatMap(grps, grp => shlex.split(grp.compileFlags || '')))];
-                    const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
-                    const sysroot = target.sysroot || '';
-                    for (const grp of target.fileGroups || []) {
-                        try {
-                            this._updateFileGroup(
-                                target.sourceDirectory || '',
-                                grp,
-                                opts,
-                                {
-                                    name: target.name,
-                                    compileFlags,
-                                    includePath,
-                                    defines,
-                                },
-                                sysroot
-                            );
-                        } catch (e) {
-                            if (e instanceof MissingCompilerException) {
-                                hadMissingCompilers = true;
-                            } else {
-                                throw e;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if (hadMissingCompilers && this._lastUpdateSucceeded) {
-            vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
-                'The path to the compiler for one or more source files was not found in the CMake cache. If you are using a toolchain file, this probably means that you need to specify the CACHE option when you set your C and/or C++ compiler path'));
-        }
-        this._lastUpdateSucceeded = !hadMissingCompilers;
-        */
     }
 }
