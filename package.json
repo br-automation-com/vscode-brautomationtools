@@ -89,6 +89,25 @@
 					"default": [
 						"C:\\BrAutomation\\PVI"
 					]
+				},
+				"vscode-brautomationtools.logging.logLevel": {
+					"description": "Level for log outputs to the console",
+					"type": "string",
+					"enum": [
+						"Fatal",
+						"Error",
+						"Warning",
+						"Info",
+						"Debug"
+					],
+					"enumDescriptions": [
+						"Log only fatal error messages",
+						"Log error messages",
+						"Log warning messages",
+						"Log information messages",
+						"Log debug messages"
+					],
+					"default": "Debug"
 				}
 			}
 		},

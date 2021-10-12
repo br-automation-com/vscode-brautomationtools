@@ -6,6 +6,7 @@
 //SYNC Needs to be in sync with package.json/contributes/configuration/properties/*
 
 import * as vscode from 'vscode';
+import { LogLevel } from './BrLog';
 
 
 //#region definitions and types from package.json contribution points
@@ -60,6 +61,39 @@ export function getDefaultBuildMode() {
     const test = config.inspect('build.defaultBuildMode');
     console.log(test);
     return config.get<string>('build.defaultBuildMode');
+
+}
+
+
+/**
+ * Gets the configured log level
+ */
+export function getLogLevel() {
+    //TODO error checking if types do not match (both directions read and write) -> is this possible somehow?
+    const config = getConfiguration();
+    //TODO doesn't work! String is used instead...
+    //const value = config.get<LogLevel>('logging.logLevel');
+    //HACK: compare and set...
+    const configValue = config.get<string>('logging.logLevel');
+    let result = LogLevel.Debug;
+    switch (configValue) {
+        case "Fatal":
+            result = LogLevel.Fatal;
+            break;
+        case "Error":
+            result = LogLevel.Error;
+            break;
+        case "Warning":
+            result = LogLevel.Warning;
+            break;
+        case "Info":
+            result = LogLevel.Info;
+            break;
+        case "Debug":
+            result = LogLevel.Debug;
+            break;
+    }
+    return result;
 
 }
 

@@ -21,6 +21,7 @@ Add new but unreleased features, fixes... here during development
     
     Maybe a more robust solution than parsing directory names can be found in the future.
 - Improved logging and notifications (TODO Readme for output channels)
+  - New setting logging.logLevel
 
 ## [0.0.2] - 2020-06-19
 This release contains only documentation changes.
