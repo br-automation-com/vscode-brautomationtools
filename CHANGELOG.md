@@ -20,6 +20,7 @@ Add new but unreleased features, fixes... here during development
     This change leads to the restriction, that older pre-release AS versions cannot be used anymore. AS V4.3.3 pre-release e.g. was stored in the folder AS433 which will now be parsed as AS V4.33 instead of AS V4.3.3.
     
     Maybe a more robust solution than parsing directory names can be found in the future.
+- Improved logging and notifications (TODO Readme for output channels)
 
 ## [0.0.2] - 2020-06-19
 This release contains only documentation changes.
