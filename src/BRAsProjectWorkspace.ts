@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import * as BrAsProjectFiles from './BrAsProjectFiles';
 import * as uriTools from './Tools/UriTools';
 import * as BrCppToolsApi from './BrCppToolsApi'; // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+import { Logger } from './BrLog';
 
 
 //#region exported types
@@ -341,7 +342,7 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
         const configPkgUri  = uriTools.pathJoin(configBaseUri, 'Config.pkg');
         const configPkgInfo = await BrAsProjectFiles.getConfigPackageInfo(configPkgUri);
         if (!configPkgInfo) {
-            console.log(`No data found in ${configPkgUri.fsPath}. Configuration will be skipped!`);
+            Logger.default.warning(`No configuration data found in ${configPkgUri.fsPath}. Configuration will be skipped!`);
             continue;
         }
         const cpuPkgDirUri = uriTools.pathJoin(configBaseUri, configPkgInfo.cpuPackageName);

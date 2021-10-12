@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import * as cppTools from 'vscode-cpptools';
 import * as BRAsProjectWorkspace from './BRAsProjectWorkspace';
 import * as BREnvironment from './BREnvironment';
+import { Logger } from './BrLog';
 import * as Helpers from './Tools/Helpers';
 import * as uriTools from './Tools/UriTools';
 
@@ -76,7 +77,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
 
     async provideConfigurations(uris: vscode.Uri[], token?: vscode.CancellationToken): Promise<cppTools.SourceFileConfigurationItem[]> {
         for (const uri of uris) {
-            console.log(uri.toString());
+            Logger.default.debug(`CppConfigurationProvider.provideConfigurations() called for URI "${uri.toString(true)}"`);
         }
         const configs = await Promise.all( uris.map(uri => this._getConfiguration(uri) ) );
         const validConfigs: cppTools.SourceFileConfigurationItem[] = [];
@@ -128,8 +129,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
      */
     private async _getConfiguration(uri: vscode.Uri): Promise<cppTools.SourceFileConfigurationItem | undefined> {
         //TODO will it also work for C++? Maybe need specific implementation for C++
-        Helpers.logTimedHeader('_getConfiguration');
-        console.log(uri.toString(true));
+        Logger.default.debug(`CppConfigurationProvider._getConfiguration() called for URI "${uri.toString(true)}"`);
         // get project include directories
         const headerUris = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri);
         const headerPaths = headerUris.map(u => u.fsPath);
@@ -163,7 +163,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
                 compilerPath:     gccInfo.gccExe.fsPath,
             }
         };
-        console.log(config);
+        Logger.default.debug(`CppConfigurationProvider._getConfiguration() called for URI "${uri.toString(true)}" return:`, {data: config});
         return config;
     }
 

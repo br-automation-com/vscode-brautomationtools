@@ -8,9 +8,10 @@ import * as xmlbuilder2 from 'xmlbuilder2';
 import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
 import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import * as Helpers from './Tools/Helpers';
+import { Logger } from './BrLog';
 
 
-// TODO const result = rootElement.querySelector() // not yet implemented by 'dom' module, so I implemented my own solution getChildElements()
+
 
 
 //#region exported interfaces
@@ -106,19 +107,22 @@ export async function getProjectFileInfo(projectFile: vscode.Uri): Promise<Proje
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(projectFile);
     if (!xmlBase) {
+        Logger.default.error(`Invalid file ${projectFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
     const asVersion = getAsVersionFromXml(xmlBase);
     if (!asVersion) {
+        //TODO should it really fail on this one? For *.apj file probably yes!
+        Logger.default.warning(`Invalid file ${projectFile.fsPath}: Failed to parse AS version`);
         return undefined;
     }
     const rootElement = getRootElement(xmlBase, 'Project');
     if (!rootElement) {
+        Logger.default.error(`Invalid file ${projectFile.fsPath}: No XML root element with name <Project> found`);
         return undefined;
     }
     // get data from the project root
     const description = rootElement.getAttribute('Description') ?? undefined;
-    console.log(description);
     // return info data
     return {
         asVersion: asVersion,
@@ -135,19 +139,24 @@ export async function getPhysicalPackageInfo(physicalPackageFile: vscode.Uri): P
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(physicalPackageFile);
     if (!xmlBase) {
+        Logger.default.error(`Invalid file ${physicalPackageFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
     const asVersion = getAsVersionFromXml(xmlBase);
     if (!asVersion) {
+        //TODO should it really fail on this one?
+        Logger.default.warning(`Invalid file ${physicalPackageFile.fsPath}: Failed to parse AS version`);
         return undefined;
     }
     const rootElement = getRootElement(xmlBase, 'Physical');
     if (!rootElement) {
+        Logger.default.error(`Invalid file ${physicalPackageFile.fsPath}: No XML root element with name <Physical> found`);
         return undefined;
     }
     // get configurations
     const objectsElement = getChildElements(rootElement, 'Objects');
     if (objectsElement.length === 0) {
+        Logger.default.error(`Invalid file ${physicalPackageFile.fsPath}: No <Objects> elements found`);
         return undefined;
     }
     const configElements = getChildElements(objectsElement[0], 'Object', {name: 'Type', value: 'Configuration'});
@@ -176,14 +185,18 @@ export async function getUserSettingsInfo(settingsFile: vscode.Uri): Promise<Use
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(settingsFile);
     if (!xmlBase) {
+        Logger.default.error(`Invalid file ${settingsFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
     const asVersion = getAsVersionFromXml(xmlBase);
     if (!asVersion) {
+        //TODO should it really fail on this one?
+        Logger.default.warning(`Invalid file ${settingsFile.fsPath}: Failed to parse AS version`);
         return undefined;
     }
     const rootElement = getRootElement(xmlBase, 'ProjectSettings');
     if (!rootElement) {
+        Logger.default.error(`Invalid file ${settingsFile.fsPath}: No XML root element with name <ProjectSettings> found`);
         return undefined;
     }
     // get active configuration
@@ -209,29 +222,36 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(cpuFile);
     if (!xmlBase) {
+        Logger.default.error(`Invalid file ${cpuFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
     const asVersion = getAsVersionFromXml(xmlBase);
     if (!asVersion) {
+        //TODO should it really fail on this one?
+        Logger.default.warning(`Invalid file ${cpuFile.fsPath}: Failed to parse AS version`);
         return undefined;
     }
     const rootElement = getRootElement(xmlBase, 'Cpu');
     if (!rootElement) {
+        Logger.default.error(`Invalid file ${cpuFile.fsPath}: No XML root element with name <Cpu> found`);
         return undefined;
     }
     const configElement = getChildElements(rootElement, 'Configuration').pop();
     if (!configElement) {
+        Logger.default.error(`Invalid file ${cpuFile.fsPath}: No <Configuration> element found`);
         return undefined;
     }
     // Get CPU module ID
     const cpuModuleId = configElement.getAttribute("ModuleId");
     if (!cpuModuleId) {
+        Logger.default.error(`Invalid file ${cpuFile.fsPath}: <Configuration> element has no attribute "ModuleId"`);
         return undefined;
     }
     // get Automation Runtime configuration values
     const arConfigElement = getChildElements(configElement, 'AutomationRuntime').pop();
     const arVersion = arConfigElement?.getAttribute('Version') ?? undefined;
     if (!arVersion) {
+        Logger.default.error(`Invalid file ${cpuFile.fsPath}: Failed to parse AR version`);
         return undefined;
     }
     // get build configuration values
@@ -267,37 +287,43 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
 
 
 /**
- * Gets information from a specified physical package file.
- * @param configPackageFile URI to the Physical.pkg
+ * Gets information from a specified configuration package file.
+ * @param configPackageFile URI to the Config.pkg
  */
 export async function getConfigPackageInfo(configPackageFile: vscode.Uri): Promise<ConfigPackageInfo | undefined> {
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(configPackageFile);
     if (!xmlBase) {
+        Logger.default.error(`Invalid file ${configPackageFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
     const asVersion = getAsVersionFromXml(xmlBase);
     if (!asVersion) {
+        //TODO should it really fail on this one?
+        Logger.default.warning(`Invalid file ${configPackageFile.fsPath}: Failed to parse AS version`);
         return undefined;
     }
     const rootElement = getRootElement(xmlBase, 'Configuration');
     if (!rootElement) {
+        Logger.default.error(`Invalid file ${configPackageFile.fsPath}: No XML root element found`);
         return undefined;
     }
-    // get configurations
+    // get CPU objects (<Object Type="Cpu">)
     const objectsElement = getChildElements(rootElement, 'Objects');
     if (objectsElement.length === 0) {
+        Logger.default.error(`Invalid file ${configPackageFile.fsPath}: No <Objects> elements found`);
         return undefined;
     }
     const cpuElements = getChildElements(objectsElement[0], 'Object', {name: 'Type', value: 'Cpu'});
     if (cpuElements.length !== 1) {
-        console.log(`None or multiple Cpu objects found in ${configPackageFile.fsPath}. Number of elements: ${cpuElements.length}`);
+        Logger.default.error(`Invalid file ${configPackageFile.fsPath}: None or multiple Cpu elements (<Object Type="Cpu">) found. Number of elements: ${cpuElements.length}`);
         return undefined;
     }
     const cpuElement = cpuElements[0];
     const cpuPackageName = cpuElement.textContent ?? undefined;
     const cpuPackageDescription = cpuElement.getAttribute('Description') ?? undefined;
     if (!cpuPackageName) {
+        Logger.default.error(`Invalid file ${configPackageFile.fsPath}: CPU Object element is empty`);
         return undefined;
     }
     return {
@@ -317,7 +343,7 @@ export async function getConfigPackageInfo(configPackageFile: vscode.Uri): Promi
 /**
  * Creates an XMLBuilder from an XML file URI.
  * @param fileUri URI to the XML file
- * @returns `undefined` if an error occurs
+ * @returns The `XMLBuilder` for the file or `undefined` if an error occurs
  */
 async function xmlCreateFromUri(fileUri: vscode.Uri): Promise<XMLBuilder | undefined> {
     try {
@@ -371,12 +397,13 @@ function getRootElement(xmlBase: XMLBuilder, requiredName?: string): xmlDom.Elem
 
 
 /**
- * Gets all children of an XML element node which are also element nodes. Filters can be applied.
- * @param baseElement The base XML element nod for which the children are listed.
- * @param nodeName 
- * @param hasAttribute 
+ * Gets all direct children of an XML element node which are also element nodes. Filters can be applied.
+ * @param baseElement The base XML element node for which the children are listed.
+ * @param nodeName If set, only child elements with the specified name are returned
+ * @param hasAttribute If set, only child elements which have the specified attribute name (and value if set) are returned
  */
 function getChildElements(baseElement: xmlDom.Element, nodeName?: string, hasAttribute?: {name: string, value?: string}): xmlDom.Element[] {
+    // TODO const result = rootElement.querySelector() // not yet implemented by 'dom' module, so I implemented my own solution getChildElements()
     const result: xmlDom.Element[] = [];
     // iterate all child elements
     let nextChild = baseElement.firstElementChild;

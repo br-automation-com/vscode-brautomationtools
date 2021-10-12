@@ -19,6 +19,7 @@ import * as BrAsProjectWorkspace from './BRAsProjectWorkspace';
 import * as BrEnvironment from './BREnvironment';
 import * as BrDialogs from './BRDialogs';
 import * as BrConfiguration from './BRConfiguration';
+import { Logger } from './BrLog';
 
 
 /**
@@ -341,7 +342,7 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
         if (this.pviTransferProcess) {
             const killed = this.pviTransferProcess.kill();
             if (!killed) {
-                console.warn('PVITransfer.exe kill was not successful.');
+                Logger.default.warning('Failed to kill PVITransfer.exe');
             }
         }
     }

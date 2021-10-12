@@ -6,6 +6,7 @@
 
 import * as vscode from 'vscode';
 import * as BRConfiguration from './BRConfiguration';
+import { Logger } from './BrLog';
 import * as uriTools from './Tools/UriTools';
 import * as semver from 'semver';
 
@@ -87,14 +88,17 @@ export async function getAvailableAutomationStudioVersions(): Promise<ASVersionI
 export async function updateAvailableAutomationStudioVersions(): Promise<void> {
 	//TODO return number like in BrAsProjectWorkspace
 	//TODO call when configuration value of baseInstallPaths changes
+	Logger.default.debug("Start updateAvailableAutomationStudioVersions()");
 	_availableAutomationStudioVersions = findAvailableASVersions();
 	const versionInfos = await _availableAutomationStudioVersions;
 	if (versionInfos.length === 0) {
 		const messageItems = ['Change baseInstallPaths'];
 		vscode.window.showWarningMessage('No Automation Studio versions found. Build functionality will not be available.', ...messageItems);
+		Logger.default.warning('No Automation Studio versions found. Build functionality will not be available.');
 		return;
 	}
-	vscode.window.showInformationMessage(`${versionInfos.length} Automation Studio versions found`);
+
+	Logger.default.debug(`${versionInfos.length} Automation Studio versions found`);
 }
 
 
@@ -232,6 +236,7 @@ async function findAvailableASVersions(): Promise<ASVersionInfo[]> {
  * Searches for AS installations within the given URI. Search is not recursive!
  */
 async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionInfo[]> {
+	Logger.default.debug(`findAvailableASVersionsInUri(${uri.fsPath})`);
 	// filter subdirectories with regular expression for AS version
 	const subDirectories = await uriTools.listSubDirectoryNames(uri);
 	const asDirRegExp = new RegExp(/^AS(\d)(\d+)$/);
@@ -244,10 +249,10 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 		// create semantic version
 		const version = semver.coerce(`${match![1]}.${match![2]}.0`);
 		if (!version) {
-			console.error('Cannot create semantic version for URI: ' + versionBaseUri.fsPath);
+			Logger.default.error('Cannot create semantic version for URI: ' + versionBaseUri.fsPath);
 			continue;
 		}
-		vscode.window.showInformationMessage(`AS Version V${version.version} found in ${versionBaseUri.fsPath}`);
+		Logger.default.info(`AS Version V${version.version} found in ${versionBaseUri.fsPath}`);
 		// get AS build executable
 		//TODO maybe language sensitive for Bin-en / Bin-de if both are available?
 		const asBuildExecutables: vscode.Uri[] = [];
@@ -263,7 +268,7 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 			// much slower backup solution if folder structure changes in future AS versions
 			asBuildExecutables.push(...await vscode.workspace.findFiles({base: versionBaseUri.fsPath, pattern: '**/BR.AS.Build.exe'}));
 			if (asBuildExecutables.length === 0) {
-				console.warn(`Cannot find BR.AS.Build.exe in URI: ${versionBaseUri.fsPath}`);
+				Logger.default.warning(`Cannot find BR.AS.Build.exe in URI: ${versionBaseUri.fsPath}`);
 				continue;
 			}
 		}
@@ -300,7 +305,7 @@ async function findAvailableGccVersions(asVersion: ASVersionInfo): Promise<void>
 		const gccVersionUri = uriTools.pathJoin(gccContainingUri, match![0]);
 		const version    = semver.coerce(match![0]);
 		if (!version) {
-			console.warn('Cannot create semantic version for URI: ' + gccVersionUri.fsPath);
+			Logger.default.warning('Cannot create semantic version for URI: ' + gccVersionUri.fsPath);
 			continue;
 		}
 		//HACK from AS V >= 4.9 there is an additional subfolder '4.9' -> do it properly with regex, so future versions can be handled
@@ -397,7 +402,7 @@ async function findAvailablePviVersionsInUri(uri: vscode.Uri): Promise<PviVersio
 			// much slower backup solution which searches recursive
 			pviTransferExecutables.push(...await vscode.workspace.findFiles({base: versionBaseUri.fsPath, pattern: '**/PVITransfer.exe'}));
 			if (pviTransferExecutables.length === 0) {
-				console.warn(`Cannot find PVITransfer.exe in URI: ${versionBaseUri.fsPath}`);
+				Logger.default.warning(`Cannot find PVITransfer.exe in URI: ${versionBaseUri.fsPath}`);
 				continue;
 			}
 		}
@@ -405,7 +410,7 @@ async function findAvailablePviVersionsInUri(uri: vscode.Uri): Promise<PviVersio
 		// get version from exe
 		const pviTransferVersion = semver.coerce(subDirectoryName);
 		if (!pviTransferVersion) {
-			console.warn(`Cannot get version of ${pviTransferExecutable.fsPath}`);
+			Logger.default.warning(`Cannot get version of ${pviTransferExecutable.fsPath}`);
 			continue;
 		}
 		// create version information and push to array
