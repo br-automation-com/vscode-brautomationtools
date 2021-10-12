@@ -2,9 +2,15 @@
 
 B&R Automation Tools is an extension for [_Visual Studio Code_](https://code.visualstudio.com) to program and build B&R Automation Studio projects.
 
-The B&R Automation Tools extension is NOT a product of [_B&R Industrial Automation GmbH_](https://www.br-automation.com), it is a privately written and inofficial experiment.
+The B&R Automation Tools extension is NOT a product of [_B&R Industrial Automation GmbH_](https://www.br-automation.com), it is a privately written and inofficial experiment. Therefore B&R Industrial Automation GmbH does not offer any support for this extension.
 
-For most of the functionality a B&R Automation Studio needs to be installed on the develeoper PC currently.
+For any bugs or feature requests please open a [_Github issue_](https://github.com/br-automation-com/vscode-brautomationtools/issues).
+
+## Scope
+
+This extension does not intend to replace Automation Studio as the main IDE for B&R PLC projects. The main goal is to offer a good code editing experience for B&R projects within VS Code. The current development focus lays on C/C++ programs and libraries.
+
+B&R ressources such as executuable binaries etc. are not provided by this extension. Features which require such ressources are only available if the ressources are installed on your system.
 
 ## How to run the extension
 
@@ -25,7 +31,7 @@ If you don't want to test the extension in your productive VS Code environment, 
 
 > Build functionality is only available, if an Automation Studio installation with a version matching the project version was detected by the B&R Automation Tools extension. See [Detecting installed B&R Automation Studio versions](#detecting-installed-br-automation-studio-versions).
 
-The B&R Automation Tools extension provides tasks which execute BR.AS.Build.exe. This makes it possible to build the project directly within VS Code. The tasks can be configured to for a normal build, a build for a simulation target, creating an RUC package, cleaning the configuration and building the cross reference.
+The B&R Automation Tools extension provides tasks which execute BR.AS.Build.exe. This makes it possible to build the project directly within VS Code. The tasks can be configured for a normal build, a build for a simulation target, creating an RUC package, cleaning the configuration and building the cross reference.
 
 You can start the tasks by executing the `Run Task...` command in the `Terminal` Menu. If you want to configure the task as a standard build task, you can also select `Run Build Task...`.
 
@@ -175,3 +181,7 @@ The configured setting in `settings.json` could look like this:
         "*.per": "st"
     }
 ```
+
+### Activation time
+
+Currently the activation of the extension takes multiple seconds. This will only affect the initial startup, but not the overall editing experience. Some efforts will be done in future to tackle this, like e.g. tree shaking when publishing the extension and maybe caching some more persistent data.
