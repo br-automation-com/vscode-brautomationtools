@@ -256,7 +256,9 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
         // collect data
         const uriData = deriveAsProjectUriData(uri);
         const projectFileData = await BrAsProjectFiles.getProjectFileInfo(uriData.projectFileUri);
-        if (!projectFileData) {
+        const asVersion = projectFileData?.header.asWorkingVersion ?? projectFileData?.header.asVersion;
+        if (!projectFileData || !asVersion) {
+            Logger.default.error(`Project '${uriData.baseUri.fsPath}' is not supported by the extension`);
             continue;
         }
         const configurationsData = await findAsConfigurationInfo(uriData.physicalUri, uriData.baseUri);
@@ -266,7 +268,7 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
         const projectData: AsProjectInfo = {
             name:                uriData.projectName,
             description:         projectFileData.description,
-            asVersion:           projectFileData.asVersion,
+            asVersion:           asVersion,
             baseUri:             uriData.baseUri,
             projectFile:         uriData.projectFileUri,
             logical:             uriData.logicalUri,

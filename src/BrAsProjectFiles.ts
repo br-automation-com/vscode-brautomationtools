@@ -18,11 +18,24 @@ import { Logger } from './BrLog';
 
 
 /**
+ * The AS XML processing instruction containing file and project versions
+ */
+export interface XmlHeader {
+    /** Full Automation Studio version in XML header */
+    asVersion?: string;
+    /** Automation Studio working version in XML header (X.Y e.g. 4.9) */
+    asWorkingVersion?: string;
+    /** Automation Studio file version in XML header */
+    asFileVersion?: string;
+}
+
+
+/**
  * Contains information from the AS project file (*.apj)
  */
 export interface ProjectFileInfo {
     /** Automation Studio version used in the project file */
-    asVersion: string;
+    header: XmlHeader;
     /** Description of the project */
     description?: string;
 }
@@ -33,7 +46,7 @@ export interface ProjectFileInfo {
  */
 export interface PhysicalPackageInfo {
     /** Automation Studio version used in the file */
-    asVersion: string;
+    header: XmlHeader;
     /** Configurations within the package file */
     configurations: {
         relativePath: string;
@@ -47,7 +60,7 @@ export interface PhysicalPackageInfo {
  */
 export interface UserSettingsInfo {
     /** Automation Studio version used in the file */
-    asVersion: string;
+    header: XmlHeader;
     /** Name of the active configuration */
     activeConfiguration?: string;
     /** Deployment target for newly added programs (e.g. active configuration) */
@@ -60,7 +73,7 @@ export interface UserSettingsInfo {
  */
 export interface CpuPackageInfo {
     /** Automation Studio version used in the file */
-    asVersion: string;
+    header: XmlHeader;
     /** Automation Runtime version used in the configuration */
     arVersion: string;
     /** Module ID of the CPU module */
@@ -86,7 +99,7 @@ export interface CpuPackageInfo {
  */
 export interface ConfigPackageInfo {
     /** Automation Studio version used in the file */
-    asVersion: string;
+    header: XmlHeader;
     /** Name of the CPU package (package which contains most files of the configuration) */
     cpuPackageName: string;
     /** Description of the CPU package */
@@ -110,10 +123,9 @@ export async function getProjectFileInfo(projectFile: vscode.Uri): Promise<Proje
         Logger.default.error(`Invalid file ${projectFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
-    const asVersion = getAsVersionFromXml(xmlBase);
-    if (!asVersion) {
-        //TODO should it really fail on this one? For *.apj file probably yes!
-        Logger.default.warning(`Invalid file ${projectFile.fsPath}: Failed to parse AS version`);
+    const xmlHeader = getXmlHeader(xmlBase);
+    if ( (!xmlHeader.asVersion) && (!xmlHeader.asWorkingVersion) ) {
+        Logger.default.error(`Invalid file ${projectFile.fsPath}: Failed to parse AS Version or WorkingVersion`);
         return undefined;
     }
     const rootElement = getRootElement(xmlBase, 'Project');
@@ -125,7 +137,7 @@ export async function getProjectFileInfo(projectFile: vscode.Uri): Promise<Proje
     const description = rootElement.getAttribute('Description') ?? undefined;
     // return info data
     return {
-        asVersion: asVersion,
+        header: xmlHeader,
         description: description
     };
 }
@@ -142,12 +154,7 @@ export async function getPhysicalPackageInfo(physicalPackageFile: vscode.Uri): P
         Logger.default.error(`Invalid file ${physicalPackageFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
-    const asVersion = getAsVersionFromXml(xmlBase);
-    if (!asVersion) {
-        //TODO should it really fail on this one?
-        Logger.default.warning(`Invalid file ${physicalPackageFile.fsPath}: Failed to parse AS version`);
-        return undefined;
-    }
+    const xmlHeader = getXmlHeader(xmlBase);
     const rootElement = getRootElement(xmlBase, 'Physical');
     if (!rootElement) {
         Logger.default.error(`Invalid file ${physicalPackageFile.fsPath}: No XML root element with name <Physical> found`);
@@ -171,7 +178,7 @@ export async function getPhysicalPackageInfo(physicalPackageFile: vscode.Uri): P
     Helpers.pushDefined(configData, ...configDataRaw);
     // return info data
     return {
-        asVersion: asVersion,
+        header: xmlHeader,
         configurations: configData
     };
 }
@@ -188,12 +195,7 @@ export async function getUserSettingsInfo(settingsFile: vscode.Uri): Promise<Use
         Logger.default.error(`Invalid file ${settingsFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
-    const asVersion = getAsVersionFromXml(xmlBase);
-    if (!asVersion) {
-        //TODO should it really fail on this one?
-        Logger.default.warning(`Invalid file ${settingsFile.fsPath}: Failed to parse AS version`);
-        return undefined;
-    }
+    const xmlHeader = getXmlHeader(xmlBase);
     const rootElement = getRootElement(xmlBase, 'ProjectSettings');
     if (!rootElement) {
         Logger.default.error(`Invalid file ${settingsFile.fsPath}: No XML root element with name <ProjectSettings> found`);
@@ -207,7 +209,7 @@ export async function getUserSettingsInfo(settingsFile: vscode.Uri): Promise<Use
     const deploymentTarget = deploymentElement?.getAttribute('Value') ?? undefined;
     // return info data
     return {
-        asVersion: asVersion,
+        header: xmlHeader,
         activeConfiguration: activeConfiguration,
         deploymentTarget: deploymentTarget
     };
@@ -225,12 +227,7 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
         Logger.default.error(`Invalid file ${cpuFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
-    const asVersion = getAsVersionFromXml(xmlBase);
-    if (!asVersion) {
-        //TODO should it really fail on this one?
-        Logger.default.warning(`Invalid file ${cpuFile.fsPath}: Failed to parse AS version`);
-        return undefined;
-    }
+    const xmlHeader = getXmlHeader(xmlBase);
     const rootElement = getRootElement(xmlBase, 'Cpu');
     if (!rootElement) {
         Logger.default.error(`Invalid file ${cpuFile.fsPath}: No XML root element with name <Cpu> found`);
@@ -272,7 +269,7 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
     });
     // return info data
     return {
-        asVersion:   asVersion,
+        header:   xmlHeader,
         arVersion:   arVersion,
         cpuModuleId: cpuModuleId,
         build: {
@@ -297,12 +294,7 @@ export async function getConfigPackageInfo(configPackageFile: vscode.Uri): Promi
         Logger.default.error(`Invalid file ${configPackageFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
-    const asVersion = getAsVersionFromXml(xmlBase);
-    if (!asVersion) {
-        //TODO should it really fail on this one?
-        Logger.default.warning(`Invalid file ${configPackageFile.fsPath}: Failed to parse AS version`);
-        return undefined;
-    }
+    const xmlHeader = getXmlHeader(xmlBase);
     const rootElement = getRootElement(xmlBase, 'Configuration');
     if (!rootElement) {
         Logger.default.error(`Invalid file ${configPackageFile.fsPath}: No XML root element found`);
@@ -327,7 +319,7 @@ export async function getConfigPackageInfo(configPackageFile: vscode.Uri): Promi
         return undefined;
     }
     return {
-        asVersion:             asVersion,
+        header:             xmlHeader,
         cpuPackageName:        cpuPackageName,
         cpuPackageDescription: cpuPackageDescription
     };
@@ -358,21 +350,34 @@ async function xmlCreateFromUri(fileUri: vscode.Uri): Promise<XMLBuilder | undef
 
 
 /**
- * Gets the AS version from the XML processing instruction `<?AutomationStudio Version=4.6.5.78 SP?>` or `<?AutomationStudio Version="4.6.5.78 SP"?>`
+ * Gets the AutomationStudio XML processing instruction containing file and project versions
  * @param xmlBase The base XMLBuilder
  */
-function getAsVersionFromXml(xmlBase: XMLBuilder): string | undefined {
-    const asVersionNode = xmlBase.find(child => {
+function getXmlHeader(xmlBase: XMLBuilder): XmlHeader {
+    //TODO implement getting of header for AS <4.9 and AS >=4.9
+    const asHeaderNode = xmlBase.find(child => {
         const node = child.node;
         if (node.nodeType === node.PROCESSING_INSTRUCTION_NODE) {
-             return (node.nodeName === 'AutomationStudio');
+            return (node.nodeName === 'AutomationStudio');
         }
         return false;
     })?.node;
-    const asVersionData = asVersionNode?.nodeValue;
-    const regExpResult = new RegExp(`^[Vv]ersion=["']*([\\d\\.]+).*$`).exec(asVersionData ?? '');
-    const asVersion = regExpResult ? regExpResult[1] : undefined;
-    return asVersion;
+    const asHeaderData = asHeaderNode?.nodeValue ? ` ${asHeaderNode.nodeValue}` : "";
+    // AS version full
+    const asVersionRegEx = /^.*[ \t]+[Vv]ersion=["']*([\d\.]+).*$/gm.exec(asHeaderData);
+    const asVersion = asVersionRegEx ? asVersionRegEx[1] : undefined;
+    // AS working version
+    const asWorkingVersionRegEx = /^.*[ \t]+WorkingVersion="([\d\.]+)".*$/gm.exec(asHeaderData);
+    const asWorkingVersion = asWorkingVersionRegEx ? asWorkingVersionRegEx[1] : undefined;
+    // AS file version
+    const asFileVersionRegEx = /^.*[ \t]+FileVersion="([\d\.]+)".*$/gm.exec(asHeaderData);
+    const asFileVersion = asFileVersionRegEx ? asFileVersionRegEx[1] : undefined;
+    // return value
+    return {
+        asVersion: asVersion,
+        asWorkingVersion: asWorkingVersion,
+        asFileVersion: asFileVersion,
+    };
 }
 
 
