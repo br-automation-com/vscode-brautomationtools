@@ -420,8 +420,8 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
         this.writeLine();
         this.pviTransferProcess = childProcess.spawn(pviTransferExe.fsPath, transferArgs);
         //TODO PVITransfer.exe output is not shown properly. In CMD output is shown, but a bit special. Maybe other spawn / stdio options will help?
-        this.pviTransferProcess.stdout.on('data', (data) => this.write(data));
-        this.pviTransferProcess.stderr.on('data', (data) => this.write(data));//TODO write in different color?
+        this.pviTransferProcess.stdout.on('data', (data) => this.write(String(data)));
+        this.pviTransferProcess.stderr.on('data', (data) => this.write(String(data)));
         this.pviTransferProcess.on('exit', (code) => this.done(code ?? 0));
     }
 
