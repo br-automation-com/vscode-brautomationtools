@@ -308,8 +308,8 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
         this.writeLine(`${buildExe.fsPath} ${buildArgs.join(' ')}`);
         this.writeLine();
         this.buildProcess = childProcess.spawn(buildExe.fsPath, buildArgs);
-        this.buildProcess.stdout.on('data', (data) => this.write(data));
-        this.buildProcess.stderr.on('data', (data) => this.write(data));//TODO write in different color?
+        this.buildProcess.stdout.on('data', (data) => this.write(String(data)));
+        this.buildProcess.stderr.on('data', (data) => this.write(String(data)));
         this.buildProcess.on('exit', (code) => this.done(code ?? 0));
     }
 

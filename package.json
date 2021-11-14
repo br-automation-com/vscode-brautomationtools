@@ -2,14 +2,14 @@
 	"name": "vscode-brautomationtools",
 	"displayName": "B&R Automation Tools",
 	"description": "Tools to edit B&R Automation Studio projects in VS Code",
-	"version": "0.0.3-alpha.4",
+	"version": "0.0.3-alpha.6",
 	"publisher": "Radeonmann",
 	"repository": {
 		"url": "https://github.com/br-automation-com/vscode-brAutomationTools"
 	},
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.60.0"
+		"vscode": "^1.61.0"
 	},
 	"categories": [
 		"Other"
