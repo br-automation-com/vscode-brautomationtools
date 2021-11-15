@@ -34,6 +34,12 @@ B&R ressources such as executuable binaries etc. are not provided by this extens
 
 ### For non developers
 
+#### From VS Code marketplace
+
+TODO, not yet available
+
+#### From VSIX installer
+
 1. Download a VSIX from one of the [_releases_](https://github.com/br-automation-com/vscode-brAutomationTools/releases)
 2. [_Install the extension from the VSIX file_](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix)
    
