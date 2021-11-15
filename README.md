@@ -12,6 +12,24 @@ This extension does not intend to replace Automation Studio as the main IDE for 
 
 B&R ressources such as executuable binaries etc. are not provided by this extension. Features which require such ressources are only available if the ressources are installed on your system.
 
+## Readme contents
+
+- [How to run the extension](#how-to-run-the-extension)
+- [Features](#features)
+  - [Auto completion / linting of C/C++ programs and libraries](#auto-completion-for-cc-programs-and-libraries)
+  - [Detecting B&R Automation Studio projects in the workspace folders](#detecting-br-automation-studio-projects-in-the-workspace-folders)
+  - [Detecting the active configuration](#detecting-the-active-configuration)
+  - [Build B&R Automation Studio projects](#build-br-automation-studio-projects)
+  - [Show errors and warnings of Automation Studio build in source code](#show-errors-and-warnings-of-automation-studio-build-in-source-code)
+  - [Detecting installed B&R Automation Studio versions](#detecting-installed-br-automation-studio-versions)
+  - [Transfer the project to a PLC or ArSim](#transfer-the-project-to-a-plc-or-arsim)
+  - [Detecting installed B&R PVI versions](#detecting-installed-br-pvi-versions)
+- [Logging](#logging)
+- [Settings](#settings)
+- [Requirements](#requirements)
+- [Known issues](#known-issues)
+
+
 ## How to run the extension
 
 ### For non developers
@@ -25,7 +43,43 @@ B&R ressources such as executuable binaries etc. are not provided by this extens
 
 If you don't want to test the extension in your productive VS Code environment, consider to have a separate [_portable VS Code instance_](https://code.visualstudio.com/docs/editor/portable).
 
+### For developers / To test the most recent source changes
+
+You will need node.js installed on your computer
+
+1. Clone the repository from https://github.com/br-automation-com/vscode-brautomationtools.git
+2. Open the cloned repository in VS Code
+3. Run `npm install` in the terminal to get all required node.js modules
+4. Build the xtension
+   1. Press `F5` to run the extension in the development host
+   2. Or run the `Create VSIX package` task to build an extension installer
+
 ## Features
+
+### Auto completion for C/C++ programs and libraries
+
+The B&R Automation Tools extension provides information to the [_C/C++ extension_](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) specific to an Automation Studio project.
+
+This enables to use IntelliSense within C/C++ programs and libraries of Automation Studio projects. IntelliSense is also provided for variables, types, functions and function blocks within IEC files (*.var, *.typ, *.fun). Additional includes and compiler defines configured in the Automation Studio project are also included in the IntelliSense information.
+
+![IntelliSense in a C-program](Doc/Screenshots/IntelliSenseCProgram.png)
+
+Currently the extension uses the header files created during an Automation Studio build to provide this information. Therefore after adjusting any of the IEC files, you need to build your project to get proper IntelliSense. A build of the cross reference is sufficient to create the header files. See [Build B&R Automation Studio projects](#build-br-automation-studio-projects) for further information.
+
+### Detecting B&R Automation Studio projects in the workspace folders
+
+All Automation Studio projects within all opened workspace folders are detected by the B&R Automation Tools extension. This information is used to provide information for other features, such as build, code completion...
+
+When adding or removing a folder to the workspace, the information is automatically updated by the extension.
+
+### Detecting the active configuration
+
+Some settings like e.g. additional includes are configuration specific. The active configuration is evaluated from the LastUser.set file in the root of your AS project.
+If no LastUser.set file is found in your project root, the first configuration is selected as the active configuration.
+
+There is currently no direct option to set another configuration as active. But you can edit the LastUser.set manually and the change will be detected by the extension.
+
+![Change active configuration](Doc/Screenshots/ChangeActiveConfigInLastUserSet.png)
 
 ### Build B&R Automation Studio projects
 
@@ -46,6 +100,8 @@ The B&R Automation Tools extension will then provide a list of all standard task
 ![Select task of BrAsBuild](Doc/Screenshots/SelectBrAsBuildTask.png)
 
 Configured tasks will be added to the _tasks.json_ in the _.vscode_ folder at the root of your workspace. There you can configure further options for your tasks, like e.g. the used build mode. VS Code will provide auto completion and descriptions for all available options.
+
+#### Examples
 
 A configured _tasks.json_ file could look like this:
 
@@ -89,23 +145,15 @@ A configured _tasks.json_ file could look like this:
 
 Check out the [_VS Code documentation_](https://code.visualstudio.com/docs/editor/tasks) for further information about tasks.
 
-### Show errors and warnings of Automation Studio build
+### Show errors and warnings of Automation Studio build in source code
 
 The B&R Automation Tools extension shows the error and warning output of a build task. The errors and warnings will show up in the Problems window, in the workspace browser and in the editor of the file where the issue was detected.
 
 ![Show build errors and warnings](Doc/Screenshots/ShowBuildErrorsAndWarnings.png)
 
-### Auto completion for C/C++ programs and libraries
-
-The B&R Automation Tools extension provides information to the [_C/C++ extension_](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) specific to an Automation Studio project.
-
-This enables to use IntelliSense within C/C++ programs and libraries of Automation Studio projects. IntelliSense is also provided for variables, types, functions and function blocks within IEC files (*.var, *.typ, *.fun).
-
-Currently the extension uses the header files created during an Automation Studio build to provide this information. Therefore after adjusting any of the IEC files, you need to build your project to get proper IntelliSense. A build of the cross reference is sufficient to create the header files.
-
 ### Detecting installed B&R Automation Studio versions
 
-B&R Automation Tools finds Automation Studio versions installed on the developer PC. The Information of the installed Automation Studio versions is used to provide Information for other features, such as build, code completion...
+B&R Automation Tools finds Automation Studio versions installed on the developer PC. The information of the installed Automation Studio versions is used to provide information for other features, such as build, code completion...
 
 The directory in which the Automation Studio versions are searched must be configured with the setting `vscode-brautomationtools.environment.automationStudioInstallPaths`. The default value is ```["C:\BrAutomation"]```.
 
@@ -133,12 +181,134 @@ If Automation Studio V4.6.x and V4.7.x are installed in `C:\BrAutomation` the di
 
 For this case the setting `vscode-brautomationtools.environment.automationStudioInstallPaths` needs to be set to ```["C:\BrAutomation"]```.
 
+### Transfer the project to a PLC or ArSim
 
-### Detecting B&R Automation Studio projects in the workspace folders
+TODO
 
-All Automation Studio projects within all workspace folders are detected by the B&R Automation Tools extension. This information is used to provide information for other features, such as build, code completion...
+> Transfer functionality is only available, if PVI installation with a version matching the project version was detected by the B&R Automation Tools extension. See [Detecting installed B&R PVI versions](#detecting-installed-br-pvi-versions).
 
-When adding or removing a folder to the workspace, the information is automatically updated by the extension.
+The B&R Automation Tools extension provides tasks which execute PVITransfer.exe. This makes it possible to transfer a project to a PLC or ArSim directly from VS Code. The tasks can be configured with various transfer settings which are usually available in the Runtime Utility Center or Automation Studio.
+
+You can start the tasks by executing the `Run Task...` command in the `Terminal` Menu.
+
+![Run Task... menu](Doc/Screenshots/RunTask.png)
+
+VS Code will then show a list with all possible task providers. Select `BrAsTransfer` to get a list of all standard tasks for PVITransfer.exe.
+
+![Select task provider for transfer](Doc/Screenshots/SelectTaskProviderBrAsTransfer.png)
+
+The B&R Automation Tools extension will then provide a list of all standard tasks. Select one to directly execute it, or click the gear icon on the right side to configure it in your workspace.
+
+![Select task of BrAsBuild](Doc/Screenshots/SelectBrAsTransferTask.png)
+
+Configured tasks will be added to the _tasks.json_ in the _.vscode_ folder at the root of your workspace. There you can configure further options for your tasks, like e.g. the used transfer mode. VS Code will provide auto completion and descriptions for all available options.
+
+> It is important to note, that the transfer task does not automatically trigger a project build. The transfer task will use the RUC package generated by a former build of the same configuration. Therefore a build with the option `"buildRUCPackage": true` needs to be executed before each transfer. VS Code offers an option for task dependencies, which can be used to automatically execute a build before the transfer. If you use the dialog to select the configuration for build and transfer, this dialog will show up two times.
+
+#### Examples
+
+A configured _tasks.json_ file could look like this:
+
+```json
+{
+	"version": "2.0.0",
+	"tasks": [
+        {
+            "label": "Build with RUC package",
+            "type": "BrAsBuild",
+            "group": "build",
+            "buildRUCPackage": true
+        },
+		{
+			"label": "BrAsTransfer: ArSim with default install settings",
+			"type": "BrAsTransfer",
+			"pviConnectionSettings": {
+				"deviceInterface": "tcpip",
+				"sourceNode": 42,
+				"destinationAddress": "127.0.0.1",
+				"destinationPort": 11160,
+				"communicationTimeout": 1000,
+				"connectionEstablishedTimeout": 60
+			},
+			"installationSettings": {
+				"installMode": "Consistent",
+				"installRestriction": "AllowInitialInstallation",
+				"keepPVValues": false,
+				"executeInitExit": true,
+				"tryToBootInRUNMode": false
+			},
+			"problemMatcher": [
+				"$BrAsBuild"
+			],
+            "dependsOn": ["Build with RUC package"]
+		},
+		{
+			"label": "BrAsTransfer: Ethernet with dialog for IP address and default install settings",
+			"type": "BrAsTransfer",
+			"pviConnectionSettings": {
+				"deviceInterface": "tcpip",
+				"sourceNode": 42,
+				"destinationPort": 11169,
+				"communicationTimeout": 1000,
+				"connectionEstablishedTimeout": 60
+			},
+			"installationSettings": {
+				"installMode": "Consistent",
+				"installRestriction": "AllowInitialInstallation",
+				"keepPVValues": false,
+				"executeInitExit": true,
+				"tryToBootInRUNMode": false
+			},
+			"problemMatcher": [
+				"$BrAsBuild"
+			],
+            "dependsOn": ["Build with RUC package"]
+		}
+	]
+}
+```
+
+>Tip: You don't have to enter unused options. Some options will show a dialog on execution of the task if they are not set (e.g. the install mode or the PLC address).
+
+Check out the [_VS Code documentation_](https://code.visualstudio.com/docs/editor/tasks) for further information about tasks.
+
+TODO
+
+### Detecting installed B&R PVI versions
+
+B&R Automation Tools finds PVI versions installed on the developer PC. The information of the installed PVI versions is used to provide information for other features, such as the transfer of projects to a PLC or ArSim.
+
+The directory in which the PVI versions are searched must be configured with the setting `vscode-brautomationtools.environment.pviInstallPaths`. The default value is ```["C:\BrAutomation\PVI"]```.
+
+After changing the setting, a reload of the VS Code window is required.
+
+#### Example
+
+If PVI V4.6.x and V4.9.x are installed in `C:\BrAutomation\PVI` the directory structure looks like this:
+
+```
+|- C:\BrAutomation\PVI
+|   |- V4.6
+|   |   |- As
+|   |   |- Bin
+|   |   |- ...
+|   |- V4.9
+|   |   |- As
+|   |   |- Bin
+|   |   |- ...
+|   |- ...
+```
+
+For this case the setting `vscode-brautomationtools.environment.pviInstallPaths` needs to be set to ```["C:\BrAutomation\PVI"]```.
+
+## Logging
+
+The extension logs information, warnings and errors which occur to the output window. This can help you as a user to see if something
+went wrong and is also important information for us developers to find bugs.
+
+You can see all messages in the output window, when you select the `vscode-brautomationtools` channel.
+
+![Select output channel](Doc/Screenshots/LoggingSelectChannel.png)
 
 ## Settings
 
@@ -146,6 +316,8 @@ When adding or removing a folder to the workspace, the information is automatica
 |---------------------------------------------------------------------|--------------|
 | `vscode-brautomationtools.build.defaultBuildMode`                   | Default build mode which will be pre-selected in build task dialogs. |
 | `vscode-brautomationtools.environment.automationStudioInstallPaths` | Paths where the Automation Studio versions are installed. E.g. if Automation Studio V4.6.x is installed in C:\\BrAutomation\\AS46, the install path is C:\\BrAutomation. See [Detecting installed B&R Automation Studio versions](#detecting-installed-br-automation-studio-versions) |
+| `vscode-brautomationtools.environment.pviInstallPaths`              | Paths where the PVI system is installed. See [Detecting installed B&R PVI versions](#detecting-installed-br-pvi-versions) |
+| `vscode-brautomationtools.logging.logLevel`                         | The level for the log output. See [Logging](#logging) |
 
 
 ## Requirements
@@ -154,11 +326,13 @@ The B&R Automation Tools extension requires the [_C/C++ extension_](https://mark
 
 ## Known Issues
 
-### Auto completion for C/C++
+### Logging
 
-Code completion for C/C++ programs and libraries does not consider the properties of configurations in the Configuration View. Therefore following Automation Studio configuration settings are not supported by the auto completion:
-*  Defines used by `-D` compiler switches (e.g. `-D MY_DEFINE`)
-*  Additional include directories
+The logging functionality was newly introduced in the V0.0.3 release. Not all code writes proper log messages at the moment. This will be addressed in future code changes.
+
+### Transfer task workflow
+
+The transfer task workflow is currently prompting multiple times for the configuration. Also there is no detection, if a build of the configuration to transfer was executed recently. It would be possible to improve this workflow. If you would like to see improvements on this, please write a comment on the [_GitHub Issue_](https://github.com/br-automation-com/vscode-brautomationtools/issues/19)
 
 ### Support for IEC languages
 

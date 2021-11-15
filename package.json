@@ -43,16 +43,6 @@
 		"configuration": {
 			"title": "B&R Automation Tools",
 			"properties": {
-				"vscode-brautomationtools.test1.urlForHelp": {
-					"description": "Where I got all this info",
-					"type": "string",
-					"default": "https://code.visualstudio.com/api/references/contribution-points#contributes.configuration"
-				},
-				"vscode-brautomationtools.test1.urlForSample": {
-					"description": "Sample for package.json",
-					"type": "string",
-					"default": "https://github.com/microsoft/vscode-extension-samples/blob/master/configuration-sample/package.json"
-				},
 				"vscode-brautomationtools.build.defaultBuildMode": {
 					"description": "Default build mode which will be pre-selected in build task dialogs.",
 					"type": "string",
