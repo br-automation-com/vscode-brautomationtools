@@ -45,7 +45,7 @@ If you don't want to test the extension in your productive VS Code environment, 
 
 ### For developers / To test the most recent source changes
 
-You will need node.js installed on your computer
+You will need [_node.js_](https://nodejs.org/en/) installed on your computer
 
 1. Clone the repository from https://github.com/br-automation-com/vscode-brautomationtools.git
 2. Open the cloned repository in VS Code
@@ -183,9 +183,7 @@ For this case the setting `vscode-brautomationtools.environment.automationStudio
 
 ### Transfer the project to a PLC or ArSim
 
-TODO
-
-> Transfer functionality is only available, if PVI installation with a version matching the project version was detected by the B&R Automation Tools extension. See [Detecting installed B&R PVI versions](#detecting-installed-br-pvi-versions).
+> Transfer functionality is only available, if a PVI installation with a version matching the project version was detected by the B&R Automation Tools extension. See [Detecting installed B&R PVI versions](#detecting-installed-br-pvi-versions).
 
 The B&R Automation Tools extension provides tasks which execute PVITransfer.exe. This makes it possible to transfer a project to a PLC or ArSim directly from VS Code. The tasks can be configured with various transfer settings which are usually available in the Runtime Utility Center or Automation Studio.
 
@@ -271,8 +269,6 @@ A configured _tasks.json_ file could look like this:
 >Tip: You don't have to enter unused options. Some options will show a dialog on execution of the task if they are not set (e.g. the install mode or the PLC address).
 
 Check out the [_VS Code documentation_](https://code.visualstudio.com/docs/editor/tasks) for further information about tasks.
-
-TODO
 
 ### Detecting installed B&R PVI versions
 
