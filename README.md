@@ -36,7 +36,7 @@ B&R ressources such as executuable binaries etc. are not provided by this extens
 
 #### From VS Code marketplace
 
-TODO, not yet available
+You can download the extension in the [_VS Code marketplace_](https://marketplace.visualstudio.com/items?itemName=radeonmann.vscode-brautomationtools).
 
 #### From VSIX installer
 
@@ -360,4 +360,4 @@ The configured setting in `settings.json` could look like this:
 
 ### Others
 
-Check out our [GitHub issues](https://github.com/br-automation-com/vscode-brautomationtools/issues) for a list of all open requests.
+Check out our [_GitHub issues_](https://github.com/br-automation-com/vscode-brautomationtools/issues) for a list of all open requests.
