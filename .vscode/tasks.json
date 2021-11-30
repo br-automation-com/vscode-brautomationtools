@@ -6,10 +6,14 @@
 		{
 			"type": "npm",
 			"script": "watch",
-			"problemMatcher": "$tsc-watch",
+			"problemMatcher": [
+				"$ts-webpack-watch",
+				"$tslint-webpack-watch"
+			],
 			"isBackground": true,
 			"presentation": {
-				"reveal": "never"
+				"reveal": "never",
+				"group": "watchers"
 			},
 			"group": {
 				"kind": "build",
@@ -17,9 +21,34 @@
 			}
 		},
 		{
+			"type": "npm",
+			"script": "watch-tests",
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "never",
+				"group": "watchers"
+			},
+			"group": "build"
+		},
+		{
+			"label": "tasks: watch-tests",
+			"dependsOn": [
+				"npm: watch",
+				"npm: watch-tests"
+			],
+			"problemMatcher": []
+		},
+		{
 			"label": "Create VSIX package",
 			"type": "npm",
-			"script": "vscode:vsixPackage",
+			"script": "vsce:package",
+			"problemMatcher": []
+		},
+		{
+			"label": "Publish extension",
+			"type": "npm",
+			"script": "vsce:publish",
 			"problemMatcher": []
 		}
 	]

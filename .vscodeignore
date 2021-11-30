@@ -1,10 +1,17 @@
+# VS code directories
 .vscode/**
 .vscode-test/**
-out/test/**
+# build outputs and other directories
+out/**
+packages/**
+node_modules/**
 src/**
-.gitignore
-vsc-extension-quickstart.md
+Doc/dev/**
+resources/dev/**
+# file types ignored in whole project (source maps, TS source, configs)
 **/tsconfig.json
 **/.eslintrc.json
+**/webpack.config.js
+**/.gitignore
 **/*.map
 **/*.ts

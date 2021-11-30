@@ -358,6 +358,6 @@ The configured setting in `settings.json` could look like this:
     }
 ```
 
-### Activation time
+### Others
 
-Currently the activation of the extension takes multiple seconds. This will only affect the initial startup, but not the overall editing experience. Some efforts will be done in future to tackle this, like e.g. tree shaking when publishing the extension and maybe caching some more persistent data.
+Check out our [GitHub issues](https://github.com/br-automation-com/vscode-brautomationtools/issues) for a list of all open requests.

@@ -17,5 +17,10 @@
         "semi": "off"
         //TODO fix quotation to ""
         //TODO investigate other rules
-    }
+    },
+    "ignorePatterns": [
+        "out",
+        "dist",
+        "**/*.d.ts"
+    ]
 }
