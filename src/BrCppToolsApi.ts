@@ -16,20 +16,20 @@ import * as uriTools from './Tools/UriTools';
  * Register the custom configuration provider on the C/C++ Tools extension
  */
 export async function registerCppToolsConfigurationProvider(context: vscode.ExtensionContext): Promise<void> {
-    //TODO adjust for https://www.npmjs.com/package/vscode-cpptools V >= 2.1.0
-    const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v4);
+    const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v5);
     if (!cppToolsApi) {
+        Logger.default.error("Failed to connect to C/C++ extension (API V5). C/C++ extension is not installed or version is not supported.");
         return;
     }
     context.subscriptions.push(cppToolsApi);
     const provider = new CppConfigurationProvider();
     usedProvider = provider; //HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
     context.subscriptions.push(provider);
-    cppToolsApi?.registerCustomConfigurationProvider(provider);
+    cppToolsApi.registerCustomConfigurationProvider(provider);
     // Ready only parsing of workspace and environment (required for proper includes)
     await BREnvironment.getAvailableAutomationStudioVersions();
     await BRAsProjectWorkspace.getWorkspaceProjects();
-    cppToolsApi?.notifyReady(provider);
+    cppToolsApi.notifyReady(provider);
 }
 
 
@@ -37,7 +37,7 @@ export async function registerCppToolsConfigurationProvider(context: vscode.Exte
 // Works well -> implement properly
 let usedProvider: CppConfigurationProvider;
 export async function didChangeCppToolsConfig() {
-    const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v4);
+    const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v5);
     if (!cppToolsApi) {
         return;
     }
@@ -116,8 +116,6 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         '-D',
         '_BUR_FORMAT_BRELF' //TODO investigate if this define needs to be called for all gcc versions (bur/plc.h)
     ];
-    private readonly defaultIntelliSenseMode = 'gcc-x86';
-    private readonly defaultCStandard = 'gnu99';
 
 
     //#endregion fields
@@ -157,8 +155,8 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
             configuration: {
                 includePath:      headerPaths,
                 defines:          [],
-                intelliSenseMode: this.defaultIntelliSenseMode, //TODO set correct value (#10)
-                standard:         this.defaultCStandard, //TODO set correct value (#10)
+                intelliSenseMode: undefined,
+                standard:         undefined,
                 compilerArgs:     compilerArgs,
                 compilerPath:     gccInfo.gccExe.fsPath,
             }
