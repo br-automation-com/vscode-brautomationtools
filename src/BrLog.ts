@@ -91,9 +91,6 @@ export class Logger {
 
 
     /** Write log with level fatal */
-    //TODO sometimes error "Getter and Setter do not agree in visibility". Is this pattern not supported in TypeScript?
-    //     See also https://stackoverflow.com/a/45909300/6279206
-    //     Should be lifted in TS >= V4.3 --> Update TS in packsge.json (https://github.com/microsoft/TypeScript/issues/2845#issuecomment-918895843)
     public get fatal() {
         return this._fatal;
     }

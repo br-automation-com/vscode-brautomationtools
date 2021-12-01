@@ -192,7 +192,6 @@ export async function getUserSettingsInfo(settingsFile: vscode.Uri): Promise<Use
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(settingsFile);
     if (!xmlBase) {
-        Logger.default.error(`Invalid file ${settingsFile.fsPath}: Failed to create XML object`);
         return undefined;
     }
     const xmlHeader = getXmlHeader(xmlBase);
@@ -343,7 +342,7 @@ async function xmlCreateFromUri(fileUri: vscode.Uri): Promise<XMLBuilder | undef
         const contentText = projectDocument.getText();
         return xmlbuilder2.create(contentText);
     } catch (error) {
-        console.log(error);
+        Logger.default.debug("BrAsProjectFiles.xmlCreateFromUri() -> catch (error)", {data: {uri: fileUri, error: error}});
         return undefined;
     }
 }
@@ -354,7 +353,6 @@ async function xmlCreateFromUri(fileUri: vscode.Uri): Promise<XMLBuilder | undef
  * @param xmlBase The base XMLBuilder
  */
 function getXmlHeader(xmlBase: XMLBuilder): XmlHeader {
-    //TODO implement getting of header for AS <4.9 and AS >=4.9
     const asHeaderNode = xmlBase.find(child => {
         const node = child.node;
         if (node.nodeType === node.PROCESSING_INSTRUCTION_NODE) {

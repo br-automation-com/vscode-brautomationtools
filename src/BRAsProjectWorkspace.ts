@@ -262,8 +262,7 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
             continue;
         }
         const configurationsData = await findAsConfigurationInfo(uriData.physicalUri, uriData.baseUri);
-        const userSettingsData   = await BrAsProjectFiles.getUserSettingsInfo(uriData.userSettingsUri);
-        const userSettingsWatcher = vscode.workspace.createFileSystemWatcher(uriTools.uriToSingleFilePattern(uriData.userSettingsUri));
+        const activeConfiguration = await getActiveConfiguration(configurationsData, uriData.userSettingsUri);
         // push to result
         const projectData: AsProjectInfo = {
             name:                uriData.projectName,
@@ -277,25 +276,25 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
             temporaryIncludes:   uriData.temporaryIncludesUri,
             binaries:            uriData.binariesUri,
             configurations:      configurationsData,
-            activeConfiguration: configurationsData.find(config => config.name === userSettingsData?.activeConfiguration),
+            activeConfiguration: activeConfiguration,
             dispose: () => {
                 userSettingsWatcher.dispose();
             }
         };
         result.push(projectData);
         // Register file system events for LastUser.set -> change active configuration
+        const userSettingsWatcher = vscode.workspace.createFileSystemWatcher(uriTools.uriToSingleFilePattern(uriData.userSettingsUri));
         userSettingsWatcher.onDidChange(async (uri) => {
-            const newUserSettingsData = await BrAsProjectFiles.getUserSettingsInfo(uriData.userSettingsUri);
-            projectData.activeConfiguration = configurationsData.find(config => config.name === newUserSettingsData?.activeConfiguration);
+            projectData.activeConfiguration = await getActiveConfiguration(configurationsData, uri);
             await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
         });
         userSettingsWatcher.onDidCreate(async (uri) => {
-            const newUserSettingsData = await BrAsProjectFiles.getUserSettingsInfo(uriData.userSettingsUri);
-            projectData.activeConfiguration = configurationsData.find(config => config.name === newUserSettingsData?.activeConfiguration);
+            projectData.activeConfiguration = await getActiveConfiguration(configurationsData, uri);
             await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
         });
         userSettingsWatcher.onDidDelete(async (uri) => {
-            projectData.activeConfiguration = undefined;
+            projectData.activeConfiguration = await getActiveConfiguration(configurationsData, uri);
+            await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
         });
     };
     await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
@@ -370,6 +369,21 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
         result.push(configData);
     }
     return result;
+}
+
+
+async function getActiveConfiguration(configurations: AsConfigurationInfo[], userSettingsUri: vscode.Uri): Promise<AsConfigurationInfo | undefined> {
+    if (configurations.length === 0) {
+        Logger.default.debug("getActiveConfiguration() -> configurations.length === 0", {data: userSettingsUri});
+        return undefined;
+    }
+    const userSettingsData = await BrAsProjectFiles.getUserSettingsInfo(userSettingsUri);
+    let activeConfiguration = configurations.find(config => config.name === userSettingsData?.activeConfiguration);
+    if (!activeConfiguration) {
+        activeConfiguration = configurations[0];
+        Logger.default.warning(`LastUser.set file was not found or is invalid. '${activeConfiguration.name}' will be used as active configuration`);
+    }
+    return activeConfiguration;
 }
 
 

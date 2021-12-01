@@ -2,7 +2,7 @@
 	"name": "vscode-brautomationtools",
 	"displayName": "B&R Automation Tools",
 	"description": "Tools to edit B&R Automation Studio projects in VS Code",
-	"version": "0.0.3",
+	"version": "0.0.4-alpha.1",
 	"publisher": "Radeonmann",
 	"icon": "resources/favicon.png",
 	"repository": {

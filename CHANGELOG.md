@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 Add new but unreleased features, fixes... here during development
 
+### Fixed
+- The active configuration was not set, when no LastUser.set file was in the AS project root
+  This lead to a not working IntelliSense functionality [#24](https://github.com/br-automation-com/vscode-brautomationtools/issues/24)
+
 ## [0.0.3] - 2021-11-30
 This release adds support for Automation Studio Versions >= V4.9.x and new tasks to transfer to a PLC.
 
