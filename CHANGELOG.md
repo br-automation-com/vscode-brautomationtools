@@ -8,10 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 Add new but unreleased features, fixes... here during development
 
+
+## [0.0.4] - 2021-12-04
+This release brings a more robust IntelliSense functionality when some files or file contents are missing in the AS project.
+Also the support for C++ and modern C features was enhanced.
+
 ### Fixed
 - The active configuration was not set, when no LastUser.set file was in the AS project root
-  This lead to a not working IntelliSense functionality [#24](https://github.com/br-automation-com/vscode-brautomationtools/issues/24)
-- Show only warnings and do not fail whole Cpu.pkg parsing functionality when there was no Module ID or AR Version found [#23](https://github.com/br-automation-com/vscode-brautomationtools/issues/23)
+  This lead to a not working IntelliSense functionality
+  [#24](https://github.com/br-automation-com/vscode-brautomationtools/issues/24)
+- Show only warnings and do not fail whole Cpu.pkg parsing functionality when there was no Module ID or AR Version found
+  [#23](https://github.com/br-automation-com/vscode-brautomationtools/issues/23)
+- The C-Standard was hard coded to gnu-99 which prevented modern C and C++ features to work. The assignment was removed, as newer versions of the C/C++
+  extension support automatic querying from the compiler
+  [#10](https://github.com/br-automation-com/vscode-brautomationtools/issues/10)
+- The default compiler argument `-ansi` lead to an error on vector initilization, e.g. `std::vector<int> v = {1, 2, 42}` (std::initializer_list).
+  This argument was removed.
+  [#21](https://github.com/br-automation-com/vscode-brautomationtools/issues/21)
+  Further investigation of the arguments will be done in [#25](https://github.com/br-automation-com/vscode-brautomationtools/issues/25)
 
 
 ## [0.0.3] - 2021-11-30
