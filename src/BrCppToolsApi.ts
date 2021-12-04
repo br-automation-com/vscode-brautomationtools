@@ -108,7 +108,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         '-O0',
         '-g',
         '-Wall',
-        '-ansi',
+        //'-ansi', // if this is used, initializer lists in C++ lead to an error from C/C++ extension, even though a build in AS works (e.g. std::vector<int> v = {1, 2, 42})
         '-D',
         '_DEFAULT_INCLUDES',
         '-D',
