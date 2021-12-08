@@ -5,36 +5,41 @@
 
 import * as vscode from 'vscode';
 import * as BRConfiguration from './BRConfiguration';
-import { Logger } from './BrLog';
+import { logger } from './BrLog';
 import {registerCommands} from './BRCommands';
 import {registerCppToolsConfigurationProvider} from './BrCppToolsApi';
 import {registerTaskProviders as registerBuildTaskProviders} from './BrAsBuildTaskProvider';
 import {registerTaskProviders as registerTransferTaskProviders} from './BrAsTransferTaskProvider';
 import {registerApiTests} from './Tools/ApiTests';
 import {registerProjectWorkspace} from './BRAsProjectWorkspace';
+import { notifications } from './BrNotifications';
+import { extensionState } from './BrExtensionState';
 
 
 // Activation event
 export async function activate(context: vscode.ExtensionContext) {
 	// Set up logger
-	Logger.default.configuration = {
+	logger.configuration = {
 		level: BRConfiguration.getLogLevel()
 	};
-	Logger.default.info("Start activation of B&R Automation Tools extension");
+	logger.info("Start activation of B&R Automation Tools extension");
 	//
+	extensionState.initialize(context);
+	notifications.initialize(context);
+	notifications.newVersionMessage();
 	registerApiTests(context);
 	registerCommands(context);
 	registerBuildTaskProviders(context);
 	registerTransferTaskProviders(context);
 	await registerCppToolsConfigurationProvider(context);
 	await registerProjectWorkspace(context);
-	Logger.default.info("Activation of B&R Automation Tools extension finished");
-	vscode.window.showInformationMessage('Extension B&R Automation Tools is now active');
+	logger.info("Activation of B&R Automation Tools extension finished");
+	notifications.activationMessage();
 }
 
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-	Logger.default.info('Your extension "vscode-brautomationtools" is now deactivated!');
+	logger.info('Your extension "vscode-brautomationtools" is now deactivated!');
 	vscode.window.showInformationMessage('Extension B&R Automation Tools is now deactivated!');
 }

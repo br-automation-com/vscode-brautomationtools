@@ -113,3 +113,73 @@ function getConfiguration() {
 
 
 //#endregion local functions
+
+
+/** Implementation of the extension state interface */
+class ExtensionConfiguration {
+    static #instance: ExtensionConfiguration = new ExtensionConfiguration();
+    public static getInstance(): ExtensionConfiguration {
+        return this.#instance;
+    }
+
+
+    private constructor() { };
+
+
+    /** VS Code extension context */
+    #context?: vscode.ExtensionContext = undefined;
+
+
+    /**
+     * Initialize the extension state
+     * @param context The context of the extension
+     */
+    initialize(context: vscode.ExtensionContext): void {
+        this.#context = context;
+    }
+
+
+    /** Notification configuration */
+    public notifications = new class {
+        constructor(private parent: ExtensionConfiguration) { }
+
+
+        readonly #hideActivationMessageKey = "notifications.hideActivationMessage";
+        public get hideActivationMessage(): boolean {
+            const value = getConfiguration().get(this.#hideActivationMessageKey);
+            return value === true ? true : false;
+        }
+        public set hideActivationMessage(value: boolean | undefined) {
+            getConfiguration().update(this.#hideActivationMessageKey, value, vscode.ConfigurationTarget.Global);
+        }
+
+
+        readonly #hideNewVersionMessageKey = "notifications.hideNewVersionMessage";
+        public get hideNewVersionMessage(): boolean {
+            const value = getConfiguration().get(this.#hideNewVersionMessageKey);
+            return value === true ? true : false;
+        }
+        public set hideNewVersionMessage(value: boolean | undefined) {
+            getConfiguration().update(this.#hideNewVersionMessageKey, value, vscode.ConfigurationTarget.Global);
+        }
+    }(this);
+
+
+    /* Template
+    public xxxxxx = new class {
+        constructor(private parent: ExtensionConfiguration) { }
+
+
+        readonly #yyyyyyKey = "xxxxxx.yyyyyy";
+        public get yyyyyy(): boolean {
+            const value = getConfiguration().get(this.#yyyyyyKey);
+            return value === true ? true : false;
+        }
+        public set yyyyyy(value: boolean | undefined) {
+            getConfiguration().update(this.#yyyyyyKey, value, vscode.ConfigurationTarget.Global);
+        }
+    }(this); */
+}
+
+/** Access the stored state of the extension (key value pairs) */
+export const extensionConfiguration = ExtensionConfiguration.getInstance();

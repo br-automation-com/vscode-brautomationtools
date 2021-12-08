@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 Add new but unreleased features, fixes... here during development
 
+### Added
+- A new notification is shown after an update of the extension. By clicking the `Show changes` button you will be redirected to the changelog on GitHub.<br/>
+  If you don't like the notification you can click the `Don't show again after update` button and we will not bother you anymore.<br/>
+  The setting to hide the notification can also be set in the settings menu under `vscode-brautomationtools.notifications.hideNewVersionMessage`
+- The activation notification message can now be hidden by clicking the `Don't show on activation` button or in the settings under `vscode-brautomationtools.notifications.hideActivationMessage`
+
 
 ## [0.0.4] - 2021-12-04
 This release brings a more robust IntelliSense functionality when some files or file contents are missing in the AS project.

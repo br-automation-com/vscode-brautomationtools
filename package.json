@@ -2,7 +2,7 @@
 	"name": "vscode-brautomationtools",
 	"displayName": "B&R Automation Tools",
 	"description": "Tools to edit B&R Automation Studio projects in VS Code",
-	"version": "0.0.4",
+	"version": "0.0.5-alpha.1",
 	"publisher": "Radeonmann",
 	"icon": "resources/favicon.png",
 	"repository": {
@@ -100,6 +100,18 @@
 						"Log debug messages"
 					],
 					"default": "Debug"
+				},
+				"vscode-brautomationtools.notifications.hideActivationMessage": {
+					"description": "Hide the information pop-up after the extension activation is done",
+					"type": "boolean",
+					"default": false,
+					"scope": "application"
+				},
+				"vscode-brautomationtools.notifications.hideNewVersionMessage": {
+					"description": "Hide the information pop-up after a new version was installed",
+					"type": "boolean",
+					"default": false,
+					"scope": "application"
 				}
 			}
 		},

@@ -10,11 +10,6 @@ import * as vscode from 'vscode';
 //#region exported types
 
 
-//TODO export variable 'logger' which can be used by everyone
-//     Currently there is a static getter on the Logger class (Logger.default)
-//export const logger: Logger = new Logger();
-
-
 /**
  * Levels for logging
  */
@@ -78,128 +73,128 @@ export class Logger {
 
     /** The configuration of the logger */
     public get configuration() {
-        return this._configuration;
+        return this.#configuration;
     }
     /** The configuration of the logger */
     public set configuration(configuration: LogConfiguration) {
-        this._configuration = configuration;
-        this._setLogFunctions();
+        this.#configuration = configuration;
+        this.#setLogFunctions();
     }
-    private _configuration: LogConfiguration = {
+    #configuration: LogConfiguration = {
         level: LogLevel.Debug
     };
 
 
     /** Write log with level fatal */
     public get fatal() {
-        return this._fatal;
+        return this.#fatal;
     }
     private set fatal(logFunction: LogFunction) {
-        this._fatal = logFunction;
+        this.#fatal = logFunction;
     }
-    private _fatal: LogFunction = this._logDummy;
+    #fatal: LogFunction = this.#logDummy;
 
 
     /** Write log with level error */
     public get error() {
-        return this._error;
+        return this.#error;
     }
     private set error(logFunction: LogFunction) {
-        this._error = logFunction;
+        this.#error = logFunction;
     }
-    private _error: LogFunction = this._logDummy;
+    #error: LogFunction = this.#logDummy;
 
 
     /** Write log with level warning */
     public get warning() {
-        return this._warning;
+        return this.#warning;
     }
     private set warning(logFunction: LogFunction) {
-        this._warning = logFunction;
+        this.#warning = logFunction;
     }
-    private _warning: LogFunction = this._logDummy;
+    #warning: LogFunction = this.#logDummy;
 
 
     /** Write log with level info */
     public get info() {
-        return this._info;
+        return this.#info;
     }
     private set info(logFunction: LogFunction) {
-        this._info = logFunction;
+        this.#info = logFunction;
     }
-    private _info: LogFunction = this._logDummy;
+    #info: LogFunction = this.#logDummy;
 
 
     /** Write log with level debug */
     public get debug() {
-        return this._debug;
+        return this.#debug;
     }
     private set debug(logFunction: LogFunction) {
-        this._debug = logFunction;
+        this.#debug = logFunction;
     }
-    private _debug: LogFunction = this._logDummy;
+    #debug: LogFunction = this.#logDummy;
 
 
     /** Create Logger with default settings */
     constructor()
     {
-        this._setLogFunctions();
+        this.#setLogFunctions();
     }
 
 
     /** VS Code output channel used for logging */
-    private static _logChannel = vscode.window.createOutputChannel('vscode-brautomationtools');
+    static #logChannel = vscode.window.createOutputChannel('vscode-brautomationtools');
 
 
     /** Set the log function properties depending on the configuration */
-    private _setLogFunctions() {
+    #setLogFunctions() {
         switch (this.configuration.level) {
             case LogLevel.Fatal:
-                this.fatal = this._logFatal;
-                this.error = this._logDummy;
-                this.warning = this._logDummy;
-                this.info = this._logDummy;
-                this.debug = this._logDummy;
+                this.fatal = this.#logFatal;
+                this.error = this.#logDummy;
+                this.warning = this.#logDummy;
+                this.info = this.#logDummy;
+                this.debug = this.#logDummy;
                 break;
 
             case LogLevel.Error:
-                this.fatal = this._logFatal;
-                this.error = this._logError;
-                this.warning = this._logDummy;
-                this.info = this._logDummy;
-                this.debug = this._logDummy;
+                this.fatal = this.#logFatal;
+                this.error = this.#logError;
+                this.warning = this.#logDummy;
+                this.info = this.#logDummy;
+                this.debug = this.#logDummy;
                 break;
 
             case LogLevel.Warning:
-                this.fatal = this._logFatal;
-                this.error = this._logError;
-                this.warning = this._logWarning;
-                this.info = this._logDummy;
-                this.debug = this._logDummy;
+                this.fatal = this.#logFatal;
+                this.error = this.#logError;
+                this.warning = this.#logWarning;
+                this.info = this.#logDummy;
+                this.debug = this.#logDummy;
                 break;
 
             case LogLevel.Info:
-                this.fatal = this._logFatal;
-                this.error = this._logError;
-                this.warning = this._logWarning;
-                this.info = this._logInfo;
-                this.debug = this._logDummy;
+                this.fatal = this.#logFatal;
+                this.error = this.#logError;
+                this.warning = this.#logWarning;
+                this.info = this.#logInfo;
+                this.debug = this.#logDummy;
                 break;
 
             case LogLevel.Debug:
-                this.fatal = this._logFatal;
-                this.error = this._logError;
-                this.warning = this._logWarning;
-                this.info = this._logInfo;
-                this.debug = this._logDebug;
+                this.fatal = this.#logFatal;
+                this.error = this.#logError;
+                this.warning = this.#logWarning;
+                this.info = this.#logInfo;
+                this.debug = this.#logDebug;
                 break;
 
             default:
-                this.fatal = this._logFatal;
-                this.error = this._logError;
-                this.warning = this._logWarning;
-                this.info = this._logInfo;
-                this.debug = this._logDebug;
+                this.fatal = this.#logFatal;
+                this.error = this.#logError;
+                this.warning = this.#logWarning;
+                this.info = this.#logInfo;
+                this.debug = this.#logDebug;
                 break;
         }
     }
@@ -212,7 +207,7 @@ export class Logger {
      * @param logEntry the log entry which will be formatted
      * @returns Formatted string representation of the log entry
      */
-    private _formatLogEntry(logEntry: LogEntry): string {
+    #formatLogEntry(logEntry: LogEntry): string {
         // header '[11:33:42.007 - Fatal]'
         const time = logEntry.timestamp.toLocaleTimeString();
         const millis = logEntry.timestamp.getMilliseconds().toString().padStart(3, "0");
@@ -227,8 +222,8 @@ export class Logger {
 
 
     /** Base log function which generates the output */
-    private _logBase(logEntry: LogEntry) {
-        Logger._logChannel.appendLine(this._formatLogEntry(logEntry));
+    #logBase(logEntry: LogEntry) {
+        Logger.#logChannel.appendLine(this.#formatLogEntry(logEntry));
     }
 
 
@@ -236,38 +231,38 @@ export class Logger {
      * This function can be assigned to function properties which should not generate output
      * for the configured level.
      */
-    private _logDummy(message: string, additionalData?: LogEntryAdditionalData) {
+    #logDummy(message: string, additionalData?: LogEntryAdditionalData) {
         // do nothing
     }
 
 
-    private _logFatal(message: string, additionalData?: LogEntryAdditionalData) {
+    #logFatal(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.Fatal, message, additionalData);
-        this._logBase(entry);
+        this.#logBase(entry);
     }
 
 
-    private _logError(message: string, additionalData?: LogEntryAdditionalData) {
+    #logError(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.Error, message, additionalData);
-        this._logBase(entry);
+        this.#logBase(entry);
     }
 
 
-    private _logWarning(message: string, additionalData?: LogEntryAdditionalData) {
+    #logWarning(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.Warning, message, additionalData);
-        this._logBase(entry);
+        this.#logBase(entry);
     }
 
 
-    private _logInfo(message: string, additionalData?: LogEntryAdditionalData) {
+    #logInfo(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.Info, message, additionalData);
-        this._logBase(entry);
+        this.#logBase(entry);
     }
 
 
-    private _logDebug(message: string, additionalData?: LogEntryAdditionalData) {
+    #logDebug(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.Debug, message, additionalData);
-        this._logBase(entry);
+        this.#logBase(entry);
     }
 }
 
@@ -281,10 +276,13 @@ export class Logger {
 //#endregion exported functions
 
 
-//#region local variables
+//#region exported variables
 
 
-//#endregion local variables
+export const logger = Logger.default;
+
+
+//#endregion exported variables
 
 
 //#region local types
