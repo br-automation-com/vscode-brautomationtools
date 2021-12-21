@@ -69,15 +69,15 @@ export interface AsConfigurationInfo {
  */
 export interface AsConfigurationBuildSettings {
     /** Used gcc version */
-    gccVersion?: string;
+    gccVersion?: string | undefined;
     /** Additional build options for all languages */
-    additionalBuildOptions?: string;
+    additionalBuildOptions: string[];
     /** Additional build options for ANSI C */
-    ansiCAdditionalBuildOptions?: string;
+    ansiCAdditionalBuildOptions: string[];
     /** Additional build options for IEC languages */
-    iecAdditionalBuildOptions?: string;
+    iecAdditionalBuildOptions: string[];
     /** Include directories for ANSI C */
-    ansiCIncludeDirectories?: vscode.Uri[];
+    ansiCIncludeDirectories: vscode.Uri[];
 }
 
 
@@ -349,8 +349,8 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
         const cpuPkgDirUri = uriTools.pathJoin(configBaseUri, configPkgInfo.cpuPackageName);
         // get data from Cpu.pkg
         const cpuPkgUri  = uriTools.pathJoin(cpuPkgDirUri, 'Cpu.pkg');
-        const cpuPkgInfo = cpuPkgUri ? await BrAsProjectFiles.getCpuPackageInfo(cpuPkgUri) : undefined;
-        const ansiCIncludeDirs = cpuPkgInfo?.build?.ansiCIncludeDirectories?.map(path => uriTools.pathResolve(projectRootUri, path));
+        const cpuPkgInfo = await BrAsProjectFiles.getCpuPackageInfo(cpuPkgUri);
+        const ansiCIncludeDirs = cpuPkgInfo?.build.ansiCIncludeDirectories?.map(path => uriTools.pathResolve(projectRootUri, path));
         // push to result
         const configData: AsConfigurationInfo = {
             name:           config.relativePath,
@@ -360,10 +360,10 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
             cpuPackageName: configPkgInfo.cpuPackageName,
             buildSettings: {
                 gccVersion:                  cpuPkgInfo?.build?.gccVersion,
-                additionalBuildOptions:      cpuPkgInfo?.build?.additionalBuildOptions,
-                ansiCAdditionalBuildOptions: cpuPkgInfo?.build?.ansiCAdditionalBuildOptions,
-                iecAdditionalBuildOptions:   cpuPkgInfo?.build?.iecAdditionalBuildOptions,
-                ansiCIncludeDirectories:     ansiCIncludeDirs
+                additionalBuildOptions:      cpuPkgInfo?.build.additionalBuildOptions ?? [],
+                ansiCAdditionalBuildOptions: cpuPkgInfo?.build.ansiCAdditionalBuildOptions ?? [],
+                iecAdditionalBuildOptions:   cpuPkgInfo?.build.iecAdditionalBuildOptions ?? [],
+                ansiCIncludeDirectories:     ansiCIncludeDirs ?? []
             }
         };
         result.push(configData);

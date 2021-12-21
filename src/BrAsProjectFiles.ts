@@ -79,17 +79,17 @@ export interface CpuPackageInfo {
     /** Module ID of the CPU module */
     cpuModuleId?: string;
     /** Configurations for build */
-    build?: {
+    build: {
         /** Used gcc version */
         gccVersion?: string;
         /** General additional build options */
-        additionalBuildOptions?: string;
+        additionalBuildOptions: string[];
         /** Additional build options for ANSI C programs */
-        ansiCAdditionalBuildOptions?: string;
+        ansiCAdditionalBuildOptions: string[];
         /** Additional build options for IEC programs */
-        iecAdditionalBuildOptions?: string;
+        iecAdditionalBuildOptions: string[];
         /** ANSI C include directories as paths in posix style (absolute or relative to AS project base) */
-        ansiCIncludeDirectories?: string[];
+        ansiCIncludeDirectories: string[];
     }
 }
 
@@ -251,20 +251,15 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
     }
     // get build configuration values
     const buildConfigElement = getChildElements(configElement, 'Build').pop();
-    const gccVersion                  = buildConfigElement?.getAttribute('GccVersion') ?? undefined;
-    const additionalBuildOptions      = buildConfigElement?.getAttribute('AdditionalBuildOptions') ?? undefined;
-    const ansiCAdditionalBuildOptions = buildConfigElement?.getAttribute('AnsicAdditionalBuildOptions') ?? undefined;
-    const iecAdditionalBuildOptions   = buildConfigElement?.getAttribute('IecAdditionalBuildOptions') ?? undefined;
-    const ansiCIncludeDirectoriesRaw  = buildConfigElement?.getAttribute('AnsicIncludeDirectories')?.split(',');
-    const ansiCIncludeDirectories     = ansiCIncludeDirectoriesRaw?.map(winPath => {
-        const isRelative = winPath.startsWith('\\');
-        if (isRelative) {
-            const posixPath = './' + winPath.substr(1).split('\\').join('/');
-            return posixPath;
-        } else {
-            return vscode.Uri.file(winPath).path;
-        }
-    });
+    const gccVersion = buildConfigElement?.getAttribute('GccVersion') ?? undefined;
+    const additionalBuildOptionsRaw = buildConfigElement?.getAttribute('AdditionalBuildOptions') ?? undefined;
+    const additionalBuildOptions = splitBuildOptions(additionalBuildOptionsRaw);
+    const ansiCAdditionalBuildOptionsRaw = buildConfigElement?.getAttribute('AnsicAdditionalBuildOptions') ?? undefined;
+    const ansiCAdditionalBuildOptions = splitBuildOptions(ansiCAdditionalBuildOptionsRaw);
+    const iecAdditionalBuildOptionsRaw = buildConfigElement?.getAttribute('IecAdditionalBuildOptions') ?? undefined;
+    const iecAdditionalBuildOptions = splitBuildOptions(iecAdditionalBuildOptionsRaw);
+    const ansiCIncludeDirectoriesRaw = buildConfigElement?.getAttribute('AnsicIncludeDirectories')?.split(',');
+    const ansiCIncludeDirectories = projectPathsToUriPaths(ansiCIncludeDirectoriesRaw);
     // return info data
     return {
         header:   xmlHeader,
@@ -432,6 +427,46 @@ function getChildElements(baseElement: xmlDom.Element, nodeName?: string, hasAtt
         result.push(actChild);
     }
     return result;
+}
+
+
+/**
+ * Split a raw build options string into separate parts
+ * @param rawOptions Raw option string from configuration file
+ * @returns An array with all the build options separated
+ */
+function splitBuildOptions(rawOptions: string | undefined): string[] {
+    // directly return for empty options
+    if ((!rawOptions) || (rawOptions.length === 0)) {
+        return [];
+    }
+    const options = rawOptions.split(/\s/gm);
+    return options;
+}
+
+
+/**
+ * Transforms a project relative or absolute Windows path as used in AS configuration files to a
+ * relative or absolute URI path without scheme...
+ * @param projectPath Path relative to AS project or absolute Windows path
+ * @returns A relative or absolute URI path to the file
+ */
+function projectPathToUriPath(projectPath: string): string {
+    const isRelative = projectPath.startsWith('\\');
+    if (isRelative) {
+        const posixPath = './' + projectPath.substr(1).split('\\').join('/');
+        return posixPath;
+    } else {
+        return vscode.Uri.file(projectPath).path;
+    }
+}
+
+
+function projectPathsToUriPaths(projectPaths: string[] | undefined): string[] {
+    if ((!projectPaths) || (projectPaths.length === 0)) {
+        return [];
+    }
+    return projectPaths.map(prjPath => projectPathToUriPath(prjPath));
 }
 
 

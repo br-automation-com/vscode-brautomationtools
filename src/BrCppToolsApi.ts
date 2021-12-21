@@ -126,7 +126,6 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
      * @param uri The uri to get the configuration from
      */
     private async _getConfiguration(uri: vscode.Uri): Promise<cppTools.SourceFileConfigurationItem | undefined> {
-        //TODO will it also work for C++? Maybe need specific implementation for C++
         Logger.default.debug(`CppConfigurationProvider._getConfiguration() called for URI "${uri.toString(true)}"`);
         // get project include directories
         const headerUris = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri);
@@ -147,8 +146,8 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         }
         // get compiler arguments
         const compilerArgs = this.defaultCompilerArgs;
-        Helpers.pushDefined(compilerArgs, activeCfg.buildSettings.additionalBuildOptions);
-        Helpers.pushDefined(compilerArgs, activeCfg.buildSettings.ansiCAdditionalBuildOptions);
+        compilerArgs.push(...activeCfg.buildSettings.additionalBuildOptions);
+        compilerArgs.push(...activeCfg.buildSettings.ansiCAdditionalBuildOptions);
         // create and return C/C++ configuration
         const config: cppTools.SourceFileConfigurationItem = {
             uri: uri,
