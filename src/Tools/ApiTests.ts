@@ -11,10 +11,10 @@ import * as uriTools from './UriTools';
 import * as fileTools from './FileTools';
 import * as Dialogs from './Dialogs';
 import * as BREnvironment from '../BREnvironment';
-import * as BRConfiguration from '../BRConfiguration';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
 import * as BrAsProjectFiles from '../BrAsProjectFiles';
 import {Logger, LogLevel} from '../BrLog';
+import { extensionConfiguration } from '../BRConfiguration';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -291,14 +291,22 @@ async function testBREnvironment() {
 
 async function testBRConfiguration() {
 	console.warn('Test BRConfiguration start');
-	// Get AS install paths
-	console.log('BRConfiguration.getAutomationStudioInstallPaths');
-	const installPaths = BRConfiguration.getAutomationStudioInstallPaths();
-	console.log(installPaths);
-	// get default build mode
-	console.log('BRConfiguration.getDefaultBuildMode');
-	const defaultBuildMode = BRConfiguration.getDefaultBuildMode();
-	console.log(defaultBuildMode);
+	// build
+	console.log('build.defaultBuildMode');
+	console.log(extensionConfiguration.build.defaultBuildMode);
+	// environment
+	console.log('environment.automationStudioInstallPaths');
+	console.log(extensionConfiguration.environment.automationStudioInstallPaths);
+	console.log('environment.pviInstallPaths');
+	console.log(extensionConfiguration.environment.pviInstallPaths);
+	// logging
+	console.log('logging.logLevel');
+	console.log(extensionConfiguration.logging.logLevel);
+	// notifications
+	console.log('notifications.hideActivationMessage');
+	console.log(extensionConfiguration.notifications.hideActivationMessage);
+	console.log('notifications.hideNewVersionMessage');
+	console.log(extensionConfiguration.notifications.hideNewVersionMessage);
 	// end
 	console.warn('Test BRConfiguration end');
 }

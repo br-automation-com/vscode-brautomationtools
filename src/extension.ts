@@ -4,7 +4,6 @@
  */
 
 import * as vscode from 'vscode';
-import * as BRConfiguration from './BRConfiguration';
 import { logger } from './BrLog';
 import {registerCommands} from './BRCommands';
 import {registerCppToolsConfigurationProvider} from './BrCppToolsApi';
@@ -14,13 +13,14 @@ import {registerApiTests} from './Tools/ApiTests';
 import {registerProjectWorkspace} from './BRAsProjectWorkspace';
 import { notifications } from './BrNotifications';
 import { extensionState } from './BrExtensionState';
+import { extensionConfiguration } from './BRConfiguration';
 
 
 // Activation event
 export async function activate(context: vscode.ExtensionContext) {
 	// Set up logger
 	logger.configuration = {
-		level: BRConfiguration.getLogLevel()
+		level: extensionConfiguration.logging.logLevel
 	};
 	logger.info("Start activation of B&R Automation Tools extension");
 	//

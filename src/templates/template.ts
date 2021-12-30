@@ -28,7 +28,7 @@ export interface TEMPLATE_IF {
  * Activation of TEMPLATE
  * @param context context to register disposables
  */
-export async function registerTEMPLATE(context: vscode.ExtensionContext) {
+export async function activateTEMPLATE(context: vscode.ExtensionContext) {
     let disposable: vscode.Disposable;
     //disposable = vscode.workspace.XXXX
     //context.subscriptions.push(disposable);

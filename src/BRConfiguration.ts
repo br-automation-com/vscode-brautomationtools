@@ -6,103 +6,10 @@
 //SYNC Needs to be in sync with package.json/contributes/configuration/properties/*
 
 import * as vscode from 'vscode';
-import { LogLevel } from './BrLog';
-
-
-//#region definitions and types from package.json contribution points
-// No complex types contributed yet
-//#endregion definitions and types from package.json contribution points
-
-//#region setting of values
-// No setters yet
-//#endregion setting of values
-
-//#region getting of values
-
-
-/**
- * Gets the configured Automation Studio install paths.
- */
-export function getAutomationStudioInstallPaths(): vscode.Uri[] {
-    //TODO error checking if types do not match (both directions read and write) -> is this possible somehow?
-    const config = getConfiguration();
-    const configValue = config.get<string[]>('environment.automationStudioInstallPaths');
-    if (configValue) {
-        return configValue.map(fsPath => vscode.Uri.file(fsPath));
-    }
-    else {
-        return [];
-    }
-}
-
-
-/**
- * Gets the configured PVI install paths.
- */
-export function getPviInstallPaths(): vscode.Uri[] {
-    //TODO error checking if types do not match (both directions read and write) -> is this possible somehow?
-    const config = getConfiguration();
-    const configValue = config.get<string[]>('environment.pviInstallPaths');
-    if (configValue) {
-        return configValue.map(fsPath => vscode.Uri.file(fsPath));
-    }
-    else {
-        return [];
-    }
-}
-
-
-/**
- * Gets the default build mode.
- */
-export function getDefaultBuildMode() {
-    //TODO error checking if types do not match (both directions read and write) -> is this possible somehow?
-    const config = getConfiguration();
-    const test = config.inspect('build.defaultBuildMode');
-    console.log(test);
-    return config.get<string>('build.defaultBuildMode');
-
-}
-
-
-/**
- * Gets the configured log level
- */
-export function getLogLevel() {
-    //TODO error checking if types do not match (both directions read and write) -> is this possible somehow?
-    const config = getConfiguration();
-    //TODO doesn't work! String is used instead...
-    //const value = config.get<LogLevel>('logging.logLevel');
-    //HACK: compare and set...
-    const configValue = config.get<string>('logging.logLevel');
-    let result = LogLevel.Debug;
-    switch (configValue) {
-        case "Fatal":
-            result = LogLevel.Fatal;
-            break;
-        case "Error":
-            result = LogLevel.Error;
-            break;
-        case "Warning":
-            result = LogLevel.Warning;
-            break;
-        case "Info":
-            result = LogLevel.Info;
-            break;
-        case "Debug":
-            result = LogLevel.Debug;
-            break;
-    }
-    return result;
-
-}
-
-
-//#endregion getting of values
-
+import { logger, LogLevel } from './BrLog';
+import { isString, isStringArray } from './Tools/TypeGuards';
 
 //#region local functions
-
 
 /**
  * Get configuration of this extension
@@ -112,31 +19,127 @@ function getConfiguration() {
 }
 
 
+/**
+ * Convert the configuartion value to LogLevel
+ * @param configValue Value which should be converted
+ * @returns Returns the LogLevel behind the configValue, or `LogLevel.Debug` if the conversion failed
+ */
+function toLogLevel(configValue: any): LogLevel{
+    let result = LogLevel.Debug;
+    switch (configValue) {
+        case "Fatal":
+        case LogLevel.Fatal:
+            result = LogLevel.Fatal;
+            break;
+        case "Error":
+        case LogLevel.Error:
+            result = LogLevel.Error;
+            break;
+        case "Warning":
+        case LogLevel.Warning:
+            result = LogLevel.Warning;
+            break;
+        case "Info":
+        case LogLevel.Info:
+            result = LogLevel.Info;
+            break;
+        case "Debug":
+        case LogLevel.Debug:
+            result = LogLevel.Debug;
+            break;
+        default:
+            logger.warning(`Invalid log level configured, ${LogLevel.Debug} level will be used`);
+            result = LogLevel.Debug;
+    }
+    return result;
+}
+
+
 //#endregion local functions
 
 
-/** Implementation of the extension state interface */
+/** Extension configuration interface */
 class ExtensionConfiguration {
     static #instance: ExtensionConfiguration = new ExtensionConfiguration();
     public static getInstance(): ExtensionConfiguration {
         return this.#instance;
     }
-
-
     private constructor() { };
 
 
-    /** VS Code extension context */
-    #context?: vscode.ExtensionContext = undefined;
+    /** Build configuration */
+    public build = new class {
+        constructor(private parent: ExtensionConfiguration) { }
 
 
-    /**
-     * Initialize the extension state
-     * @param context The context of the extension
-     */
-    initialize(context: vscode.ExtensionContext): void {
-        this.#context = context;
-    }
+        readonly #defaultBuildModeKey = "build.defaultBuildMode";
+        public get defaultBuildMode(): string {
+            const value = getConfiguration().get(this.#defaultBuildModeKey);
+            if (isString(value)) {
+                return value;
+            } else {
+                logger.warning(`Invalid default build mode configured, "Build" will be used`);
+                return "Build";
+            }
+        }
+        public set defaultBuildMode(value: string | undefined) {
+            getConfiguration().update(this.#defaultBuildModeKey, value, vscode.ConfigurationTarget.Global);
+        }
+    }(this);
+
+
+    /** Environment configuration */
+    public environment = new class {
+        constructor(private parent: ExtensionConfiguration) { }
+
+
+        readonly #automationStudioInstallPathsKey = "environment.automationStudioInstallPaths";
+        public get automationStudioInstallPaths(): vscode.Uri[] {
+            const configValue = getConfiguration().get(this.#automationStudioInstallPathsKey);
+            if (isStringArray(configValue)) {
+                return configValue.map(fsPath => vscode.Uri.file(fsPath));
+            } else {
+                logger.error(`Invalid type in configuration of '${this.#automationStudioInstallPathsKey}'`);
+                return [];
+            }
+        }
+        public set automationStudioInstallPaths(value: vscode.Uri[] | undefined) {
+            const configValue = value?.map(uri => uri.fsPath);
+            getConfiguration().update(this.#automationStudioInstallPathsKey, configValue, vscode.ConfigurationTarget.Global);
+        }
+
+
+        readonly #pviInstallPathsKey = "environment.pviInstallPaths";
+        public get pviInstallPaths(): vscode.Uri[] {
+            const configValue = getConfiguration().get(this.#pviInstallPathsKey);
+            if (isStringArray(configValue)) {
+                return configValue.map(fsPath => vscode.Uri.file(fsPath));
+            } else {
+                logger.error(`Invalid type in configuration of '${this.#pviInstallPathsKey}'`);
+                return [];
+            }
+        }
+        public set pviInstallPaths(value: vscode.Uri[] | undefined) {
+            const configValue = value?.map(uri => uri.fsPath);
+            getConfiguration().update(this.#pviInstallPathsKey, configValue, vscode.ConfigurationTarget.Global);
+        }
+    }(this);
+
+
+    /**Logging configuration */
+    public logging = new class {
+        constructor(private parent: ExtensionConfiguration) { }
+
+
+        readonly #logLevelKey = "logging.logLevel";
+        public get logLevel(): LogLevel {
+            const value = getConfiguration().get(this.#logLevelKey);
+            return toLogLevel(value);
+        }
+        public set logLevel(value: LogLevel | undefined) {
+            getConfiguration().update(this.#logLevelKey, value, vscode.ConfigurationTarget.Global);
+        }
+    }(this);
 
 
     /** Notification configuration */
@@ -181,5 +184,5 @@ class ExtensionConfiguration {
     }(this); */
 }
 
-/** Access the stored state of the extension (key value pairs) */
+/** Access the configuration of the extension */
 export const extensionConfiguration = ExtensionConfiguration.getInstance();

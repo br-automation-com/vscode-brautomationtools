@@ -4,9 +4,10 @@
  */
 
 import * as vscode from 'vscode';
+import { isString } from './Tools/TypeGuards';
 
 
-/** Implementation of the extension state interface */
+/** Extension state interface */
 class ExtensionState {
     static #instance: ExtensionState = new ExtensionState();
     public static getInstance(): ExtensionState {
@@ -46,7 +47,7 @@ class ExtensionState {
         public get lastShownVersion(): string | undefined
         {
             const value = this.parent.#context?.globalState.get<string>(this.#lastShownVersionKey);
-            return typeof(value) === 'string' ? value : undefined;
+            return isString(value) ? value : undefined;
         }
         public set lastShownVersion(value: string | undefined)
         {

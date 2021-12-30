@@ -8,8 +8,8 @@ import * as childProcess from 'child_process';
 import * as BrAsProjectWorkspace from './BRAsProjectWorkspace';
 import * as BrEnvironment from './BREnvironment';
 import * as BrDialogs from './BRDialogs';
-import * as BrConfiguration from './BRConfiguration';
 import { Logger } from './BrLog';
+import { extensionConfiguration } from './BRConfiguration';
 
 
 /**
@@ -397,7 +397,7 @@ function processTaskDefinitionWithSettings(baseDefinition: BrAsBuildTaskDefiniti
     // build mode
     let asBuildMode = baseDefinition.asBuildMode;
     if (asBuildMode === BrAsBuildLiterals.UseSettings) {
-        asBuildMode = BrConfiguration.getDefaultBuildMode();
+        asBuildMode = extensionConfiguration.build.defaultBuildMode;
         if (!asBuildMode) {
             return undefined;
         }

@@ -5,7 +5,7 @@
 
 import {ValueQuickPickItem, ValueQuickPickOptions, ValueQuickPickInitialValues, getQuickPickSingleValue} from './Tools/Dialogs';
 import * as BRAsProjectWorkspace from './BRAsProjectWorkspace';
-import * as BRConfiguration from './BRConfiguration';
+import { extensionConfiguration } from './BRConfiguration';
 
 
 /**
@@ -70,7 +70,7 @@ export async function selectBuildMode(): Promise<string | undefined> {
         { label: 'BuildAndTransfer', detail: 'Build for transfer', value: 'BuildAndTransfer' },
         { label: 'BuildAndCreateCompactFlash', detail: 'Build for creation of CF card', value: 'BuildAndCreateCompactFlash' }
     ];
-    const defaultBuildModeValue = BRConfiguration.getDefaultBuildMode();
+    const defaultBuildModeValue = extensionConfiguration.build.defaultBuildMode;
     const defaultBuildModeItem = buildModeItems.find(mode => mode.value === defaultBuildModeValue);
     // set options and initial values
     const pickOptions = <ValueQuickPickOptions>{ title: 'Select build mode' };

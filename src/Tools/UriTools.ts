@@ -38,6 +38,7 @@ export function pathDirname(uri: vscode.Uri): vscode.Uri
  * @param append paths to append
  */
 export function pathJoin(baseUri: vscode.Uri, ...append: string[]): vscode.Uri {
+    //TODO obsolete? -> vscode.Uri.joinPath
     const basePath = baseUri.path;
     const joinedPath = posix.join(basePath, ...append);
     const joinedUri = baseUri.with({path: joinedPath});

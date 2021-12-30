@@ -5,10 +5,10 @@
 //TODO get version information once on startup, only specify an array of base install paths in the configuration
 
 import * as vscode from 'vscode';
-import * as BRConfiguration from './BRConfiguration';
 import { Logger } from './BrLog';
 import * as uriTools from './Tools/UriTools';
 import * as semver from 'semver';
+import { extensionConfiguration } from './BRConfiguration';
 
 
 //#region exported interfaces
@@ -93,6 +93,7 @@ export async function updateAvailableAutomationStudioVersions(): Promise<void> {
 	const versionInfos = await _availableAutomationStudioVersions;
 	if (versionInfos.length === 0) {
 		const messageItems = ['Change baseInstallPaths'];
+		//TODO action for item
 		vscode.window.showWarningMessage('No Automation Studio versions found. Build functionality will not be available.', ...messageItems);
 		Logger.default.warning('No Automation Studio versions found. Build functionality will not be available.');
 		return;
@@ -221,7 +222,7 @@ let _availablePviVersions: Promise<PviVersionInfo[]> = findAvailablePviVersions(
  * Searches for AS installations within the configured installation paths. Search is not recursive!
  */
 async function findAvailableASVersions(): Promise<ASVersionInfo[]> {
-	const baseInstallUris = BRConfiguration.getAutomationStudioInstallPaths();
+	const baseInstallUris = extensionConfiguration.environment.automationStudioInstallPaths;
 	const versionInfos: ASVersionInfo[] = [];
 	for (const uri of baseInstallUris) {
 		versionInfos.push(...(await findAvailableASVersionsInUri(uri)));
@@ -252,7 +253,6 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 			Logger.default.error('Cannot create semantic version for URI: ' + versionBaseUri.fsPath);
 			continue;
 		}
-		Logger.default.info(`AS Version V${version.version} found in ${versionBaseUri.fsPath}`);
 		// get AS build executable
 		//TODO maybe language sensitive for Bin-en / Bin-de if both are available?
 		const asBuildExecutables: vscode.Uri[] = [];
@@ -272,6 +272,7 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 				continue;
 			}
 		}
+		Logger.default.info(`AS Version V${version.version} found in ${versionBaseUri.fsPath}`);
 		const buildExecutable = asBuildExecutables[0];
 		// create version information and push to array
 		const versionInfo: ASVersionInfo = {
@@ -371,7 +372,7 @@ async function findAvailableGccTargetSystems(gccVersion: AsGccVersionInfo): Prom
  * Searches for PVI installations within the configured installation paths. Search is not recursive!
  */
 async function findAvailablePviVersions(): Promise<PviVersionInfo[]> {
-	const baseInstallUris = BRConfiguration.getPviInstallPaths();
+	const baseInstallUris = extensionConfiguration.environment.pviInstallPaths;
 	const versionInfos: PviVersionInfo[] = [];
 	for (const uri of baseInstallUris) {
 		versionInfos.push(...(await findAvailablePviVersionsInUri(uri)));
@@ -413,6 +414,7 @@ async function findAvailablePviVersionsInUri(uri: vscode.Uri): Promise<PviVersio
 			Logger.default.warning(`Cannot get version of ${pviTransferExecutable.fsPath}`);
 			continue;
 		}
+		Logger.default.info(`PVI Version V${pviTransferVersion.version} found in ${versionBaseUri.fsPath}`);
 		// create version information and push to array
 		const versionInfo: PviVersionInfo = {
 			version:        pviTransferVersion,
