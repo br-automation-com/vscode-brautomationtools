@@ -18,7 +18,7 @@ import * as uriTools from './Tools/UriTools';
 export async function registerCppToolsConfigurationProvider(context: vscode.ExtensionContext): Promise<void> {
     const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v5);
     if (!cppToolsApi) {
-        Logger.default.error("Failed to connect to C/C++ extension (API V5). C/C++ extension is not installed or version is not supported.");
+        Logger.default.error('Failed to connect to C/C++ extension (API V5). C/C++ extension is not installed or version is not supported.');
         return;
     }
     context.subscriptions.push(cppToolsApi);

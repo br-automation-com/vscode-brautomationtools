@@ -77,13 +77,13 @@ async function newVersionMessage(): Promise<void> {
         if (!hideNotification) {
             const message = `Welcome to the new version of ${extensionName}, ${extensionVersion}`;
             const hideButton = "Don't show again after update";
-            const showInfoButton = "Show changes";
+            const showInfoButton = 'Show changes';
             const result = await vscode.window.showInformationMessage(message, showInfoButton, hideButton);
             if (result === hideButton) {
                     extensionConfiguration.notifications.hideNewVersionMessage = true;
                 }
             if (result === showInfoButton) {
-                await vscode.env.openExternal(vscode.Uri.parse("https://github.com/br-automation-com/vscode-brautomationtools/blob/master/CHANGELOG.md"));
+                await vscode.env.openExternal(vscode.Uri.parse('https://github.com/br-automation-com/vscode-brautomationtools/blob/master/CHANGELOG.md'));
             }
         }
     }

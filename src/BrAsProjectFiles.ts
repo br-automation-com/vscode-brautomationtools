@@ -239,7 +239,7 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
         return undefined;
     }
     // Get CPU module ID
-    const cpuModuleId = configElement.getAttribute("ModuleId") ?? undefined;
+    const cpuModuleId = configElement.getAttribute('ModuleId') ?? undefined;
     if (!cpuModuleId) {
         Logger.default.warning(`Failed to get ModuleId from CPU package file '${cpuFile.fsPath}'`);
     }
@@ -336,7 +336,7 @@ async function xmlCreateFromUri(fileUri: vscode.Uri): Promise<XMLBuilder | undef
         const contentText = projectDocument.getText();
         return xmlbuilder2.create(contentText);
     } catch (error) {
-        Logger.default.debug("BrAsProjectFiles.xmlCreateFromUri() -> catch (error)", {data: {uri: fileUri, error: error}});
+        Logger.default.debug('BrAsProjectFiles.xmlCreateFromUri() -> catch (error)', {data: {uri: fileUri, error: error}});
         return undefined;
     }
 }
@@ -354,7 +354,7 @@ function getXmlHeader(xmlBase: XMLBuilder): XmlHeader {
         }
         return false;
     })?.node;
-    const asHeaderData = asHeaderNode?.nodeValue ? ` ${asHeaderNode.nodeValue}` : "";
+    const asHeaderData = asHeaderNode?.nodeValue ? ` ${asHeaderNode.nodeValue}` : '';
     // AS version full
     const asVersionRegEx = /^.*[ \t]+[Vv]ersion=["']*([\d\.]+).*$/gm.exec(asHeaderData);
     const asVersion = asVersionRegEx ? asVersionRegEx[1] : undefined;

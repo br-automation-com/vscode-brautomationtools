@@ -22,7 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	logger.configuration = {
 		level: extensionConfiguration.logging.logLevel
 	};
-	logger.info("Start activation of B&R Automation Tools extension");
+	logger.info('Start activation of B&R Automation Tools extension');
 	//
 	extensionState.initialize(context);
 	notifications.initialize(context);
@@ -33,7 +33,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerTransferTaskProviders(context);
 	await registerCppToolsConfigurationProvider(context);
 	await registerProjectWorkspace(context);
-	logger.info("Activation of B&R Automation Tools extension finished");
+	logger.info('Activation of B&R Automation Tools extension finished');
 	notifications.activationMessage();
 }
 

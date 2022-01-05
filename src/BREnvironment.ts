@@ -88,7 +88,7 @@ export async function getAvailableAutomationStudioVersions(): Promise<ASVersionI
 export async function updateAvailableAutomationStudioVersions(): Promise<void> {
 	//TODO return number like in BrAsProjectWorkspace
 	//TODO call when configuration value of baseInstallPaths changes
-	Logger.default.debug("Start updateAvailableAutomationStudioVersions()");
+	Logger.default.debug('Start updateAvailableAutomationStudioVersions()');
 	_availableAutomationStudioVersions = findAvailableASVersions();
 	const versionInfos = await _availableAutomationStudioVersions;
 	if (versionInfos.length === 0) {

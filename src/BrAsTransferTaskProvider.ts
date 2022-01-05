@@ -58,7 +58,7 @@ const transferTaskProblemMatchers = ['$BrAsBuild'];
 //TODO package.json
 enum BrAsTransferLiterals{
     useSettings            = '$useSettings',
-    lastBuiltConfiguration = "$lastBuiltConfig" //TODO implement
+    lastBuiltConfiguration = '$lastBuiltConfig' //TODO implement
 }
 
 
@@ -107,10 +107,10 @@ interface BrAsTransferTaskDefinition extends vscode.TaskDefinition {
     /** Settings for installation of project */
     readonly installationSettings?: {
         /** Mode of installation */
-        installMode?: "Consistent" | "InstallDuringTaskOperation" | "ForceReboot" | "ForceInitialInstallation";
+        installMode?: 'Consistent' | 'InstallDuringTaskOperation' | 'ForceReboot' | 'ForceInitialInstallation';
 
         /** Installation restrictions */
-        installRestriction?: "AllowInitialInstallation" | "AllowPartitioning" | "AllowUpdatesWithoutDataLoss";
+        installRestriction?: 'AllowInitialInstallation' | 'AllowPartitioning' | 'AllowUpdatesWithoutDataLoss';
 
         /** Try to keep process variable values */
         keepPVValues?: boolean;
@@ -149,7 +149,7 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
             asProjectFile:   undefined,
             asConfiguration: undefined,
             pviConnectionSettings: {
-                deviceInterface:             "tcpip",
+                deviceInterface:             'tcpip',
                 sourceNode:                   42,
                 destinationAddress:           undefined,
                 destinationPort:              11169,
@@ -167,7 +167,7 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
                 tryToBootInRUNMode: undefined
             }
         });
-        taskEthernetDialogAll.name = "Ethernet with dialogs for IP address and install settings";
+        taskEthernetDialogAll.name = 'Ethernet with dialogs for IP address and install settings';
         result.push(taskEthernetDialogAll);
         // Ethernet with dialog for IP address and default install settings
         const taskEthernetDialogAddr = await BrAsTransferTaskProvider.definitionToTask({
@@ -176,7 +176,7 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
             asProjectFile:   undefined,
             asConfiguration: undefined,
             pviConnectionSettings: {
-                deviceInterface:             "tcpip",
+                deviceInterface:             'tcpip',
                 sourceNode:                   42,
                 destinationAddress:           undefined,
                 destinationPort:              11169,
@@ -187,14 +187,14 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
                 remoteParameters:             undefined
             },
             installationSettings: {
-                installMode:        "Consistent",
-                installRestriction: "AllowInitialInstallation",
+                installMode:        'Consistent',
+                installRestriction: 'AllowInitialInstallation',
                 keepPVValues:       false,
                 executeInitExit:    true,
                 tryToBootInRUNMode: false
             }
         });
-        taskEthernetDialogAddr.name = "Ethernet with dialog for IP address and default install settings";
+        taskEthernetDialogAddr.name = 'Ethernet with dialog for IP address and default install settings';
         result.push(taskEthernetDialogAddr);
         // ArSim with default install settings
         const taskArSimDefaultInstall = await BrAsTransferTaskProvider.definitionToTask({
@@ -203,9 +203,9 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
             asProjectFile:   undefined,
             asConfiguration: undefined,
             pviConnectionSettings: {
-                deviceInterface:             "tcpip",
+                deviceInterface:             'tcpip',
                 sourceNode:                   42,
-                destinationAddress:           "127.0.0.1",
+                destinationAddress:           '127.0.0.1',
                 destinationPort:              11160,
                 communicationTimeout:         1000,
                 additionalDeviceParameters:   undefined,
@@ -214,14 +214,14 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
                 remoteParameters:             undefined
             },
             installationSettings: {
-                installMode:        "Consistent",
-                installRestriction: "AllowInitialInstallation",
+                installMode:        'Consistent',
+                installRestriction: 'AllowInitialInstallation',
                 keepPVValues:       false,
                 executeInitExit:    true,
                 tryToBootInRUNMode: false
             }
         });
-        taskArSimDefaultInstall.name = "ArSim with default install settings";
+        taskArSimDefaultInstall.name = 'ArSim with default install settings';
         result.push(taskArSimDefaultInstall);
         // return
         return result;
@@ -290,17 +290,17 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
         Helpers.pushDefined(nameContents, definition.installationSettings?.installMode);
         Helpers.pushDefined(nameContents, definition.installationSettings?.installRestriction);
         if (definition.installationSettings?.keepPVValues) {
-            nameContents.push("keep PV val.");
+            nameContents.push('keep PV val.');
         }
         if (definition.installationSettings?.executeInitExit) {
-            nameContents.push("with INIT/EXIT");
+            nameContents.push('with INIT/EXIT');
         }
         if (definition.installationSettings?.tryToBootInRUNMode) {
-            nameContents.push("boot in run");
+            nameContents.push('boot in run');
         }
         // PVITransfer arguments
         if (definition.pviTransferExecutionArgumets) {
-            nameContents.push("with PVITransfer arguments");
+            nameContents.push('with PVITransfer arguments');
         }
         // return
         return nameContents.join(' - ');
@@ -391,15 +391,15 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
             return;
         }
         // Check if RUC package is existing for selected configuration
-        const rucPackageBaseUri = uriTools.pathJoin(asProject.binaries, usedDefinition.asConfiguration, asConfigurationData.cpuPackageName, "RUCPackage");
-        const rucPackageUri = uriTools.pathJoin(rucPackageBaseUri, "RUCPackage.zip");
+        const rucPackageBaseUri = uriTools.pathJoin(asProject.binaries, usedDefinition.asConfiguration, asConfigurationData.cpuPackageName, 'RUCPackage');
+        const rucPackageUri = uriTools.pathJoin(rucPackageBaseUri, 'RUCPackage.zip');
         if (!uriTools.exists(rucPackageUri)) {
             this.writeLine(`ERROR: No RUC package found for configuration ${usedDefinition.asConfiguration}. Please build RUC package first.`);
             this.done(50);
             return;
         }
         // Create PIL file with transfer instructions
-        const pilFileUri = uriTools.pathJoin(rucPackageBaseUri, "VSCodeTransfer.pil");
+        const pilFileUri = uriTools.pathJoin(rucPackageBaseUri, 'VSCodeTransfer.pil');
         const pilFileCreated = await createPILFileFromTaskDefinition(usedDefinition, pilFileUri);
         if (!pilFileCreated) {
             this.writeLine(`ERROR: PIL file "${pilFileUri.fsPath}" could not be created`);
@@ -591,36 +591,36 @@ async function processTaskDefinitionWithDialogs(baseDefinition: BrAsTransferTask
         //TODO centralize pakage.json Enums, dialogs...
         installMode = await Dialogs.getQuickPickSingleValue(
             [
-                {value: "Consistent",                 label: "All tasks will be paused during installation", },
-                {value: "InstallDuringTaskOperation", label: "Only changed tasks will be paused during installation"},
-                {value: "ForceReboot",                label: "PLC will be rebooted and the installation is done during booting"},
-                {value: "ForceInitialInstallation",   label: "Initial installation which resets all data"}
+                {value: 'Consistent',                 label: 'All tasks will be paused during installation', },
+                {value: 'InstallDuringTaskOperation', label: 'Only changed tasks will be paused during installation'},
+                {value: 'ForceReboot',                label: 'PLC will be rebooted and the installation is done during booting'},
+                {value: 'ForceInitialInstallation',   label: 'Initial installation which resets all data'}
             ],
-            {title: "Installation restrictions"}
+            {title: 'Installation restrictions'}
             );;
     }
     let installRestriction = baseDefinition.installationSettings?.installRestriction;
     if (!installRestriction) {
         installRestriction = await Dialogs.getQuickPickSingleValue(
             [
-                {value: "AllowInitialInstallation",    label: "Allow initial installation", },
-                {value: "AllowPartitioning",           label: "Allow partitioning"},
-                {value: "AllowUpdatesWithoutDataLoss", label: "Allow only updates without data loss"}
+                {value: 'AllowInitialInstallation',    label: 'Allow initial installation', },
+                {value: 'AllowPartitioning',           label: 'Allow partitioning'},
+                {value: 'AllowUpdatesWithoutDataLoss', label: 'Allow only updates without data loss'}
             ],
-            {title: "Installation restrictions"}
+            {title: 'Installation restrictions'}
             );
     }
     let keepPVValues = baseDefinition.installationSettings?.keepPVValues;
     if (keepPVValues === undefined) {
-        keepPVValues = await Dialogs.yesNoDialog("Keep PV values?");
+        keepPVValues = await Dialogs.yesNoDialog('Keep PV values?');
     }
     let executeInitExit = baseDefinition.installationSettings?.executeInitExit;
     if (executeInitExit === undefined) {
-        executeInitExit = await Dialogs.yesNoDialog("Execute EXIT and INIT routines?");
+        executeInitExit = await Dialogs.yesNoDialog('Execute EXIT and INIT routines?');
     }
     let tryToBootInRUNMode = baseDefinition.installationSettings?.tryToBootInRUNMode;
     if (tryToBootInRUNMode === undefined) {
-        tryToBootInRUNMode = await Dialogs.yesNoDialog("Try to boot in RUN mode if a restart is required of forced?");
+        tryToBootInRUNMode = await Dialogs.yesNoDialog('Try to boot in RUN mode if a restart is required of forced?');
     }
     // apply dialog values
     return taskDefinitionWith(baseDefinition, 
@@ -694,7 +694,7 @@ async function createPILFileFromTaskDefinition(definition: BrAsTransferTaskDefin
     if (definition.pviConnectionSettings?.additionalDeviceParameters) {
         connDeviceParArgs.push(definition.pviConnectionSettings.additionalDeviceParameters);
     }
-    const connDevicePar = connDeviceParArgs.join(" ");
+    const connDevicePar = connDeviceParArgs.join(' ');
     // connection command, CPU parameters
     const connCpuParArgs: string[] = [];
     if (definition.pviConnectionSettings?.destinationAddress) {
@@ -709,9 +709,9 @@ async function createPILFileFromTaskDefinition(definition: BrAsTransferTaskDefin
     if (definition.pviConnectionSettings?.additionalCPUparameters) {
         connCpuParArgs.push(definition.pviConnectionSettings.additionalCPUparameters);
     }
-    const connCpuPar = connCpuParArgs.join(" ");
+    const connCpuPar = connCpuParArgs.join(' ');
     // connection command, waiting time
-    let connWaitingTime = "";
+    let connWaitingTime = '';
     if (definition.pviConnectionSettings?.connectionEstablishedTimeout) {
         connWaitingTime = `WT=${definition.pviConnectionSettings.communicationTimeout}`;
     }
@@ -724,17 +724,17 @@ async function createPILFileFromTaskDefinition(definition: BrAsTransferTaskDefin
     if (definition.pviConnectionSettings?.remoteParameters) {
         connCommandArgs.push(`, "${definition.pviConnectionSettings.remoteParameters}"`);
     }
-    const connCommand = connCommandArgs.join("");
+    const connCommand = connCommandArgs.join('');
     // transfer command
-    const transferRUCFile = "RUCPackage.zip";
+    const transferRUCFile = 'RUCPackage.zip';
     const transferInstallSettings = [
         //TODO do not set default values here!
-        `InstallMode=${definition.installationSettings?.installMode ?? "Consistent"}`,
-        `InstallRestriction=${definition.installationSettings?.installRestriction ?? "AllowUpdatesWithoutDataLoss"}`,
-        `KeepPVValues=${definition.installationSettings?.keepPVValues ? "1" : "0"}`,
-        `ExecuteInitExit=${definition.installationSettings?.executeInitExit ? "1" : "0"}`,
-        `TryToBootInRUNMode=${definition.installationSettings?.tryToBootInRUNMode ? "1" : "0"}`
-    ].join(" ");
+        `InstallMode=${definition.installationSettings?.installMode ?? 'Consistent'}`,
+        `InstallRestriction=${definition.installationSettings?.installRestriction ?? 'AllowUpdatesWithoutDataLoss'}`,
+        `KeepPVValues=${definition.installationSettings?.keepPVValues ? '1' : '0'}`,
+        `ExecuteInitExit=${definition.installationSettings?.executeInitExit ? '1' : '0'}`,
+        `TryToBootInRUNMode=${definition.installationSettings?.tryToBootInRUNMode ? '1' : '0'}`
+    ].join(' ');
     const transferCommand = `Transfer "${transferRUCFile}", "${transferInstallSettings}"`;
     // create file
     const created = await fileTools.createFile(pilFile, {overwrite: true});
@@ -745,8 +745,8 @@ async function createPILFileFromTaskDefinition(definition: BrAsTransferTaskDefin
     const pilFileContents = [
         connCommand,
         transferCommand,
-        ""
-    ].join("\r\n");
+        ''
+    ].join('\r\n');
     return fileTools.insertTextAtBeginOfFile(pilFile, pilFileContents);
 }
 

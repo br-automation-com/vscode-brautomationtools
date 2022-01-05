@@ -27,23 +27,23 @@ function getConfiguration() {
 function toLogLevel(configValue: any): LogLevel{
     let result = LogLevel.debug;
     switch (configValue) {
-        case "Fatal":
+        case 'Fatal':
         case LogLevel.fatal:
             result = LogLevel.fatal;
             break;
-        case "Error":
+        case 'Error':
         case LogLevel.error:
             result = LogLevel.error;
             break;
-        case "Warning":
+        case 'Warning':
         case LogLevel.warning:
             result = LogLevel.warning;
             break;
-        case "Info":
+        case 'Info':
         case LogLevel.info:
             result = LogLevel.info;
             break;
-        case "Debug":
+        case 'Debug':
         case LogLevel.debug:
             result = LogLevel.debug;
             break;
@@ -72,14 +72,14 @@ class ExtensionConfiguration {
         constructor(private parent: ExtensionConfiguration) { }
 
 
-        readonly #defaultBuildModeKey = "build.defaultBuildMode";
+        readonly #defaultBuildModeKey = 'build.defaultBuildMode';
         public get defaultBuildMode(): string {
             const value = getConfiguration().get(this.#defaultBuildModeKey);
             if (isString(value)) {
                 return value;
             } else {
                 logger.warning(`Invalid default build mode configured, "Build" will be used`);
-                return "Build";
+                return 'Build';
             }
         }
         public set defaultBuildMode(value: string | undefined) {
@@ -93,7 +93,7 @@ class ExtensionConfiguration {
         constructor(private parent: ExtensionConfiguration) { }
 
 
-        readonly #automationStudioInstallPathsKey = "environment.automationStudioInstallPaths";
+        readonly #automationStudioInstallPathsKey = 'environment.automationStudioInstallPaths';
         public get automationStudioInstallPaths(): vscode.Uri[] {
             const configValue = getConfiguration().get(this.#automationStudioInstallPathsKey);
             if (isStringArray(configValue)) {
@@ -109,7 +109,7 @@ class ExtensionConfiguration {
         }
 
 
-        readonly #pviInstallPathsKey = "environment.pviInstallPaths";
+        readonly #pviInstallPathsKey = 'environment.pviInstallPaths';
         public get pviInstallPaths(): vscode.Uri[] {
             const configValue = getConfiguration().get(this.#pviInstallPathsKey);
             if (isStringArray(configValue)) {
@@ -131,7 +131,7 @@ class ExtensionConfiguration {
         constructor(private parent: ExtensionConfiguration) { }
 
 
-        readonly #logLevelKey = "logging.logLevel";
+        readonly #logLevelKey = 'logging.logLevel';
         public get logLevel(): LogLevel {
             const value = getConfiguration().get(this.#logLevelKey);
             return toLogLevel(value);
@@ -147,7 +147,7 @@ class ExtensionConfiguration {
         constructor(private parent: ExtensionConfiguration) { }
 
 
-        readonly #hideActivationMessageKey = "notifications.hideActivationMessage";
+        readonly #hideActivationMessageKey = 'notifications.hideActivationMessage';
         public get hideActivationMessage(): boolean {
             const value = getConfiguration().get(this.#hideActivationMessageKey);
             return value === true ? true : false;
@@ -157,7 +157,7 @@ class ExtensionConfiguration {
         }
 
 
-        readonly #hideNewVersionMessageKey = "notifications.hideNewVersionMessage";
+        readonly #hideNewVersionMessageKey = 'notifications.hideNewVersionMessage';
         public get hideNewVersionMessage(): boolean {
             const value = getConfiguration().get(this.#hideNewVersionMessageKey);
             return value === true ? true : false;

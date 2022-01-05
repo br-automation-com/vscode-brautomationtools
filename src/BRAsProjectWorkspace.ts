@@ -374,7 +374,7 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
 
 async function getActiveConfiguration(configurations: AsConfigurationInfo[], userSettingsUri: vscode.Uri): Promise<AsConfigurationInfo | undefined> {
     if (configurations.length === 0) {
-        Logger.default.debug("getActiveConfiguration() -> configurations.length === 0", {data: userSettingsUri});
+        Logger.default.debug('getActiveConfiguration() -> configurations.length === 0', {data: userSettingsUri});
         return undefined;
     }
     const userSettingsData = await BrAsProjectFiles.getUserSettingsInfo(userSettingsUri);

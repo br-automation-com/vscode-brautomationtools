@@ -472,22 +472,22 @@ async function testVsCodeExtensionContext(context: vscode.ExtensionContext) : Pr
 async function testBrLog(context: vscode.ExtensionContext): Promise<void> {
 	console.warn('Test BrLog start');
 	// log messages of various levels
-	Logger.default.fatal("Some fatal 1");
-	Logger.default.error("Some error 1");
-	Logger.default.warning("Some warning 1");
-	Logger.default.info("Some info 1");
-	Logger.default.debug("Some debug 1");
+	Logger.default.fatal('Some fatal 1');
+	Logger.default.error('Some error 1');
+	Logger.default.warning('Some warning 1');
+	Logger.default.info('Some info 1');
+	Logger.default.debug('Some debug 1');
 	// log with objects and array
-	Logger.default.fatal("Now log with additional data!");
-	Logger.default.fatal("Undefined", { data: undefined });
-	Logger.default.fatal("Null", { data: null });
-	Logger.default.fatal("Boolean", { data: false });
-	Logger.default.fatal("Number", { data: 33 });
-	Logger.default.fatal("String", { data: "hello" });
-	const someObj = { a: "hello", b: "world", c: 33, d: { d1: 20, d2: "42" } };
-	Logger.default.fatal("Obj", { data: someObj });
-	const someArray = [{ a: 33, b: { b1: 33, b2: false } }, undefined, "hello", 33, false, null, { q: "testQ", r: "testR" }];
-	Logger.default.fatal("Array", { data: someArray });
+	Logger.default.fatal('Now log with additional data!');
+	Logger.default.fatal('Undefined', { data: undefined });
+	Logger.default.fatal('Null', { data: null });
+	Logger.default.fatal('Boolean', { data: false });
+	Logger.default.fatal('Number', { data: 33 });
+	Logger.default.fatal('String', { data: 'hello' });
+	const someObj = { a: 'hello', b: 'world', c: 33, d: { d1: 20, d2: '42' } };
+	Logger.default.fatal('Obj', { data: someObj });
+	const someArray = [{ a: 33, b: { b1: 33, b2: false } }, undefined, 'hello', 33, false, null, { q: 'testQ', r: 'testR' }];
+	Logger.default.fatal('Array', { data: someArray });
 	console.warn('Test BrLog end');
 }
 

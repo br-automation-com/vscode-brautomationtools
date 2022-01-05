@@ -14,8 +14,15 @@
         "curly": "warn",
         "eqeqeq": "warn",
         "no-throw-literal": "warn",
-        "semi": "off"
-        //TODO fix quotation to ""
+        "semi": "off",
+        "quotes": [
+            "warn",
+            "single",
+            {
+                "allowTemplateLiterals": true,
+                "avoidEscape": true
+            }
+        ]
         //TODO investigate other rules
     },
     "ignorePatterns": [

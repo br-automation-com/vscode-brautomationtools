@@ -210,12 +210,12 @@ export class Logger {
     #formatLogEntry(logEntry: LogEntry): string {
         // header '[11:33:42.007 - Fatal]'
         const time = logEntry.timestamp.toLocaleTimeString();
-        const millis = logEntry.timestamp.getMilliseconds().toString().padStart(3, "0");
-        const level = LogLevel[logEntry.level].padStart(5, " ");
+        const millis = logEntry.timestamp.getMilliseconds().toString().padStart(3, '0');
+        const level = LogLevel[logEntry.level].padStart(5, ' ');
         const header = `[${time}.${millis} - ${level}]`;
         // message and if existing additional data
         const message = logEntry.message;
-        const additionalData = (logEntry.addData === undefined) ? "" : `(${JSON.stringify(logEntry.addData.data)})`;
+        const additionalData = (logEntry.addData === undefined) ? '' : `(${JSON.stringify(logEntry.addData.data)})`;
         // formatted message '[11:33:42.007 - Fatal] My message ({someProp:"hello"})'
         return `${header} ${message} ${additionalData}`;
     }

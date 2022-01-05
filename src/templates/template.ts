@@ -40,7 +40,7 @@ export async function activateTEMPLATE(context: vscode.ExtensionContext) {
  * TEMPLATE
  */
 export async function TEMPLATE_FUN(): Promise<string> {
-    return "aaaa";
+    return 'aaaa';
 }
 
 
@@ -80,7 +80,7 @@ enum TEMPLATE_LOC_ENUM {
  * TEMPLATE
  */
 async function TEMPLATE_LOCFUN(): Promise<string> {
-    return "result";
+    return 'result';
 }
 
 

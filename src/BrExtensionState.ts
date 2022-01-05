@@ -43,7 +43,7 @@ class ExtensionState {
         }
 
 
-        readonly #lastShownVersionKey = "notifications.lastShownVersion";
+        readonly #lastShownVersionKey = 'notifications.lastShownVersion';
         public get lastShownVersion(): string | undefined
         {
             const value = this.parent.#context?.globalState.get<string>(this.#lastShownVersionKey);
