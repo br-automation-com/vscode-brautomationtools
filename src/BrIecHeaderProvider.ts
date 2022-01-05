@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 
 
-export async function TestProvideHeader(context: vscode.ExtensionContext) {
+export async function testProvideHeader(context: vscode.ExtensionContext) {
     //TODO providing a text document works fine, but how to make it accessible for C/C++ extension?
     const myProvider = new class implements vscode.TextDocumentContentProvider {
 

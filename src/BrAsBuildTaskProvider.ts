@@ -18,7 +18,7 @@ import { extensionConfiguration } from './BRConfiguration';
  */
 export function registerTaskProviders(context: vscode.ExtensionContext) {
     let disposable: vscode.Disposable | undefined;
-    disposable = vscode.tasks.registerTaskProvider(BrAsBuildTaskTypeName, new BrAsBuildTaskProvider());
+    disposable = vscode.tasks.registerTaskProvider(buildTaskTypeName, new BrAsBuildTaskProvider());
     context.subscriptions.push(disposable);
 }
 
@@ -30,14 +30,14 @@ export function registerTaskProviders(context: vscode.ExtensionContext) {
  * Task type name of BrAsBuild task provider
  */
 //SYNC Needs to be in sync with package.json/contributes/taskDefinitions/[n]/type
-const BrAsBuildTaskTypeName = 'BrAsBuild';
+const buildTaskTypeName = 'BrAsBuild';
 
 
 /**
  * Problem matchers for BrAsBuild task
  */
 //SYNC Needs to be in sync with package.json/contributes/problemMatchers/[n]/name
-const BrAsBuildTaskProblemMatchers = ['$BrAsBuild'];
+const buildTaskProblemMatchers = ['$BrAsBuild'];
 
 
 /**
@@ -45,7 +45,7 @@ const BrAsBuildTaskProblemMatchers = ['$BrAsBuild'];
  */
 //SYNC Needs to be in sync with package.json/contributes/taskDefinitions/[n]/ description and enums
 enum BrAsBuildLiterals{
-    UseSettings = '$useSettings',
+    useSettings = '$useSettings',
 }
 
 
@@ -107,18 +107,18 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         const result: vscode.Task[] = [];
         // task for undefined configuration
         const taskBuildWithDialogs = await BrAsBuildTaskProvider.definitionToTask({
-            type: BrAsBuildTaskTypeName
+            type: buildTaskTypeName
         });
         result.push(taskBuildWithDialogs);
         // task to build cross reference
         const taskBuildCrossRef = await BrAsBuildTaskProvider.definitionToTask({
-            type:                 BrAsBuildTaskTypeName,
+            type:                 buildTaskTypeName,
             buildCrossReferences: true
         });
         result.push(taskBuildCrossRef);
         // task to clean project
         const taskCleanProject = await BrAsBuildTaskProvider.definitionToTask({
-            type:            BrAsBuildTaskTypeName,
+            type:            buildTaskTypeName,
             cleanTemporary:  true,
             cleanBinary:     true,
             cleanGenerated:  true,
@@ -152,7 +152,7 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
      * @returns undefined if task.definition is not a BrAsBuildTaskDefinition
      */
     private static taskToDefinition(task: vscode.Task): BrAsBuildTaskDefinition | undefined {
-        if (task.definition.type !== BrAsBuildTaskTypeName) {
+        if (task.definition.type !== buildTaskTypeName) {
             return undefined;
         }
         const asBuildDefinition: BrAsBuildTaskDefinition = task.definition as BrAsBuildTaskDefinition;
@@ -172,9 +172,9 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
             definition,                  // taskDefinition
             vscode.TaskScope.Workspace,  // scope
             name,                        // name
-            BrAsBuildTaskTypeName,       // source (type)
+            buildTaskTypeName,       // source (type)
             customExec,                  // execution
-            BrAsBuildTaskProblemMatchers // problemMatchers
+            buildTaskProblemMatchers // problemMatchers
         );
         return task;
     }
@@ -396,7 +396,7 @@ async function processTaskDefinition(baseDefinition: BrAsBuildTaskDefinition): P
 function processTaskDefinitionWithSettings(baseDefinition: BrAsBuildTaskDefinition): BrAsBuildTaskDefinition | undefined {
     // build mode
     let asBuildMode = baseDefinition.asBuildMode;
-    if (asBuildMode === BrAsBuildLiterals.UseSettings) {
+    if (asBuildMode === BrAsBuildLiterals.useSettings) {
         asBuildMode = extensionConfiguration.build.defaultBuildMode;
         if (!asBuildMode) {
             return undefined;

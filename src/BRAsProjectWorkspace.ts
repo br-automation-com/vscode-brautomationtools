@@ -184,57 +184,57 @@ let _workspaceProjects: Promise<AsProjectInfo[]> = findAsProjectInfo();
 /** The type of an URI object within the Automation Studio context */
 enum ProjectUriType {
     /** The URI is undefined in context of the AS project  */
-    Undefined,
+    undefined,
     /** The URI is the base directory of an AS project */
-    ProjectBaseDirectory,
+    projectBaseDirectory,
     /** The URI is the project file of an AS project */
-    ProjectFile,
+    projectFile,
     /** The URI is the root directory of the logical contents */
-    LogicalRootDirectory,
+    logicalRootDirectory,
     /** The URI is the root directory of the physical contents */
-    PhysicalRootDirectory,
+    physicalRootDirectory,
     /** The URI is the root directory of the generated binaries */
-    BinariesRootDirectory,
+    binariesRootDirectory,
     /** The URI is the root directory of the logical contents */
-    TemporaryRootDirectory,
+    temporaryRootDirectory,
     /** The URI is the root directory of a physical configuration */
-    PhysicalConfigurationRootDirectory,
+    physicalConfigurationRootDirectory,
     /** The URI is a standard package directory */
-    PackageDirectory,
+    packageDirectory,
     /** The URI is a standard package file contents list */
-    PackageFileList,
+    packageFileList,
     /** The URI is an IEC program directory */
-    IecProgramDirectory,
+    iecProgramDirectory,
     /** The URI is an IEC program file contents list */
-    IecProgramFileList,
+    iecProgramFileList,
     /** The URI is a C program directory */
-    CProgramDirectory,//TODO C++ same? also in all other C values, also check static vs. dynamic Library
+    cProgramDirectory,//TODO C++ same? also in all other C values, also check static vs. dynamic Library
     /** The URI is a C program file contents list */
-    CProgramFileList,
+    cProgramFileList,
     /** The URI is a binary library directory */
-    BinaryLibraryDirectory,
+    binaryLibraryDirectory,
     /** The URI is a binary library file contents list */
-    BinaryLibraryFileList,
+    binaryLibraryFileList,
     /** The URI is an IEC library directory */
-    IecLibraryDirectory,
+    iecLibraryDirectory,
     /** The URI is an IEC library file contents list */
-    IecLibraryFileList,
+    iecLibraryFileList,
     /** The URI is a C library directory */
-    CLibraryDirectory,
+    cLibraryDirectory,
     /** The URI is a C library file contents list */
-    CLibraryFileList,
+    cLibraryFileList,
     /** The URI is an IEC source code file */
-    IecSourceFile,
+    iecSourceFile,
     /** The URI is an IEC variables files */
-    IecVariablesFile,
+    iecVariablesFile,
     /** The URI is an IEC types file */
-    IecTypesFile,
+    iecTypesFile,
     /** The URI is an IEC function declaration file */
-    IecFunctionsFile,
+    iecFunctionsFile,
     /** The URI is a C source code file */
-    CSourceFile,
+    cSourceFile,
     /** The URI is a C header file */
-    CHeaderFile
+    cHeaderFile
 }
 
 
@@ -404,13 +404,13 @@ async function isInLibrary(asProject: AsProjectInfo, uri: vscode.Uri): Promise<b
     // check if one of the paths is a library directory
     for (const actUri of toLogical) {
         const actType = await getProjectUriType(actUri);
-        if (actType === ProjectUriType.BinaryLibraryDirectory) {
+        if (actType === ProjectUriType.binaryLibraryDirectory) {
             return true;
         }
-        if (actType === ProjectUriType.IecLibraryDirectory) {
+        if (actType === ProjectUriType.iecLibraryDirectory) {
             return true;
         }
-        if (actType === ProjectUriType.CLibraryDirectory) {
+        if (actType === ProjectUriType.cLibraryDirectory) {
             return true;
         }
     }
@@ -455,59 +455,59 @@ async function getProjectUriType(uri: vscode.Uri) : Promise<ProjectUriType> {
         const info = uriTools.pathParsedUri(uri);
         // project organisation files
         if (info.ext === '.apj') {
-            return ProjectUriType.ProjectFile;
+            return ProjectUriType.projectFile;
         }
         else if (info.ext === '.pkg') {
             //TODO further specify
-            return ProjectUriType.PackageFileList;
+            return ProjectUriType.packageFileList;
         }
         else if (info.ext === '.lby') {
             if (info.name.toLowerCase() === 'binary') {
-                return ProjectUriType.BinaryLibraryFileList;
+                return ProjectUriType.binaryLibraryFileList;
             }
             else if (info.name.toLowerCase() === 'iec') {
-                return ProjectUriType.IecLibraryFileList;
+                return ProjectUriType.iecLibraryFileList;
             }
             else if (info.name.toLowerCase() === 'ansic') {
-                return ProjectUriType.CLibraryFileList;
+                return ProjectUriType.cLibraryFileList;
             }
             else {
-                return ProjectUriType.Undefined;
+                return ProjectUriType.undefined;
             }
         }
         else if (info.ext === '.prg') {
             if (info.name.toLowerCase() === 'iec') {
-                return ProjectUriType.IecProgramFileList;
+                return ProjectUriType.iecProgramFileList;
             }
             else if (info.name.toLowerCase() === 'ansic') {
-                return ProjectUriType.CProgramFileList;
+                return ProjectUriType.cProgramFileList;
             }
             else {
-                return ProjectUriType.Undefined;
+                return ProjectUriType.undefined;
             }
         }
         // IEC files
         else if (info.ext === '.var') {
-            return ProjectUriType.IecVariablesFile;
+            return ProjectUriType.iecVariablesFile;
         }
         else if (info.ext === '.typ') {
-            return ProjectUriType.IecTypesFile;
+            return ProjectUriType.iecTypesFile;
         }
         else if (info.ext === '.fun') {
-            return ProjectUriType.IecFunctionsFile;
+            return ProjectUriType.iecFunctionsFile;
         }
         else if (info.ext === '.st') {
             //TODO other IEC languages
-            return ProjectUriType.IecSourceFile;
+            return ProjectUriType.iecSourceFile;
         }
         // C / C++ files
         else if (info.ext === '.c') {
             // TODO C++ files
-            return ProjectUriType.CSourceFile;
+            return ProjectUriType.cSourceFile;
         }
         else if (info.ext === '.h') {
             // TODO C++ files
-            return ProjectUriType.CHeaderFile;
+            return ProjectUriType.cHeaderFile;
         }
     } else if (await uriTools.isDirectory(uri)) {
         // get files with types in directory
@@ -521,37 +521,37 @@ async function getProjectUriType(uri: vscode.Uri) : Promise<ProjectUriType> {
             });
         }
         // check if specific files are present to define a package type
-        const hasIecProgramFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.IecProgramFileList) ? true : false;
+        const hasIecProgramFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.iecProgramFileList) ? true : false;
         if (hasIecProgramFileList) {
-            return ProjectUriType.IecProgramDirectory;
+            return ProjectUriType.iecProgramDirectory;
         }
-        const hasCProgramFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.CProgramFileList) ? true : false;
+        const hasCProgramFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.cProgramFileList) ? true : false;
         if (hasCProgramFileList) {
-            return ProjectUriType.CProgramDirectory;
+            return ProjectUriType.cProgramDirectory;
         }
-        const hasBinaryLibraryFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.BinaryLibraryFileList) ? true : false;
+        const hasBinaryLibraryFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.binaryLibraryFileList) ? true : false;
         if (hasBinaryLibraryFileList) {
-            return ProjectUriType.BinaryLibraryDirectory;
+            return ProjectUriType.binaryLibraryDirectory;
         }
-        const hasIecLibraryFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.IecLibraryFileList) ? true : false;
+        const hasIecLibraryFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.iecLibraryFileList) ? true : false;
         if (hasIecLibraryFileList) {
-            return ProjectUriType.IecLibraryDirectory;
+            return ProjectUriType.iecLibraryDirectory;
         }
-        const hasCLibraryFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.CLibraryFileList) ? true : false;
+        const hasCLibraryFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.cLibraryFileList) ? true : false;
         if (hasCLibraryFileList) {
-            return ProjectUriType.CLibraryDirectory;
+            return ProjectUriType.cLibraryDirectory;
         }
-        const hasPackageFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.PackageFileList) ? true : false;
+        const hasPackageFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.packageFileList) ? true : false;
         if (hasPackageFileList) {
-            return ProjectUriType.PackageDirectory;
+            return ProjectUriType.packageDirectory;
         }
-        const hasProjectFile = subFilesWithTypes.find(f => f.type === ProjectUriType.ProjectFile) ? true : false;
+        const hasProjectFile = subFilesWithTypes.find(f => f.type === ProjectUriType.projectFile) ? true : false;
         if (hasProjectFile) {
-            return ProjectUriType.ProjectBaseDirectory;
+            return ProjectUriType.projectBaseDirectory;
         }
     }
     // no match until now -> undefined
-    return ProjectUriType.Undefined;
+    return ProjectUriType.undefined;
 }
 
 

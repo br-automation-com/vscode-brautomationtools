@@ -28,7 +28,7 @@ import { Logger } from './BrLog';
  */
 export function registerTaskProviders(context: vscode.ExtensionContext) {
     let disposable: vscode.Disposable | undefined;
-    disposable = vscode.tasks.registerTaskProvider(BrAsTransferTaskTypeName, new BrAsTransferTaskProvider());
+    disposable = vscode.tasks.registerTaskProvider(transferTaskTypeName, new BrAsTransferTaskProvider());
     context.subscriptions.push(disposable);
 }
 
@@ -40,7 +40,7 @@ export function registerTaskProviders(context: vscode.ExtensionContext) {
  * Task type name of BrAsTransfer task provider
  */
 //SYNC Needs to be in sync with package.json/contributes/taskDefinitions/[n]/type
-const BrAsTransferTaskTypeName = 'BrAsTransfer';
+const transferTaskTypeName = 'BrAsTransfer';
 
 
 /**
@@ -48,7 +48,7 @@ const BrAsTransferTaskTypeName = 'BrAsTransfer';
  */
 //SYNC Needs to be in sync with package.json/contributes/problemMatchers/[n]/name
 //TODO create problem matcher for PIL execution
-const BrAsTransferTaskProblemMatchers = ['$BrAsBuild'];
+const transferTaskProblemMatchers = ['$BrAsBuild'];
 
 
 /**
@@ -57,8 +57,8 @@ const BrAsTransferTaskProblemMatchers = ['$BrAsBuild'];
 //SYNC Needs to be in sync with package.json/contributes/taskDefinitions/[n]/ description and enums
 //TODO package.json
 enum BrAsTransferLiterals{
-    UseSettings            = '$useSettings',
-    LastBuiltConfiguration = "$lastBuiltConfig" //TODO implement
+    useSettings            = '$useSettings',
+    lastBuiltConfiguration = "$lastBuiltConfig" //TODO implement
 }
 
 
@@ -145,7 +145,7 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
         const result: vscode.Task[] = [];
         // Ethernet with dialogs for IP address and install settings
         const taskEthernetDialogAll = await BrAsTransferTaskProvider.definitionToTask({
-            type:            BrAsTransferTaskTypeName,
+            type:            transferTaskTypeName,
             asProjectFile:   undefined,
             asConfiguration: undefined,
             pviConnectionSettings: {
@@ -171,7 +171,7 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
         result.push(taskEthernetDialogAll);
         // Ethernet with dialog for IP address and default install settings
         const taskEthernetDialogAddr = await BrAsTransferTaskProvider.definitionToTask({
-            type:                 BrAsTransferTaskTypeName,
+            type:                 transferTaskTypeName,
 
             asProjectFile:   undefined,
             asConfiguration: undefined,
@@ -198,7 +198,7 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
         result.push(taskEthernetDialogAddr);
         // ArSim with default install settings
         const taskArSimDefaultInstall = await BrAsTransferTaskProvider.definitionToTask({
-            type:                 BrAsTransferTaskTypeName,
+            type:                 transferTaskTypeName,
 
             asProjectFile:   undefined,
             asConfiguration: undefined,
@@ -250,7 +250,7 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
      * @returns undefined if task.definition is not a BrAsTransferTaskDefinition
      */
     private static taskToDefinition(task: vscode.Task): BrAsTransferTaskDefinition | undefined {
-        if (task.definition.type !== BrAsTransferTaskTypeName) {
+        if (task.definition.type !== transferTaskTypeName) {
             return undefined;
         }
         const taskDefinition: BrAsTransferTaskDefinition = task.definition as BrAsTransferTaskDefinition;
@@ -270,9 +270,9 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
             definition,                     // taskDefinition
             vscode.TaskScope.Workspace,     // scope
             name,                           // name
-            BrAsTransferTaskTypeName,       // source (type)
+            transferTaskTypeName,       // source (type)
             customExec,                     // execution
-            BrAsTransferTaskProblemMatchers // problemMatchers
+            transferTaskProblemMatchers // problemMatchers
         );
         return task;
     }

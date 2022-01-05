@@ -15,15 +15,15 @@ import * as vscode from 'vscode';
  */
 export enum LogLevel {
     /** Fatal error -> extension cannot continue to work */
-    Fatal = 0,
+    fatal = 0,
     /** Error -> Some functionality will not work or some function failed to execute */
-    Error = 1,
+    error = 1,
     /** Warning -> Some functionality may be limited */
-    Warning = 2,
+    warning = 2,
     /** Info -> Normal insight to whats happening */
-    Info = 3,
+    info = 3,
     /** Debug -> Detailed insight what is happening */
-    Debug = 4
+    debug = 4
 }
 
 
@@ -81,7 +81,7 @@ export class Logger {
         this.#setLogFunctions();
     }
     #configuration: LogConfiguration = {
-        level: LogLevel.Debug
+        level: LogLevel.debug
     };
 
 
@@ -149,7 +149,7 @@ export class Logger {
     /** Set the log function properties depending on the configuration */
     #setLogFunctions() {
         switch (this.configuration.level) {
-            case LogLevel.Fatal:
+            case LogLevel.fatal:
                 this.fatal = this.#logFatal;
                 this.error = this.#logDummy;
                 this.warning = this.#logDummy;
@@ -157,7 +157,7 @@ export class Logger {
                 this.debug = this.#logDummy;
                 break;
 
-            case LogLevel.Error:
+            case LogLevel.error:
                 this.fatal = this.#logFatal;
                 this.error = this.#logError;
                 this.warning = this.#logDummy;
@@ -165,7 +165,7 @@ export class Logger {
                 this.debug = this.#logDummy;
                 break;
 
-            case LogLevel.Warning:
+            case LogLevel.warning:
                 this.fatal = this.#logFatal;
                 this.error = this.#logError;
                 this.warning = this.#logWarning;
@@ -173,7 +173,7 @@ export class Logger {
                 this.debug = this.#logDummy;
                 break;
 
-            case LogLevel.Info:
+            case LogLevel.info:
                 this.fatal = this.#logFatal;
                 this.error = this.#logError;
                 this.warning = this.#logWarning;
@@ -181,7 +181,7 @@ export class Logger {
                 this.debug = this.#logDummy;
                 break;
 
-            case LogLevel.Debug:
+            case LogLevel.debug:
                 this.fatal = this.#logFatal;
                 this.error = this.#logError;
                 this.warning = this.#logWarning;
@@ -237,31 +237,31 @@ export class Logger {
 
 
     #logFatal(message: string, additionalData?: LogEntryAdditionalData) {
-        const entry = new LogEntry(LogLevel.Fatal, message, additionalData);
+        const entry = new LogEntry(LogLevel.fatal, message, additionalData);
         this.#logBase(entry);
     }
 
 
     #logError(message: string, additionalData?: LogEntryAdditionalData) {
-        const entry = new LogEntry(LogLevel.Error, message, additionalData);
+        const entry = new LogEntry(LogLevel.error, message, additionalData);
         this.#logBase(entry);
     }
 
 
     #logWarning(message: string, additionalData?: LogEntryAdditionalData) {
-        const entry = new LogEntry(LogLevel.Warning, message, additionalData);
+        const entry = new LogEntry(LogLevel.warning, message, additionalData);
         this.#logBase(entry);
     }
 
 
     #logInfo(message: string, additionalData?: LogEntryAdditionalData) {
-        const entry = new LogEntry(LogLevel.Info, message, additionalData);
+        const entry = new LogEntry(LogLevel.info, message, additionalData);
         this.#logBase(entry);
     }
 
 
     #logDebug(message: string, additionalData?: LogEntryAdditionalData) {
-        const entry = new LogEntry(LogLevel.Debug, message, additionalData);
+        const entry = new LogEntry(LogLevel.debug, message, additionalData);
         this.#logBase(entry);
     }
 }

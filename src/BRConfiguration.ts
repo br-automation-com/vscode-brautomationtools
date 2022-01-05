@@ -25,31 +25,31 @@ function getConfiguration() {
  * @returns Returns the LogLevel behind the configValue, or `LogLevel.Debug` if the conversion failed
  */
 function toLogLevel(configValue: any): LogLevel{
-    let result = LogLevel.Debug;
+    let result = LogLevel.debug;
     switch (configValue) {
         case "Fatal":
-        case LogLevel.Fatal:
-            result = LogLevel.Fatal;
+        case LogLevel.fatal:
+            result = LogLevel.fatal;
             break;
         case "Error":
-        case LogLevel.Error:
-            result = LogLevel.Error;
+        case LogLevel.error:
+            result = LogLevel.error;
             break;
         case "Warning":
-        case LogLevel.Warning:
-            result = LogLevel.Warning;
+        case LogLevel.warning:
+            result = LogLevel.warning;
             break;
         case "Info":
-        case LogLevel.Info:
-            result = LogLevel.Info;
+        case LogLevel.info:
+            result = LogLevel.info;
             break;
         case "Debug":
-        case LogLevel.Debug:
-            result = LogLevel.Debug;
+        case LogLevel.debug:
+            result = LogLevel.debug;
             break;
         default:
-            logger.warning(`Invalid log level configured, ${LogLevel.Debug} level will be used`);
-            result = LogLevel.Debug;
+            logger.warning(`Invalid log level configured, ${LogLevel.debug} level will be used`);
+            result = LogLevel.debug;
     }
     return result;
 }
