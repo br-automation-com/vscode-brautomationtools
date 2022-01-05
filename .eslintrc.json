@@ -8,26 +8,26 @@
     "plugins": [
         "@typescript-eslint"
     ],
-    "extends": "eslint:recommended",
+    "extends": "eslint:recommended", //TODO check for duplicates of recommended in defined rules
     "rules": {
         // naming
-        "@typescript-eslint/naming-convention": "warn",
+        "@typescript-eslint/naming-convention": "error",
         // general
-        "@typescript-eslint/semi": "warn",
-        "semi": "warn",
-        "no-extra-semi": "warn",
+        "@typescript-eslint/semi": "error",
+        "semi": "error",
+        "no-extra-semi": "error",
         "brace-style": [
-            "warn",
+            "error",
             "1tbs",
             {
                 "allowSingleLine": true
             }
         ],
-        "curly": "warn",
-        "eqeqeq": "warn",
-        "no-throw-literal": "warn",
+        "curly": "error",
+        "eqeqeq": "error",
+        "no-throw-literal": "error",
         "quotes": [
-            "warn",
+            "error",
             "single",
             {
                 "allowTemplateLiterals": true,
@@ -35,10 +35,10 @@
             }
         ],
         // lambdas (arrow)
-        "arrow-parens": "warn",
-        "no-confusing-arrow": "warn",
-        "implicit-arrow-linebreak": "warn",
-        "arrow-spacing": "warn",
+        "arrow-parens": "error",
+        "no-confusing-arrow": "error",
+        "implicit-arrow-linebreak": "error",
+        "arrow-spacing": "error",
         //TODO rules which should probably be enabled in future (set to error in eslint:recommended)
         "no-unused-vars": "off",
         "no-useless-escape": "off",
