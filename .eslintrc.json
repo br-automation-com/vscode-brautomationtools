@@ -22,7 +22,12 @@
                 "allowTemplateLiterals": true,
                 "avoidEscape": true
             }
-        ]
+        ],
+        // lambdas (arrow)
+        "arrow-parens": "warn",
+        "no-confusing-arrow": "warn",
+        "implicit-arrow-linebreak": "warn",
+        "arrow-spacing": "warn"
         //TODO investigate other rules
     },
     "ignorePatterns": [

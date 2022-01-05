@@ -115,7 +115,7 @@ export async function getAsVersionInfo(versionRequest: semver.SemVer | string): 
 	}
 	const fitBugfix = `${semanticRequest.major}.${semanticRequest.minor}.x`;
 	const asVersions = await getAvailableAutomationStudioVersions();
-	return asVersions.find(v => semver.satisfies(v.version, fitBugfix));
+	return asVersions.find((v) => semver.satisfies(v.version, fitBugfix));
 }
 
 
@@ -135,7 +135,7 @@ export async function getBrAsBuilExe(versionRequest: semver.SemVer | string): Pr
  */
 export async function getGccTargetSystemInfo(asVersion: semver.SemVer | string, gccVersion: semver.SemVer | string, targetSystem: TargetSystemType): Promise<AsGccTargetSystemInfo | undefined> {
 	const asVersionInfo = await getAsVersionInfo(asVersion);
-	const gccVersionInfo = asVersionInfo?.gccVersions.find(v => v.version.compare(gccVersion) === 0);
+	const gccVersionInfo = asVersionInfo?.gccVersions.find((v) => v.version.compare(gccVersion) === 0);
 	if (!gccVersionInfo) {
 		return undefined;
 	}
@@ -170,7 +170,7 @@ export async function getPviVersionInfo(versionRequest?: semver.SemVer | string)
 			return undefined;
 		}
 		const fitBugfix = `${semanticRequest.major}.${semanticRequest.minor}.x`;
-		return pviVersions.find(v => semver.satisfies(v.version, fitBugfix));
+		return pviVersions.find((v) => semver.satisfies(v.version, fitBugfix));
 	} else {
 		// newest version
 		return pviVersions[0];
@@ -241,7 +241,7 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 	// filter subdirectories with regular expression for AS version
 	const subDirectories = await uriTools.listSubDirectoryNames(uri);
 	const asDirRegExp = new RegExp(/^AS(\d)(\d+)$/);
-	const matching = subDirectories.filter(d => asDirRegExp.test(d)).map(d => asDirRegExp.exec(d));
+	const matching = subDirectories.filter((d) => asDirRegExp.test(d)).map((d) => asDirRegExp.exec(d));
 	// create version information from matching subdirectories
 	const versionInfos: ASVersionInfo[] = [];
 	for (const match of matching) {
@@ -300,7 +300,7 @@ async function findAvailableGccVersions(asVersion: ASVersionInfo): Promise<void>
 	const gccContainingUri = uriTools.pathJoin(asVersion.baseUri, 'AS/gnuinst');
 	const gccSubDirs       = await uriTools.listSubDirectoryNames(gccContainingUri);
 	const gccDirRegExp     = new RegExp('^V(\\d+).(\\d+).(\\d+)$');
-	const matching         = gccSubDirs.filter(d => gccDirRegExp.test(d)).map(d => gccDirRegExp.exec(d));
+	const matching         = gccSubDirs.filter((d) => gccDirRegExp.test(d)).map((d) => gccDirRegExp.exec(d));
 	// create version information from matching subdirectories
 	for (const match of matching) {
 		const gccVersionUri = uriTools.pathJoin(gccContainingUri, match![0]);

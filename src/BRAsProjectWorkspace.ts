@@ -132,7 +132,7 @@ export async function getProjectForUri(uri: vscode.Uri): Promise<AsProjectInfo |
     const projects = await getWorkspaceProjects();
     // sort projects so the longest path is first -> when an AS project is within an AS project the right one is found
     const projectsSorted = projects.sort((a, b) => (b.baseUri.path.length - a.baseUri.path.length));
-    return projectsSorted.find(p => uriTools.isSubOf(p.baseUri, uri));
+    return projectsSorted.find((p) => uriTools.isSubOf(p.baseUri, uri));
 }
 
 
@@ -350,7 +350,7 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
         // get data from Cpu.pkg
         const cpuPkgUri  = uriTools.pathJoin(cpuPkgDirUri, 'Cpu.pkg');
         const cpuPkgInfo = await BrAsProjectFiles.getCpuPackageInfo(cpuPkgUri);
-        const ansiCIncludeDirs = cpuPkgInfo?.build.ansiCIncludeDirectories?.map(path => uriTools.pathResolve(projectRootUri, path));
+        const ansiCIncludeDirs = cpuPkgInfo?.build.ansiCIncludeDirectories?.map((path) => uriTools.pathResolve(projectRootUri, path));
         // push to result
         const configData: AsConfigurationInfo = {
             name:           config.relativePath,
@@ -378,7 +378,7 @@ async function getActiveConfiguration(configurations: AsConfigurationInfo[], use
         return undefined;
     }
     const userSettingsData = await BrAsProjectFiles.getUserSettingsInfo(userSettingsUri);
-    let activeConfiguration = configurations.find(config => config.name === userSettingsData?.activeConfiguration);
+    let activeConfiguration = configurations.find((config) => config.name === userSettingsData?.activeConfiguration);
     if (!activeConfiguration) {
         activeConfiguration = configurations[0];
         Logger.default.warning(`LastUser.set file was not found or is invalid. '${activeConfiguration.name}' will be used as active configuration`);
@@ -521,31 +521,31 @@ async function getProjectUriType(uri: vscode.Uri) : Promise<ProjectUriType> {
             });
         }
         // check if specific files are present to define a package type
-        const hasIecProgramFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.iecProgramFileList) ? true : false;
+        const hasIecProgramFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.iecProgramFileList) ? true : false;
         if (hasIecProgramFileList) {
             return ProjectUriType.iecProgramDirectory;
         }
-        const hasCProgramFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.cProgramFileList) ? true : false;
+        const hasCProgramFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.cProgramFileList) ? true : false;
         if (hasCProgramFileList) {
             return ProjectUriType.cProgramDirectory;
         }
-        const hasBinaryLibraryFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.binaryLibraryFileList) ? true : false;
+        const hasBinaryLibraryFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.binaryLibraryFileList) ? true : false;
         if (hasBinaryLibraryFileList) {
             return ProjectUriType.binaryLibraryDirectory;
         }
-        const hasIecLibraryFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.iecLibraryFileList) ? true : false;
+        const hasIecLibraryFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.iecLibraryFileList) ? true : false;
         if (hasIecLibraryFileList) {
             return ProjectUriType.iecLibraryDirectory;
         }
-        const hasCLibraryFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.cLibraryFileList) ? true : false;
+        const hasCLibraryFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.cLibraryFileList) ? true : false;
         if (hasCLibraryFileList) {
             return ProjectUriType.cLibraryDirectory;
         }
-        const hasPackageFileList = subFilesWithTypes.find(f => f.type === ProjectUriType.packageFileList) ? true : false;
+        const hasPackageFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.packageFileList) ? true : false;
         if (hasPackageFileList) {
             return ProjectUriType.packageDirectory;
         }
-        const hasProjectFile = subFilesWithTypes.find(f => f.type === ProjectUriType.projectFile) ? true : false;
+        const hasProjectFile = subFilesWithTypes.find((f) => f.type === ProjectUriType.projectFile) ? true : false;
         if (hasProjectFile) {
             return ProjectUriType.projectBaseDirectory;
         }

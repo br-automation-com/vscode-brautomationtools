@@ -107,7 +107,7 @@ export async function getQuickPickValues<T>(items: ValueQuickPickItem<T>[], opti
                 // Maybe do some validation here in the future. Maybe input for callbacks?
             });
             picker.onDidAccept(() => {
-                resolve(picker.selectedItems.map(i => i.value));
+                resolve(picker.selectedItems.map((i) => i.value));
                 picker.dispose();
             });
             picker.onDidHide(() => {

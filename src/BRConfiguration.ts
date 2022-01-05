@@ -97,14 +97,14 @@ class ExtensionConfiguration {
         public get automationStudioInstallPaths(): vscode.Uri[] {
             const configValue = getConfiguration().get(this.#automationStudioInstallPathsKey);
             if (isStringArray(configValue)) {
-                return configValue.map(fsPath => vscode.Uri.file(fsPath));
+                return configValue.map((fsPath) => vscode.Uri.file(fsPath));
             } else {
                 logger.error(`Invalid type in configuration of '${this.#automationStudioInstallPathsKey}'`);
                 return [];
             }
         }
         public set automationStudioInstallPaths(value: vscode.Uri[] | undefined) {
-            const configValue = value?.map(uri => uri.fsPath);
+            const configValue = value?.map((uri) => uri.fsPath);
             getConfiguration().update(this.#automationStudioInstallPathsKey, configValue, vscode.ConfigurationTarget.Global);
         }
 
@@ -113,14 +113,14 @@ class ExtensionConfiguration {
         public get pviInstallPaths(): vscode.Uri[] {
             const configValue = getConfiguration().get(this.#pviInstallPathsKey);
             if (isStringArray(configValue)) {
-                return configValue.map(fsPath => vscode.Uri.file(fsPath));
+                return configValue.map((fsPath) => vscode.Uri.file(fsPath));
             } else {
                 logger.error(`Invalid type in configuration of '${this.#pviInstallPathsKey}'`);
                 return [];
             }
         }
         public set pviInstallPaths(value: vscode.Uri[] | undefined) {
-            const configValue = value?.map(uri => uri.fsPath);
+            const configValue = value?.map((uri) => uri.fsPath);
             getConfiguration().update(this.#pviInstallPathsKey, configValue, vscode.ConfigurationTarget.Global);
         }
     }(this);

@@ -167,7 +167,7 @@ export async function getPhysicalPackageInfo(physicalPackageFile: vscode.Uri): P
         return undefined;
     }
     const configElements = getChildElements(objectsElement[0], 'Object', {name: 'Type', value: 'Configuration'});
-    const configDataRaw = configElements.map(element => {
+    const configDataRaw = configElements.map((element) => {
         const description = element.getAttribute('Description') ?? undefined;
         const relativePath = element.textContent ?? undefined;
         if (relativePath) {
@@ -347,7 +347,7 @@ async function xmlCreateFromUri(fileUri: vscode.Uri): Promise<XMLBuilder | undef
  * @param xmlBase The base XMLBuilder
  */
 function getXmlHeader(xmlBase: XMLBuilder): XmlHeader {
-    const asHeaderNode = xmlBase.find(child => {
+    const asHeaderNode = xmlBase.find((child) => {
         const node = child.node;
         if (node.nodeType === node.PROCESSING_INSTRUCTION_NODE) {
             return (node.nodeName === 'AutomationStudio');
@@ -466,7 +466,7 @@ function projectPathsToUriPaths(projectPaths: string[] | undefined): string[] {
     if ((!projectPaths) || (projectPaths.length === 0)) {
         return [];
     }
-    return projectPaths.map(prjPath => projectPathToUriPath(prjPath));
+    return projectPaths.map((prjPath) => projectPathToUriPath(prjPath));
 }
 
 

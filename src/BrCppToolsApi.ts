@@ -79,7 +79,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         for (const uri of uris) {
             Logger.default.debug(`CppConfigurationProvider.provideConfigurations() called for URI "${uri.toString(true)}"`);
         }
-        const configs = await Promise.all( uris.map(uri => this._getConfiguration(uri) ) );
+        const configs = await Promise.all( uris.map((uri) => this._getConfiguration(uri) ) );
         const validConfigs: cppTools.SourceFileConfigurationItem[] = [];
         Helpers.pushDefined(validConfigs, ...configs);
         return validConfigs;
@@ -129,7 +129,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         Logger.default.debug(`CppConfigurationProvider._getConfiguration() called for URI "${uri.toString(true)}"`);
         // get project include directories
         const headerUris = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri);
-        const headerPaths = headerUris.map(u => u.fsPath);
+        const headerPaths = headerUris.map((u) => u.fsPath);
         // get project info for further queries and check required properties
         const asProjectInfo = await BRAsProjectWorkspace.getProjectForUri(uri);
         if (!asProjectInfo) {

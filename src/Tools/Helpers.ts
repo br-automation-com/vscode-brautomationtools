@@ -39,5 +39,5 @@ export function pushDefined<T>(array: T[], ...items: (T | undefined | null)[]) {
  * @param ms Delay time in milliseconds
  */
 export function delay(ms: number) {
-    return new Promise( resolve => setTimeout(resolve, ms) );
+    return new Promise( (resolve) => setTimeout(resolve, ms) );
 }

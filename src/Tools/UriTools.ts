@@ -210,7 +210,7 @@ export async function listSubDirectoryNames(baseUri: vscode.Uri): Promise<string
  */
 export async function listSubDirectories(baseUri: vscode.Uri) {
     const dirNames = await listSubDirectoryNames(baseUri);
-    return dirNames.map(name => pathJoin(baseUri, name));
+    return dirNames.map((name) => pathJoin(baseUri, name));
 }
 
 
@@ -220,7 +220,7 @@ export async function listSubDirectories(baseUri: vscode.Uri) {
  */
 export async function listSubFiles(baseUri: vscode.Uri): Promise<vscode.Uri[]> {
     const fileNames = await listSubsOfType(baseUri, vscode.FileType.File);
-    return fileNames.map(name => pathJoin(baseUri, name));
+    return fileNames.map((name) => pathJoin(baseUri, name));
 }
 
 
@@ -231,8 +231,8 @@ export async function listSubFiles(baseUri: vscode.Uri): Promise<vscode.Uri[]> {
  */
 async function listSubsOfType(baseUri: vscode.Uri, fileType: vscode.FileType): Promise<string[]> {
     const subs = await vscode.workspace.fs.readDirectory(baseUri);
-    const subsOfType = subs.filter(sub => sub[1] === fileType);
-    const subNames = subsOfType.map(sub => sub[0]);
+    const subsOfType = subs.filter((sub) => sub[1] === fileType);
+    const subNames = subsOfType.map((sub) => sub[0]);
     return subNames;
 }
 

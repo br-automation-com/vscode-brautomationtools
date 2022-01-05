@@ -384,7 +384,7 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
             this.done(40);
             return;
         }
-        const asConfigurationData = asProject.configurations.find(config => config.name === usedDefinition.asConfiguration);
+        const asConfigurationData = asProject.configurations.find((config) => config.name === usedDefinition.asConfiguration);
         if (!asConfigurationData) {
             this.writeLine(`ERROR: Configuration not found in project`);
             this.done(45);

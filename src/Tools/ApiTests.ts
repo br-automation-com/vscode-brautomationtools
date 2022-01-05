@@ -141,15 +141,15 @@ async function testFileSystemEvents() {
 	console.log('createFileSystemWatcher:');
 	console.log(pattern);
 	const watcher = vscode.workspace.createFileSystemWatcher(pattern);
-	watcher.onDidChange(uri => {
+	watcher.onDidChange((uri) => {
 		console.log('File changed:');
 		console.log(uri);
 	});
-	watcher.onDidCreate(uri => {
+	watcher.onDidCreate((uri) => {
 		console.log('File created:');
 		console.log(uri);
 	});
-	watcher.onDidDelete(uri => {
+	watcher.onDidDelete((uri) => {
 		console.log('File deleted:');
 		console.log(uri);
 	});
@@ -164,7 +164,7 @@ async function testFileSystemEvents() {
 	 * - Will be useful to watch moving / deleting / creating files in the general AS workspace
 	 * - Can be used e.g. for a feature to automatically adjust package files
 	 */
-	const renameSubscript = vscode.workspace.onDidRenameFiles(event => {
+	const renameSubscript = vscode.workspace.onDidRenameFiles((event) => {
 		console.log('Files renamed from -> to:');
 		for (const file of event.files) {
 			console.log(`${file.oldUri.fsPath} -> ${file.newUri.fsPath}`);
@@ -425,7 +425,7 @@ async function testBrAsProjectFiles(): Promise<void> {
 	console.log('BrAsProjectFiles.getUserSettingsInfo');
 	const settingFiles = await vscode.workspace.findFiles({base: asProject.baseUri.fsPath, pattern: '*.set'});
 	const settingsInfos = await Promise.all(
-			settingFiles.map(async file => {
+			settingFiles.map(async (file) => {
 				return {uri: file, data: await BrAsProjectFiles.getUserSettingsInfo(file)};
 			})
 		);
@@ -434,7 +434,7 @@ async function testBrAsProjectFiles(): Promise<void> {
 	console.log('BrAsProjectFiles.getConfigPackageInfo');
 	const configPkgFiles = await vscode.workspace.findFiles({base: asProject.physical.fsPath, pattern: '*/Config.pkg'});
 	const configPkgInfos = await Promise.all(
-		configPkgFiles.map(async file => {
+		configPkgFiles.map(async (file) => {
 			return {uri: file, data: await BrAsProjectFiles.getConfigPackageInfo(file)};
 		})
 	);
@@ -443,7 +443,7 @@ async function testBrAsProjectFiles(): Promise<void> {
 	console.log('BrAsProjectFiles.getCpuPackageInfo');
 	const cpuPkgFiles = await vscode.workspace.findFiles({base: asProject.physical.fsPath, pattern: '*/*/Cpu.pkg'});
 	const cpuPkgInfos = await Promise.all(
-		cpuPkgFiles.map(async file => {
+		cpuPkgFiles.map(async (file) => {
 			return {uri: file, data: await BrAsProjectFiles.getCpuPackageInfo(file)};
 		})
 	);
