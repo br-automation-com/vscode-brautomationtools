@@ -296,7 +296,7 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
             projectData.activeConfiguration = await getActiveConfiguration(configurationsData, uri);
             await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
         });
-    };
+    }
     await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
     return result;
 }
@@ -454,58 +454,43 @@ async function getProjectUriType(uri: vscode.Uri) : Promise<ProjectUriType> {
     if (await uriTools.isFile(uri)) {
         const info = uriTools.pathParsedUri(uri);
         // project organisation files
+        //TODO use switch(info.ext) {...}
         if (info.ext === '.apj') {
             return ProjectUriType.projectFile;
-        }
-        else if (info.ext === '.pkg') {
+        } else if (info.ext === '.pkg') {
             //TODO further specify
             return ProjectUriType.packageFileList;
-        }
-        else if (info.ext === '.lby') {
+        } else if (info.ext === '.lby') {
             if (info.name.toLowerCase() === 'binary') {
                 return ProjectUriType.binaryLibraryFileList;
-            }
-            else if (info.name.toLowerCase() === 'iec') {
+            } else if (info.name.toLowerCase() === 'iec') {
                 return ProjectUriType.iecLibraryFileList;
-            }
-            else if (info.name.toLowerCase() === 'ansic') {
+            } else if (info.name.toLowerCase() === 'ansic') {
                 return ProjectUriType.cLibraryFileList;
-            }
-            else {
+            } else {
                 return ProjectUriType.undefined;
             }
-        }
-        else if (info.ext === '.prg') {
+        } else if (info.ext === '.prg') {
             if (info.name.toLowerCase() === 'iec') {
                 return ProjectUriType.iecProgramFileList;
-            }
-            else if (info.name.toLowerCase() === 'ansic') {
+            } else if (info.name.toLowerCase() === 'ansic') {
                 return ProjectUriType.cProgramFileList;
-            }
-            else {
+            } else {
                 return ProjectUriType.undefined;
             }
-        }
-        // IEC files
-        else if (info.ext === '.var') {
+        } else if (info.ext === '.var') {
             return ProjectUriType.iecVariablesFile;
-        }
-        else if (info.ext === '.typ') {
+        } else if (info.ext === '.typ') {
             return ProjectUriType.iecTypesFile;
-        }
-        else if (info.ext === '.fun') {
+        } else if (info.ext === '.fun') {
             return ProjectUriType.iecFunctionsFile;
-        }
-        else if (info.ext === '.st') {
+        } else if (info.ext === '.st') {
             //TODO other IEC languages
             return ProjectUriType.iecSourceFile;
-        }
-        // C / C++ files
-        else if (info.ext === '.c') {
+        } else if (info.ext === '.c') {
             // TODO C++ files
             return ProjectUriType.cSourceFile;
-        }
-        else if (info.ext === '.h') {
+        } else if (info.ext === '.h') {
             // TODO C++ files
             return ProjectUriType.cHeaderFile;
         }

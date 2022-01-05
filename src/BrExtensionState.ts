@@ -15,7 +15,7 @@ class ExtensionState {
     }
 
 
-    private constructor() {};
+    private constructor() { }
     
 
     /** VS Code extension context */
@@ -44,13 +44,11 @@ class ExtensionState {
 
 
         readonly #lastShownVersionKey = 'notifications.lastShownVersion';
-        public get lastShownVersion(): string | undefined
-        {
+        public get lastShownVersion(): string | undefined {
             const value = this.parent.#context?.globalState.get<string>(this.#lastShownVersionKey);
             return isString(value) ? value : undefined;
         }
-        public set lastShownVersion(value: string | undefined)
-        {
+        public set lastShownVersion(value: string | undefined) {
             this.parent.#context?.globalState.update(this.#lastShownVersionKey, value);
         }
     } (this) ;

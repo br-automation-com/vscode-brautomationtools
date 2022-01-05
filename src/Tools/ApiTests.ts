@@ -72,8 +72,7 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	Helpers.logTimedHeader('Test command end');
 }
 
-async function testVarious(arg1: any, arg2: any)
-{
+async function testVarious(arg1: any, arg2: any) {
 	console.warn('Test various start');
 	// check command arguments
 	console.log('arg1 and arg2:');

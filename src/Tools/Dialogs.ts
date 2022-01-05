@@ -14,7 +14,7 @@ import * as vscode from 'vscode';
  */
 export interface ValueQuickPickItem<T> extends vscode.QuickPickItem {
     value: T;
-};
+}
 
 
 /**

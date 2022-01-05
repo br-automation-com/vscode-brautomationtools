@@ -64,7 +64,7 @@ class ExtensionConfiguration {
     public static getInstance(): ExtensionConfiguration {
         return this.#instance;
     }
-    private constructor() { };
+    private constructor() { }
 
 
     /** Build configuration */

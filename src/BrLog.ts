@@ -136,8 +136,7 @@ export class Logger {
 
 
     /** Create Logger with default settings */
-    constructor()
-    {
+    constructor() {
         this.#setLogFunctions();
     }
 

@@ -25,8 +25,7 @@ export function pathBasename(uri: vscode.Uri, extension?: string): string {
  * Return the directory name of a path. Similar to the Unix dirname command.
  * @param uri the path to evaluate.
  */
-export function pathDirname(uri: vscode.Uri): vscode.Uri
-{
+export function pathDirname(uri: vscode.Uri): vscode.Uri {
     const dirPath = posix.dirname(uri.path);
     return uri.with({path: dirPath});
 }
@@ -146,8 +145,7 @@ export function isSubOf(base: vscode.Uri, uri: vscode.Uri): boolean {
     const relative = pathRelative(base, uri);
     if (relative.startsWith('..')) {
         return false;
-    }
-    else {
+    } else {
         return true;
     }
 }
@@ -241,8 +239,7 @@ async function listSubsOfType(baseUri: vscode.Uri, fileType: vscode.FileType): P
  * Creates a `vscode.RelativePattern` which matches only the specified file URI.
  * @param uri URI to create the pattern from
  */
-export function uriToSingleFilePattern(uri: vscode.Uri): vscode.RelativePattern
-{
+export function uriToSingleFilePattern(uri: vscode.Uri): vscode.RelativePattern {
     const fileName = pathBasename(uri);
     const dirName = pathDirname(uri).fsPath;
     return {base: dirName, pattern: fileName};

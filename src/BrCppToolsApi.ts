@@ -66,8 +66,7 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
         const asProject = await BRAsProjectWorkspace.getProjectForUri(uri);
         if (!asProject) {
             return false;
-        }
-        else {
+        } else {
             // Only files in logical view can provide info
             //TODO is it also required for headers in Temp?
             return uriTools.isSubOf(asProject.logical, uri);

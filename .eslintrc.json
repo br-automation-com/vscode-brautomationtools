@@ -8,13 +8,24 @@
     "plugins": [
         "@typescript-eslint"
     ],
+    "extends": "eslint:recommended",
     "rules": {
+        // naming
         "@typescript-eslint/naming-convention": "warn",
+        // general
         "@typescript-eslint/semi": "warn",
+        "semi": "warn",
+        "no-extra-semi": "warn",
+        "brace-style": [
+            "warn",
+            "1tbs",
+            {
+                "allowSingleLine": true
+            }
+        ],
         "curly": "warn",
         "eqeqeq": "warn",
         "no-throw-literal": "warn",
-        "semi": "off",
         "quotes": [
             "warn",
             "single",
@@ -27,8 +38,13 @@
         "arrow-parens": "warn",
         "no-confusing-arrow": "warn",
         "implicit-arrow-linebreak": "warn",
-        "arrow-spacing": "warn"
-        //TODO investigate other rules
+        "arrow-spacing": "warn",
+        //TODO rules which should probably be enabled in future (set to error in eslint:recommended)
+        "no-unused-vars": "off",
+        "no-useless-escape": "off",
+        "no-undef": "off" // most of the undef are console
+        //TODO set spacing rules as I like it ;)
+        //"space-before-function-paren": ["warn", "never"],
     },
     "ignorePatterns": [
         "out",

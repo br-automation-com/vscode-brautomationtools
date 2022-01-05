@@ -597,7 +597,7 @@ async function processTaskDefinitionWithDialogs(baseDefinition: BrAsTransferTask
                 {value: 'ForceInitialInstallation',   label: 'Initial installation which resets all data'}
             ],
             {title: 'Installation restrictions'}
-            );;
+            );
     }
     let installRestriction = baseDefinition.installationSettings?.installRestriction;
     if (!installRestriction) {

@@ -11,8 +11,7 @@
  * @returns true if value is a `string[]`, false otherwise
  */
 export function isStringArray(value: any): value is string[] {
-    if (!Array.isArray(value) )
-    {
+    if (!Array.isArray(value) ) {
         return false;
     }
     for (const elem of value) {

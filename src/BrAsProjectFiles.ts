@@ -378,8 +378,7 @@ function getXmlHeader(xmlBase: XMLBuilder): XmlHeader {
  * @param xmlBase the XMLBuilder of the document
  * @param requiredName If specified, the root element needs to match this name
  */
-function getRootElement(xmlBase: XMLBuilder, requiredName?: string): xmlDom.Element | undefined
-{
+function getRootElement(xmlBase: XMLBuilder, requiredName?: string): xmlDom.Element | undefined {
     try {
         const rootElement = xmlBase.root().node as xmlDom.Element;
         if (requiredName) {
