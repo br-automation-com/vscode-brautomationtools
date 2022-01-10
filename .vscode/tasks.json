@@ -4,6 +4,16 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "eslint",
+			"detail": "eslint src --ext ts",
+			"type": "npm",
+			"script": "lint",
+			"problemMatcher": [
+				"$eslint-stylish"
+			]
+		},
+		{
+			"label": "build",
 			"type": "npm",
 			"script": "watch",
 			"problemMatcher": [
