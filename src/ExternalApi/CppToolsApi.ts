@@ -16,34 +16,16 @@ import * as uriTools from '../Tools/UriTools';
  * Register the custom configuration provider on the C/C++ Tools extension
  */
 export async function registerCppToolsConfigurationProvider(context: vscode.ExtensionContext): Promise<void> {
-    const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v5);
-    if (!cppToolsApi) {
-        Logger.default.error('Failed to connect to C/C++ extension (API V5). C/C++ extension is not installed or version is not supported.');
-        return;
-    }
-    context.subscriptions.push(cppToolsApi);
-    const provider = new CppConfigurationProvider();
-    usedProvider = provider; //HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+    const provider = CppConfigurationProvider.getInstance();
     context.subscriptions.push(provider);
-    cppToolsApi.registerCustomConfigurationProvider(provider);
-    // Ready only parsing of workspace and environment (required for proper includes)
-    await BREnvironment.getAvailableAutomationStudioVersions();
-    await BRAsProjectWorkspace.getWorkspaceProjects();
-    cppToolsApi.notifyReady(provider);
+    await provider.initialize();
 }
 
 
 // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
 // Works well -> implement properly
-let usedProvider: CppConfigurationProvider;
 export async function didChangeCppToolsConfig() {
-    const cppToolsApi = await cppTools.getCppToolsApi(cppTools.Version.v5);
-    if (!cppToolsApi) {
-        return;
-    }
-    if (usedProvider) {
-        cppToolsApi.didChangeCustomConfiguration(usedProvider);
-    }
+    CppConfigurationProvider.getInstance().didChangeCppToolsConfig();
 }
 
 
@@ -52,7 +34,35 @@ export async function didChangeCppToolsConfig() {
  * the `CustomConfigurationProvider` interface for information on how this class
  * should be used.
  */
-export class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
+class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
+    static #instance: CppConfigurationProvider = new CppConfigurationProvider();
+    public static getInstance(): CppConfigurationProvider {
+        return this.#instance;
+    }
+
+    private constructor() {
+    }
+
+    async initialize(): Promise<boolean> {
+        this.#cppApi = await cppTools.getCppToolsApi(cppTools.Version.v5);
+        if (!this.#cppApi) {
+            Logger.default.error('Failed to connect to C/C++ extension (API V5). C/C++ extension is not installed or version is not supported.');
+            return false;
+        }
+        this.#cppApi.registerCustomConfigurationProvider(this);
+        // Ready only parsing of workspace and environment (required for proper includes)
+        BREnvironment.getAvailableAutomationStudioVersions().then(() => this.didChangeCppToolsConfig());
+        BRAsProjectWorkspace.getWorkspaceProjects().then(() => this.didChangeCppToolsConfig());
+        this.#cppApi.notifyReady(this);
+        return true;
+    }
+
+    didChangeCppToolsConfig() {
+        this.#cppApi?.didChangeCustomConfiguration(this);
+    }
+
+    #cppApi: cppTools.CppToolsApi | undefined;
+
     //#region cppTools.CustomConfigurationProvider interface implementation
 
     // Our name and extension ID visible to cpptools
@@ -164,25 +174,20 @@ export class CppConfigurationProvider implements cppTools.CustomConfigurationPro
     }
 
 
-    /** No-op */
-    dispose() { }
+    /** Dispose all disposable resources */
+    dispose() {
+        this.#cppApi?.dispose();
+    }
 
 
     /**
      * Version of Cpptools API
      */
-    private _cpptoolsVersion: cppTools.Version = cppTools.Version.latest;
+    #cpptoolsVersion: cppTools.Version = cppTools.Version.v5;
     /**
      * Gets the version of Cpptools API.
      */
     get cpptoolsVersion(): cppTools.Version {
-        return this._cpptoolsVersion;
-    }
-    /**
-     * Set the version of Cpptools API.
-     * @param value of CppTools API version
-     */
-    set cpptoolsVersion(value: cppTools.Version) {
-        this._cpptoolsVersion = value;
+        return this.#cpptoolsVersion;
     }
 }
