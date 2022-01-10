@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 import * as BrAsProjectFiles from './BrAsProjectFiles';
 import * as uriTools from './Tools/UriTools';
-import * as BrCppToolsApi from './BrCppToolsApi'; // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+import * as CppToolsApi from './ExternalApi/CppToolsApi'; // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
 import { Logger } from './BrLog';
 
 
@@ -286,18 +286,18 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
         const userSettingsWatcher = vscode.workspace.createFileSystemWatcher(uriTools.uriToSingleFilePattern(uriData.userSettingsUri));
         userSettingsWatcher.onDidChange(async (uri) => {
             projectData.activeConfiguration = await getActiveConfiguration(configurationsData, uri);
-            await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+            await CppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
         });
         userSettingsWatcher.onDidCreate(async (uri) => {
             projectData.activeConfiguration = await getActiveConfiguration(configurationsData, uri);
-            await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+            await CppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
         });
         userSettingsWatcher.onDidDelete(async (uri) => {
             projectData.activeConfiguration = await getActiveConfiguration(configurationsData, uri);
-            await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+            await CppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
         });
     }
-    await BrCppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+    await CppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
     return result;
 }
 

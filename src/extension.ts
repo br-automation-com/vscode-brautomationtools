@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 import { logger } from './BrLog';
 import {registerCommands} from './BRCommands';
-import {registerCppToolsConfigurationProvider} from './BrCppToolsApi';
+import {registerCppToolsConfigurationProvider} from './ExternalApi/CppToolsApi';
 import {registerTaskProviders as registerBuildTaskProviders} from './BrAsBuildTaskProvider';
 import {registerTaskProviders as registerTransferTaskProviders} from './BrAsTransferTaskProvider';
 import {registerApiTests} from './Tools/ApiTests';
