@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import * as cppTools from 'vscode-cpptools';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
 import * as BREnvironment from '../BREnvironment';
-import { Logger } from '../BrLog';
+import { logger } from '../BrLog';
 import * as Helpers from '../Tools/Helpers';
 import * as uriTools from '../Tools/UriTools';
 
@@ -46,7 +46,7 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
     async initialize(): Promise<boolean> {
         this.#cppApi = await cppTools.getCppToolsApi(cppTools.Version.v5);
         if (!this.#cppApi) {
-            Logger.default.error('Failed to connect to C/C++ extension (API V5). C/C++ extension is not installed or version is not supported.');
+            logger.error('Failed to connect to C/C++ extension (API V5). C/C++ extension is not installed or version is not supported.');
             return false;
         }
         this.#cppApi.registerCustomConfigurationProvider(this);
@@ -74,23 +74,30 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
     async canProvideConfiguration(uri: vscode.Uri): Promise<boolean> {
         // Check if file is within an AS project
         const asProject = await BRAsProjectWorkspace.getProjectForUri(uri);
+        let canProvide = false;
         if (!asProject) {
-            return false;
+            canProvide = false;
         } else {
             // Only files in logical view can provide info
             //TODO is it also required for headers in Temp?
-            return uriTools.isSubOf(asProject.logical, uri);
+            canProvide = uriTools.isSubOf(asProject.logical, uri);
         }
+        logger.debug('CppConfigurationProvider.canProvideConfiguration(uri)', { uri: uri.toString(true), return: canProvide });
+        return canProvide;
     }
 
 
     async provideConfigurations(uris: vscode.Uri[], token?: vscode.CancellationToken): Promise<cppTools.SourceFileConfigurationItem[]> {
-        for (const uri of uris) {
-            Logger.default.debug(`CppConfigurationProvider.provideConfigurations() called for URI "${uri.toString(true)}"`);
-        }
         const configs = await Promise.all( uris.map((uri) => this._getConfiguration(uri) ) );
         const validConfigs: cppTools.SourceFileConfigurationItem[] = [];
         Helpers.pushDefined(validConfigs, ...configs);
+        const logData = {
+            uris: uris.map((uri) => uri.toString(true)),
+            return: validConfigs,
+            numRequested: uris.length,
+            numResults: validConfigs.length
+        };
+        logger.debug('CppConfigurationProvider.provideConfigurations(uris)', logData);
         return validConfigs;
     }
 
@@ -135,7 +142,6 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
      * @param uri The uri to get the configuration from
      */
     private async _getConfiguration(uri: vscode.Uri): Promise<cppTools.SourceFileConfigurationItem | undefined> {
-        Logger.default.debug(`CppConfigurationProvider._getConfiguration() called for URI "${uri.toString(true)}"`);
         // get project include directories
         const headerUris = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri);
         const headerPaths = headerUris.map((u) => u.fsPath);
@@ -169,7 +175,6 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
                 compilerPath:     gccInfo.gccExe.fsPath,
             }
         };
-        Logger.default.debug(`CppConfigurationProvider._getConfiguration() called for URI "${uri.toString(true)}" return:`, {data: config});
         return config;
     }
 

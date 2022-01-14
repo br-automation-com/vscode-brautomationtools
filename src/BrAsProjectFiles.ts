@@ -8,7 +8,7 @@ import * as xmlbuilder2 from 'xmlbuilder2';
 import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
 import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import * as Helpers from './Tools/Helpers';
-import { Logger } from './BrLog';
+import { logger } from './BrLog';
 
 
 
@@ -120,17 +120,17 @@ export async function getProjectFileInfo(projectFile: vscode.Uri): Promise<Proje
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(projectFile);
     if (!xmlBase) {
-        Logger.default.error(`File '${projectFile.fsPath}' does not exist or is no valid XML file`);
+        logger.error(`File '${projectFile.fsPath}' does not exist or is no valid XML file`);
         return undefined;
     }
     const xmlHeader = getXmlHeader(xmlBase);
     if ( (!xmlHeader.asVersion) && (!xmlHeader.asWorkingVersion) ) {
-        Logger.default.error(`Invalid file ${projectFile.fsPath}: Failed to parse AS Version or WorkingVersion`);
+        logger.error(`Invalid file ${projectFile.fsPath}: Failed to parse AS Version or WorkingVersion`);
         return undefined;
     }
     const rootElement = getRootElement(xmlBase, 'Project');
     if (!rootElement) {
-        Logger.default.error(`Invalid file ${projectFile.fsPath}: No XML root element with name <Project> found`);
+        logger.error(`Invalid file ${projectFile.fsPath}: No XML root element with name <Project> found`);
         return undefined;
     }
     // get data from the project root
@@ -151,19 +151,19 @@ export async function getPhysicalPackageInfo(physicalPackageFile: vscode.Uri): P
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(physicalPackageFile);
     if (!xmlBase) {
-        Logger.default.error(`File '${physicalPackageFile.fsPath}' does not exist or is no valid XML file`);
+        logger.error(`File '${physicalPackageFile.fsPath}' does not exist or is no valid XML file`);
         return undefined;
     }
     const xmlHeader = getXmlHeader(xmlBase);
     const rootElement = getRootElement(xmlBase, 'Physical');
     if (!rootElement) {
-        Logger.default.error(`Invalid file ${physicalPackageFile.fsPath}: No XML root element with name <Physical> found`);
+        logger.error(`Invalid file ${physicalPackageFile.fsPath}: No XML root element with name <Physical> found`);
         return undefined;
     }
     // get configurations
     const objectsElement = getChildElements(rootElement, 'Objects');
     if (objectsElement.length === 0) {
-        Logger.default.error(`Invalid file ${physicalPackageFile.fsPath}: No <Objects> elements found`);
+        logger.error(`Invalid file ${physicalPackageFile.fsPath}: No <Objects> elements found`);
         return undefined;
     }
     const configElements = getChildElements(objectsElement[0], 'Object', {name: 'Type', value: 'Configuration'});
@@ -192,13 +192,13 @@ export async function getUserSettingsInfo(settingsFile: vscode.Uri): Promise<Use
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(settingsFile);
     if (!xmlBase) {
-        Logger.default.debug(`BrAsProjectFiles.getUserSettingsInfo() -> (!xmlBase)`, { data: { settingsFile: settingsFile } });
+        logger.debug(`BrAsProjectFiles.getUserSettingsInfo(settingsFile) -> (!xmlBase)`, { settingsFile: settingsFile.toString(true) });
         return undefined;
     }
     const xmlHeader = getXmlHeader(xmlBase);
     const rootElement = getRootElement(xmlBase, 'ProjectSettings');
     if (!rootElement) {
-        Logger.default.debug(`BrAsProjectFiles.getUserSettingsInfo() -> (!rootElement)`, { data: { settingsFile: settingsFile} });
+        logger.debug(`BrAsProjectFiles.getUserSettingsInfo(settingsFile) -> (!rootElement)`, { settingsFile: settingsFile.toString(true) });
         return undefined;
     }
     // get active configuration
@@ -224,30 +224,30 @@ export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackage
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(cpuFile);
     if (!xmlBase) {
-        Logger.default.error(`File '${cpuFile.fsPath}' does not exist or is no valid XML file`);
+        logger.error(`File '${cpuFile.fsPath}' does not exist or is no valid XML file`);
         return undefined;
     }
     const xmlHeader = getXmlHeader(xmlBase);
     const rootElement = getRootElement(xmlBase, 'Cpu');
     if (!rootElement) {
-        Logger.default.error(`Invalid file ${cpuFile.fsPath}: No XML root element with name <Cpu> found`);
+        logger.error(`Invalid file ${cpuFile.fsPath}: No XML root element with name <Cpu> found`);
         return undefined;
     }
     const configElement = getChildElements(rootElement, 'Configuration').pop();
     if (!configElement) {
-        Logger.default.error(`Invalid file ${cpuFile.fsPath}: No <Configuration> element found`);
+        logger.error(`Invalid file ${cpuFile.fsPath}: No <Configuration> element found`);
         return undefined;
     }
     // Get CPU module ID
     const cpuModuleId = configElement.getAttribute('ModuleId') ?? undefined;
     if (!cpuModuleId) {
-        Logger.default.warning(`Failed to get ModuleId from CPU package file '${cpuFile.fsPath}'`);
+        logger.warning(`Failed to get ModuleId from CPU package file '${cpuFile.fsPath}'`);
     }
     // get Automation Runtime configuration values
     const arConfigElement = getChildElements(configElement, 'AutomationRuntime').pop();
     const arVersion = arConfigElement?.getAttribute('Version') ?? undefined;
     if (!arVersion) {
-        Logger.default.warning(`Failed to get AR version from CPU package file '${cpuFile.fsPath}'`);
+        logger.warning(`Failed to get AR version from CPU package file '${cpuFile.fsPath}'`);
     }
     // get build configuration values
     const buildConfigElement = getChildElements(configElement, 'Build').pop();
@@ -284,31 +284,31 @@ export async function getConfigPackageInfo(configPackageFile: vscode.Uri): Promi
     // getting of basic XML content
     const xmlBase = await xmlCreateFromUri(configPackageFile);
     if (!xmlBase) {
-        Logger.default.error(`File '${configPackageFile.fsPath}' does not exist or is no valid XML file`);
+        logger.error(`File '${configPackageFile.fsPath}' does not exist or is no valid XML file`);
         return undefined;
     }
     const xmlHeader = getXmlHeader(xmlBase);
     const rootElement = getRootElement(xmlBase, 'Configuration');
     if (!rootElement) {
-        Logger.default.error(`Invalid file ${configPackageFile.fsPath}: No XML root element with name <Configuration> found`);
+        logger.error(`Invalid file ${configPackageFile.fsPath}: No XML root element with name <Configuration> found`);
         return undefined;
     }
     // get CPU objects (<Object Type="Cpu">)
     const objectsElement = getChildElements(rootElement, 'Objects');
     if (objectsElement.length === 0) {
-        Logger.default.error(`Invalid file ${configPackageFile.fsPath}: No <Objects> elements found`);
+        logger.error(`Invalid file ${configPackageFile.fsPath}: No <Objects> elements found`);
         return undefined;
     }
     const cpuElements = getChildElements(objectsElement[0], 'Object', {name: 'Type', value: 'Cpu'});
     if (cpuElements.length !== 1) {
-        Logger.default.error(`Invalid file ${configPackageFile.fsPath}: None or multiple Cpu elements (<Object Type="Cpu">) found. Number of elements: ${cpuElements.length}`);
+        logger.error(`Invalid file ${configPackageFile.fsPath}: None or multiple Cpu elements (<Object Type="Cpu">) found. Number of elements: ${cpuElements.length}`);
         return undefined;
     }
     const cpuElement = cpuElements[0];
     const cpuPackageName = cpuElement.textContent ?? undefined;
     const cpuPackageDescription = cpuElement.getAttribute('Description') ?? undefined;
     if (!cpuPackageName) {
-        Logger.default.error(`Invalid file ${configPackageFile.fsPath}: CPU Object element is empty`);
+        logger.error(`Invalid file ${configPackageFile.fsPath}: CPU Object element is empty`);
         return undefined;
     }
     return {
@@ -336,7 +336,7 @@ async function xmlCreateFromUri(fileUri: vscode.Uri): Promise<XMLBuilder | undef
         const contentText = projectDocument.getText();
         return xmlbuilder2.create(contentText);
     } catch (error) {
-        Logger.default.debug('BrAsProjectFiles.xmlCreateFromUri() -> catch (error)', {data: {uri: fileUri, error: error}});
+        logger.debug('BrAsProjectFiles.xmlCreateFromUri(fileUri) -> catch (error)', { fileUri: fileUri.toString(true) });
         return undefined;
     }
 }

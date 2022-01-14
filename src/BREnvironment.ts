@@ -5,7 +5,7 @@
 //TODO get version information once on startup, only specify an array of base install paths in the configuration
 
 import * as vscode from 'vscode';
-import { Logger } from './BrLog';
+import { logger } from './BrLog';
 import * as uriTools from './Tools/UriTools';
 import * as semver from 'semver';
 import { extensionConfiguration } from './BRConfiguration';
@@ -88,18 +88,19 @@ export async function getAvailableAutomationStudioVersions(): Promise<ASVersionI
 export async function updateAvailableAutomationStudioVersions(): Promise<void> {
 	//TODO return number like in BrAsProjectWorkspace
 	//TODO call when configuration value of baseInstallPaths changes
-	Logger.default.debug('Start updateAvailableAutomationStudioVersions()');
+	logger.debug('updateAvailableAutomationStudioVersions() -> start');
 	_availableAutomationStudioVersions = findAvailableASVersions();
 	const versionInfos = await _availableAutomationStudioVersions;
 	if (versionInfos.length === 0) {
 		const messageItems = ['Change baseInstallPaths'];
 		//TODO action for item
+		//TODO note that currently also intellisense is not available (no plctypes.h, ...)
 		vscode.window.showWarningMessage('No Automation Studio versions found. Build functionality will not be available.', ...messageItems);
-		Logger.default.warning('No Automation Studio versions found. Build functionality will not be available.');
+		logger.warning('No Automation Studio versions found. Build functionality will not be available.');
 		return;
 	}
 
-	Logger.default.debug(`${versionInfos.length} Automation Studio versions found`);
+	logger.debug('updateAvailableAutomationStudioVersions() -> end', {numFoundVersions: versionInfos.length});
 }
 
 
@@ -237,7 +238,7 @@ async function findAvailableASVersions(): Promise<ASVersionInfo[]> {
  * Searches for AS installations within the given URI. Search is not recursive!
  */
 async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionInfo[]> {
-	Logger.default.debug(`findAvailableASVersionsInUri(${uri.fsPath})`);
+	logger.debug('findAvailableASVersionsInUri(uri)', {uri: uri.toString(true)});
 	// filter subdirectories with regular expression for AS version
 	const subDirectories = await uriTools.listSubDirectoryNames(uri);
 	const asDirRegExp = new RegExp(/^AS(\d)(\d+)$/);
@@ -250,7 +251,9 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 		// create semantic version
 		const version = semver.coerce(`${match![1]}.${match![2]}.0`);
 		if (!version) {
-			Logger.default.error('Cannot create semantic version for URI: ' + versionBaseUri.fsPath);
+			//TODO why does AS 3.0.90 not work?
+			//TODO more user friendly message
+			logger.error('Cannot create semantic version from URI: ' + versionBaseUri.fsPath);
 			continue;
 		}
 		// get AS build executable
@@ -268,11 +271,11 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 			// much slower backup solution if folder structure changes in future AS versions
 			asBuildExecutables.push(...await vscode.workspace.findFiles({base: versionBaseUri.fsPath, pattern: '**/BR.AS.Build.exe'}));
 			if (asBuildExecutables.length === 0) {
-				Logger.default.warning(`Cannot find BR.AS.Build.exe in URI: ${versionBaseUri.fsPath}`);
+				logger.warning(`Cannot find BR.AS.Build.exe in URI: ${versionBaseUri.fsPath}`);
 				continue;
 			}
 		}
-		Logger.default.info(`AS Version V${version.version} found in ${versionBaseUri.fsPath}`);
+		logger.info(`AS Version V${version.version} found in ${versionBaseUri.fsPath}`);
 		const buildExecutable = asBuildExecutables[0];
 		// create version information and push to array
 		const versionInfo: ASVersionInfo = {
@@ -306,7 +309,8 @@ async function findAvailableGccVersions(asVersion: ASVersionInfo): Promise<void>
 		const gccVersionUri = uriTools.pathJoin(gccContainingUri, match![0]);
 		const version    = semver.coerce(match![0]);
 		if (!version) {
-			Logger.default.warning('Cannot create semantic version for URI: ' + gccVersionUri.fsPath);
+			//TODO more user friendly message
+			logger.warning('Cannot create semantic version for URI: ' + gccVersionUri.fsPath);
 			continue;
 		}
 		//HACK from AS V >= 4.9 there is an additional subfolder '4.9' -> do it properly with regex, so future versions can be handled
@@ -403,7 +407,7 @@ async function findAvailablePviVersionsInUri(uri: vscode.Uri): Promise<PviVersio
 			// much slower backup solution which searches recursive
 			pviTransferExecutables.push(...await vscode.workspace.findFiles({base: versionBaseUri.fsPath, pattern: '**/PVITransfer.exe'}));
 			if (pviTransferExecutables.length === 0) {
-				Logger.default.warning(`Cannot find PVITransfer.exe in URI: ${versionBaseUri.fsPath}`);
+				logger.warning(`Cannot find PVITransfer.exe in URI: ${versionBaseUri.fsPath}`);
 				continue;
 			}
 		}
@@ -411,10 +415,10 @@ async function findAvailablePviVersionsInUri(uri: vscode.Uri): Promise<PviVersio
 		// get version from exe
 		const pviTransferVersion = semver.coerce(subDirectoryName);
 		if (!pviTransferVersion) {
-			Logger.default.warning(`Cannot get version of ${pviTransferExecutable.fsPath}`);
+			logger.warning(`Cannot get PVI version of ${pviTransferExecutable.fsPath}`);
 			continue;
 		}
-		Logger.default.info(`PVI Version V${pviTransferVersion.version} found in ${versionBaseUri.fsPath}`);
+		logger.info(`PVI Version V${pviTransferVersion.version} found in ${versionBaseUri.fsPath}`);
 		// create version information and push to array
 		const versionInfo: PviVersionInfo = {
 			version:        pviTransferVersion,

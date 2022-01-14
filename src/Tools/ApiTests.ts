@@ -13,7 +13,7 @@ import * as Dialogs from './Dialogs';
 import * as BREnvironment from '../BREnvironment';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
 import * as BrAsProjectFiles from '../BrAsProjectFiles';
-import {Logger, LogLevel} from '../BrLog';
+import {logger, LogLevel} from '../BrLog';
 import { extensionConfiguration } from '../BRConfiguration';
 //import * as NAME from '../BRxxxxxx';
 
@@ -471,22 +471,22 @@ async function testVsCodeExtensionContext(context: vscode.ExtensionContext) : Pr
 async function testBrLog(context: vscode.ExtensionContext): Promise<void> {
 	console.warn('Test BrLog start');
 	// log messages of various levels
-	Logger.default.fatal('Some fatal 1');
-	Logger.default.error('Some error 1');
-	Logger.default.warning('Some warning 1');
-	Logger.default.info('Some info 1');
-	Logger.default.debug('Some debug 1');
+	logger.fatal('Some fatal 1');
+	logger.error('Some error 1');
+	logger.warning('Some warning 1');
+	logger.info('Some info 1');
+	logger.debug('Some debug 1');
 	// log with objects and array
-	Logger.default.fatal('Now log with additional data!');
-	Logger.default.fatal('Undefined', { data: undefined });
-	Logger.default.fatal('Null', { data: null });
-	Logger.default.fatal('Boolean', { data: false });
-	Logger.default.fatal('Number', { data: 33 });
-	Logger.default.fatal('String', { data: 'hello' });
+	logger.fatal('Now log with additional data!');
+	logger.fatal('Undefined', { data: undefined });
+	logger.fatal('Null', { data: null });
+	logger.fatal('Boolean', { data: false });
+	logger.fatal('Number', { data: 33 });
+	logger.fatal('String', { data: 'hello' });
 	const someObj = { a: 'hello', b: 'world', c: 33, d: { d1: 20, d2: '42' } };
-	Logger.default.fatal('Obj', { data: someObj });
+	logger.fatal('Obj', { data: someObj });
 	const someArray = [{ a: 33, b: { b1: 33, b2: false } }, undefined, 'hello', 33, false, null, { q: 'testQ', r: 'testR' }];
-	Logger.default.fatal('Array', { data: someArray });
+	logger.fatal('Array', { data: someArray });
 	console.warn('Test BrLog end');
 }
 

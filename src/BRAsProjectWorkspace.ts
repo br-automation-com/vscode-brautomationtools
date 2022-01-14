@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import * as BrAsProjectFiles from './BrAsProjectFiles';
 import * as uriTools from './Tools/UriTools';
 import * as CppToolsApi from './ExternalApi/CppToolsApi'; // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
-import { Logger } from './BrLog';
+import { logger } from './BrLog';
 
 
 //#region exported types
@@ -258,7 +258,8 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
         const projectFileData = await BrAsProjectFiles.getProjectFileInfo(uriData.projectFileUri);
         const asVersion = projectFileData?.header.asWorkingVersion ?? projectFileData?.header.asVersion;
         if (!projectFileData || !asVersion) {
-            Logger.default.error(`Project '${uriData.baseUri.fsPath}' is not supported by the extension`);
+            //TODO Better log message, what does 'is not supported' mean?
+            logger.error(`Project '${uriData.baseUri.fsPath}' is not supported by the extension`);
             continue;
         }
         const configurationsData = await findAsConfigurationInfo(uriData.physicalUri, uriData.baseUri);
@@ -343,7 +344,7 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
         const configPkgUri  = uriTools.pathJoin(configBaseUri, 'Config.pkg');
         const configPkgInfo = await BrAsProjectFiles.getConfigPackageInfo(configPkgUri);
         if (!configPkgInfo) {
-            Logger.default.warning(`No configuration data found in ${configPkgUri.fsPath}. Configuration will be skipped!`);
+            logger.warning(`No configuration data found in ${configPkgUri.fsPath}. Configuration will be skipped!`);
             continue;
         }
         const cpuPkgDirUri = uriTools.pathJoin(configBaseUri, configPkgInfo.cpuPackageName);
@@ -374,14 +375,14 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
 
 async function getActiveConfiguration(configurations: AsConfigurationInfo[], userSettingsUri: vscode.Uri): Promise<AsConfigurationInfo | undefined> {
     if (configurations.length === 0) {
-        Logger.default.debug('getActiveConfiguration() -> configurations.length === 0', {data: userSettingsUri});
+        logger.debug('getActiveConfiguration(configs, uri) -> configurations.length === 0', {uri: userSettingsUri});
         return undefined;
     }
     const userSettingsData = await BrAsProjectFiles.getUserSettingsInfo(userSettingsUri);
     let activeConfiguration = configurations.find((config) => config.name === userSettingsData?.activeConfiguration);
     if (!activeConfiguration) {
         activeConfiguration = configurations[0];
-        Logger.default.warning(`LastUser.set file was not found or is invalid. '${activeConfiguration.name}' will be used as active configuration`);
+        logger.warning(`LastUser.set file was not found or is invalid. '${activeConfiguration.name}' will be used as active configuration`);
     }
     return activeConfiguration;
 }

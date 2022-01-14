@@ -8,7 +8,7 @@ import * as childProcess from 'child_process';
 import * as BrAsProjectWorkspace from './BRAsProjectWorkspace';
 import * as BrEnvironment from './BREnvironment';
 import * as BrDialogs from './BRDialogs';
-import { Logger } from './BrLog';
+import { logger } from './BrLog';
 import { extensionConfiguration } from './BRConfiguration';
 
 
@@ -259,7 +259,7 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
         if (this.buildProcess) {
             const killed = this.buildProcess.kill();
             if (!killed) {
-                Logger.default.warning('Failed to kill BR.AS.Build.exe');
+                logger.warning('Failed to kill BR.AS.Build.exe');
             }
         }
     }

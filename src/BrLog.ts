@@ -68,7 +68,7 @@ export class LogEntry {
 //#region exported classes
 
 
-export class Logger {
+class Logger {
     /** Default logger instance */
     public static readonly default: Logger = new Logger();
 
