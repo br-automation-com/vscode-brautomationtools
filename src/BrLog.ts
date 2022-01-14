@@ -33,11 +33,13 @@ export enum LogLevel {
 export interface LogConfiguration {
     /** Used level for logging. All log messages with a lower level will not be written */
     level: LogLevel;
+    /** Additional data pretty print */
+    prettyPrintAdditionalData: boolean;
 }
 
 
 export interface LogEntryAdditionalData {
-    data ?: any;
+    [data: string] : any;
 }
 
 
@@ -81,7 +83,8 @@ export class Logger {
         this.#setLogFunctions();
     }
     #configuration: LogConfiguration = {
-        level: LogLevel.debug
+        level: LogLevel.debug,
+        prettyPrintAdditionalData: false
     };
 
 
@@ -214,9 +217,17 @@ export class Logger {
         const header = `[${time}.${millis} - ${level}]`;
         // message and if existing additional data
         const message = logEntry.message;
-        const additionalData = (logEntry.addData === undefined) ? '' : `(${JSON.stringify(logEntry.addData.data)})`;
-        // formatted message '[11:33:42.007 - Fatal] My message ({someProp:"hello"})'
-        return `${header} ${message} ${additionalData}`;
+        let additionalData: string = '';
+        if (logEntry.addData) {
+            const undefReplacer = (key: string, val: any) => (val === undefined ? null : val);
+            if (this.configuration.prettyPrintAdditionalData) {
+                additionalData = `\n${JSON.stringify(logEntry.addData, undefReplacer, 2)}`;
+            } else {
+                additionalData = ` ${JSON.stringify(logEntry.addData, undefReplacer)}`;
+            }   
+        }
+        // formatted message '[11:33:42.007 - Fatal] My message {data: {someProp:"hello"}}'
+        return `${header} ${message}${additionalData}`;
     }
 
 

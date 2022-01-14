@@ -13,6 +13,10 @@ Add new but unreleased features, fixes... here during development
   If you don't like the notification you can click the `Don't show again after update` button and we will not bother you anymore.<br/>
   The setting to hide the notification can also be set in the settings menu under `vscode-brautomationtools.notifications.hideNewVersionMessage`
 - The activation notification message can now be hidden by clicking the `Don't show on activation` button or in the settings under `vscode-brautomationtools.notifications.hideActivationMessage`
+- The additional data added by some logger entries can now be pretty printed by setting the new configuration value `vscode-brautomationtools.logging.prettyPrintAdditionalData` to `true`. This can make it easier to analyze the data but the log output will use multiple lines for one entry.
+
+### Changed
+- The default setting for the log level `vscode-brautomationtools.logging.logLevel` was changed from `Debug` to `Info`
 
 
 ## [0.0.4] - 2021-12-04

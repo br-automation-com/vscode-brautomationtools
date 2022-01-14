@@ -20,7 +20,8 @@ import { extensionConfiguration } from './BRConfiguration';
 export async function activate(context: vscode.ExtensionContext) {
 	// Set up logger
 	logger.configuration = {
-		level: extensionConfiguration.logging.logLevel
+		level: extensionConfiguration.logging.logLevel,
+		prettyPrintAdditionalData: extensionConfiguration.logging.prettyPrintAdditionalData
 	};
 	logger.info('Start activation of B&R Automation Tools extension');
 	//

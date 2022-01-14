@@ -139,6 +139,16 @@ class ExtensionConfiguration {
         public set logLevel(value: LogLevel | undefined) {
             getConfiguration().update(this.#logLevelKey, value, vscode.ConfigurationTarget.Global);
         }
+
+
+        readonly #prettyPrintAdditionalDataKey = 'logging.prettyPrintAdditionalData';
+        public get prettyPrintAdditionalData(): boolean {
+            const value = getConfiguration().get(this.#prettyPrintAdditionalDataKey);
+            return value === true ? true : false;
+        }
+        public set prettyPrintAdditionalData(value: boolean | undefined) {
+            getConfiguration().update(this.#prettyPrintAdditionalDataKey, value, vscode.ConfigurationTarget.Global);
+        }
     }(this);
 
 

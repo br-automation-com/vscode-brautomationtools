@@ -99,7 +99,12 @@
 						"Log information messages",
 						"Log debug messages"
 					],
-					"default": "Debug"
+					"default": "Info"
+				},
+				"vscode-brautomationtools.logging.prettyPrintAdditionalData": {
+					"description": "Pretty print additional data in logger. This means, that the additional JSON data will be spread over mutliple lines and indented.",
+					"type": "boolean",
+					"default": false
 				},
 				"vscode-brautomationtools.notifications.hideActivationMessage": {
 					"description": "Hide the information pop-up after the extension activation is done",
