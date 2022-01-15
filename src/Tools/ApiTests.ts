@@ -13,7 +13,7 @@ import * as Dialogs from './Dialogs';
 import * as BREnvironment from '../BREnvironment';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
 import * as BrAsProjectFiles from '../BrAsProjectFiles';
-import {logger, LogLevel} from '../BrLog';
+import { logger } from '../BrLog';
 import { extensionConfiguration } from '../BRConfiguration';
 //import * as NAME from '../BRxxxxxx';
 
@@ -33,7 +33,7 @@ export function registerApiTests(context: vscode.ExtensionContext) {
 
 
 async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContext) {
-	Helpers.logTimedHeader('Test command start');
+	logHeader('Test command start');
 	// select tests to execute
 	if (await Dialogs.yesNoDialog('Run various tests?')) {
 		await testVarious(arg1, arg2);
@@ -69,29 +69,14 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 		await testBrLog(context);
 	}
 	// end
-	Helpers.logTimedHeader('Test command end');
+	logHeader('Test command end');
 }
 
 async function testVarious(arg1: any, arg2: any) {
-	console.warn('Test various start');
+	logHeader('Test various start');
 	// check command arguments
-	console.log('arg1 and arg2:');
-	console.log(arg1);
-	console.log(arg2);
-	// console timer tests
-	console.log('Timer tests');
-	console.time('testVarious_timer');
-	console.timeStamp('testVarious_timestamp'); // -> cannot be seen in the debug console
-	await Helpers.delay(200);
-	console.timeLog('testVarious_timer', 'timeLog() 1');
-	await Helpers.delay(200);
-	console.timeLog('testVarious_timer', 'timeLog() 2');
-	await Helpers.delay(200);
-	console.timeEnd('testVarious_timer');
-	await Helpers.delay(200);
-	console.timeLog('testVarious_timer', 'timeLog() after timeEnd()'); // -> Warning: No such label 'testVarious_timer' for console.timeLog()
+	logger.info('arg1 and arg2:', {arg1: arg1, arg2: arg2});
 	// xmlbuilder tests
-	console.log('xmlbuilder tests');
 	const xmlTextNormal =          `<?xml version="1.0" encoding="utf-8"?>
 									<?AutomationStudio Version=4.6.5.78 SP?>
 									<Physical xmlns="http://br-automation.co.at/AS/Physical">
@@ -114,17 +99,16 @@ async function testVarious(arg1: any, arg2: any) {
 		const builder = xmlbuilder.create(xmlTextNormal); // throws on invalid XML (xmlTextNoRootCont, xmlTextMultiRoot)
 		const rootBld = builder.root(); // throws when no root is available (xmlTextNoRoot)
 		const rootNode = rootBld.node as xmlDom.Element;
-		console.log(rootNode);
+		logger.info('xmlbuilder tests', {rootNode: rootNode});
 	} catch (error) {
-		console.log('xmlbuilder error');
-		console.log(error);
+		logger.info('xmlbuilder test error', {error: error});
 	}
 	// end
-	console.warn('Test various end');
+	logHeader('Test various end');
 }
 
 async function testFileSystemEvents() {
-	console.warn('Test file system events start');
+	logHeader('Test file system events start');
 	/** 
 	 * #### Test FileSystemWatcher:
 	 * - All events are registered, also events triggered by outside programs
@@ -137,20 +121,16 @@ async function testFileSystemEvents() {
 	 * - e.g. change of active configuration
 	 */
 	const pattern = '**';
-	console.log('createFileSystemWatcher:');
-	console.log(pattern);
+	logger.info('createFileSystemWatcher:', {pattern: pattern});
 	const watcher = vscode.workspace.createFileSystemWatcher(pattern);
 	watcher.onDidChange((uri) => {
-		console.log('File changed:');
-		console.log(uri);
+		logger.info('File changed:', { uri: uri.toString(true) });
 	});
 	watcher.onDidCreate((uri) => {
-		console.log('File created:');
-		console.log(uri);
+		logger.info('File created:', { uri: uri.toString(true) });
 	});
 	watcher.onDidDelete((uri) => {
-		console.log('File deleted:');
-		console.log(uri);
+		logger.info('File deleted:', { uri: uri.toString(true) });
 	});
 	/**
 	 * #### Test vscode.workspace.onDidXxxxFiles:
@@ -163,71 +143,102 @@ async function testFileSystemEvents() {
 	 * - Will be useful to watch moving / deleting / creating files in the general AS workspace
 	 * - Can be used e.g. for a feature to automatically adjust package files
 	 */
-	const renameSubscript = vscode.workspace.onDidRenameFiles((event) => {
-		console.log('Files renamed from -> to:');
-		for (const file of event.files) {
-			console.log(`${file.oldUri.fsPath} -> ${file.newUri.fsPath}`);
-		}
+	vscode.workspace.onDidRenameFiles((event) => {
+		const fromTo = event.files.map((f) => `${f.oldUri.toString(true)} -> ${f.newUri.toString(true)}`);
+		logger.info('Files renamed from -> to:', {fromTo: fromTo});
 	});
-	console.warn('Test file system events end');
+	logHeader('Test file system events end');
 }
 
 
 async function testUriTools() {
-	console.warn('Test UriTools start');
-	// test pathRelative and isSubOf
+	logHeader('Test UriTools start');
 	const uriFrom = vscode.Uri.file('C:\\Temp\\');
 	const uriToIsSub = vscode.Uri.file('c:\\Temp\\Test1\\test.txt');
 	const uriToNotSub = vscode.Uri.file('C:\\User\\Test1\\test.txt');
-	console.log(`uriTools.pathRelative from '${uriFrom.path}' to '${uriToIsSub.path}' --> '${uriTools.pathRelative(uriFrom, uriToIsSub)}'`);
-	console.log(`uriTools.pathRelative from '${uriFrom.path}' to '${uriToNotSub.path}' --> '${uriTools.pathRelative(uriFrom, uriToNotSub)}'`);
-	console.log(`uriTools.isSubOf base '${uriFrom.path}' uri '${uriToIsSub.path}' --> '${uriTools.isSubOf(uriFrom, uriToIsSub)}'`);
-	console.log(`uriTools.isSubOf base '${uriFrom.path}' uri '${uriToNotSub.path}' --> '${uriTools.isSubOf(uriFrom, uriToNotSub)}'`);
+	// test pathRelative
+	logger.info('uriTools.pathRelative(from, to)', {
+		from: uriFrom.path,
+		to: uriToIsSub.path,
+		result: uriTools.pathRelative(uriFrom, uriToIsSub)
+	});
+	logger.info('uriTools.pathRelative(from, to)', {
+		from: uriFrom.path,
+		to: uriToNotSub.path,
+		result: uriTools.pathRelative(uriFrom, uriToNotSub)
+	});
+	// test isSubOf
+	logger.info('uriTools.isSubOf(base, uri)', {
+		base: uriFrom.path,
+		uri: uriToIsSub.path,
+		result: uriTools.isSubOf(uriFrom, uriToIsSub)
+	});
+	logger.info('uriTools.isSubOf(base, uri)', {
+		base: uriFrom.path,
+		uri: uriToNotSub.path,
+		result: uriTools.isSubOf(uriFrom, uriToNotSub)
+	});
 	// test pathsFromTo
-	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriToIsSub.path}'`);
-	const fromToIsSub = uriTools.pathsFromTo(uriFrom, uriToIsSub);
-	console.log(fromToIsSub);
-	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriToNotSub.path}'`);
-	const fromToNotSub = uriTools.pathsFromTo(uriFrom, uriToNotSub);
-	console.log(fromToNotSub);
-	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriFrom.path}'`);
-	const fromToSame = uriTools.pathsFromTo(uriFrom, uriFrom);
-	console.log(fromToSame);
+	logger.info('uriTools.pathsFromTo(from, to)', {
+		from: uriFrom.path,
+		to: uriToIsSub.path,
+		result: uriTools.pathsFromTo(uriFrom, uriToIsSub)
+	});
+	logger.info('uriTools.pathsFromTo(from, to)', {
+		from: uriFrom.path,
+		to: uriToNotSub.path,
+		result: uriTools.pathsFromTo(uriFrom, uriToNotSub)
+	});
+	logger.info('uriTools.pathsFromTo(from, to)', {
+		from: uriFrom.path,
+		to: uriFrom.path,
+		result: uriTools.pathsFromTo(uriFrom, uriFrom)
+	});
 	// test pathsFromTo with replace
 	const uriReplace = vscode.Uri.file('C:\\Replace\\');
-	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriToIsSub.path}' replace '${uriReplace.path}'`);
-	const fromToIsSubReplace = uriTools.pathsFromTo(uriFrom, uriToIsSub, uriReplace);
-	console.log(fromToIsSubReplace);
-	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriToNotSub.path}' replace '${uriReplace.path}'`);
-	const fromToNotSubReplace = uriTools.pathsFromTo(uriFrom, uriToNotSub, uriReplace);
-	console.log(fromToNotSubReplace);
-	console.log(`uriTools.pathsFromTo from '${uriFrom.path}' to '${uriFrom.path}' replace '${uriReplace.path}'`);
-	const fromToSameReplace = uriTools.pathsFromTo(uriFrom, uriFrom, uriReplace);
-	console.log(fromToSameReplace);
+	logger.info('uriTools.pathsFromTo(from, to, replace)', {
+		from: uriFrom.path,
+		to: uriToIsSub.path,
+		replace: uriReplace.path,
+		result: uriTools.pathsFromTo(uriFrom, uriToIsSub, uriReplace)
+	});
+	logger.info('uriTools.pathsFromTo(from, to, replace)', {
+		from: uriFrom.path,
+		to: uriToNotSub.path,
+		replace: uriReplace.path,
+		result: uriTools.pathsFromTo(uriFrom, uriToNotSub, uriReplace)
+	});
+	logger.info('uriTools.pathsFromTo(from, to, replace)', {
+		from: uriFrom.path,
+		to: uriFrom.path,
+		replace: uriReplace.path,
+		result: uriTools.pathsFromTo(uriFrom, uriFrom, uriReplace)
+	});
 	// end
-	console.warn('Test UriTools end');
+	logHeader('Test UriTools end');
 }
 
 
 async function testFileTools() {
-	console.warn('Test FileTools start');
+	logHeader('Test FileTools start');
 	if (!vscode.workspace.workspaceFolders) {
-		console.log('No workspace folder defined');
+		logger.info('No workspace folder defined');
 		return;
 	}
 	const wsUri = vscode.workspace.workspaceFolders[0].uri;
 	const fileUri = uriTools.pathJoin(wsUri, 'MyTempFile.txt');
-	console.log(`Creating file ${fileUri.fsPath}`);
+	logger.info(`Creating file ${fileUri.fsPath}`);
 	await fileTools.createFile(fileUri, {overwrite: true});
-	console.log(`Insert text into file ${fileUri.fsPath}`);
+	logger.info(`Insert text into file ${fileUri.fsPath}`);
 	await fileTools.insertTextInFile(fileUri, new vscode.Position(0, 0), 'asdf');
-	console.warn('Test FileTools end');
+	// end
+	logHeader('Test FileTools end');
 }
 
 
 async function testHelpers() {
+	logHeader('Test Helpers start');
 	// test pushDefined
-	console.log('Helpers.pushDefined');
 	const mixedValues = [true, false, undefined, null];
 	const result: boolean[] = [];
 	Helpers.pushDefined(result, ...mixedValues);
@@ -235,109 +246,107 @@ async function testHelpers() {
 	Helpers.pushDefined(result, null);
 	Helpers.pushDefined(result, true);
 	Helpers.pushDefined(result, false);
-	console.log(result);
+	logger.info('Helpers.pushDefined()', { result: result });
+	// end
+	logHeader('Test Helpers end');
 }
 
 
 async function testBREnvironment() {
-	console.warn('Test BREnvironment start');
+	logHeader('Test BREnvironment start');
 	// Update AS versions
 	if (await Dialogs.yesNoDialog('Update AS versions?')) {
-		console.log('BREnvironment.updateAvailableAutomationStudioVersions');
-		console.time('BREnvironment.updateAvailableAutomationStudioVersions');
-		await BREnvironment.updateAvailableAutomationStudioVersions();
-		console.timeEnd('BREnvironment.updateAvailableAutomationStudioVersions');
+		logger.info('BREnvironment.updateAvailableAutomationStudioVersions() start');
+		const result = await BREnvironment.updateAvailableAutomationStudioVersions();
+		logger.info('BREnvironment.updateAvailableAutomationStudioVersions() done', { result: result });
 	}
 	// get AS version info
-	console.log('BREnvironment.getAvailableAutomationStudioVersions');
 	const asVersions = await BREnvironment.getAvailableAutomationStudioVersions();
-	console.log(asVersions);
+	logger.info('BREnvironment.getAvailableAutomationStudioVersions()', { result: asVersions });
 	// get BR.AS.Build.exe
 	const inputAsVersion = await vscode.window.showInputBox({prompt: 'Enter an AS version to find BR.AS.Build.exe'});
 	if (inputAsVersion) {
-		console.log(`BREnvironment.getBrAsBuilExe for version: ${inputAsVersion}`);
 		const buildExe = await BREnvironment.getBrAsBuilExe(inputAsVersion);
-		console.log(buildExe);
+		logger.info('BREnvironment.getBrAsBuilExe(requested)', { requested: inputAsVersion, result: buildExe });
 	}
 	// get gcc target system info
 	const getTargetInfoAsVersion = '4.6.5';
 	const getTargetInfoGccVersion = '4.1.2';
 	const getTargetSystemType = 'SG4 Ia32';
-	console.log(`BREnvironment.getGccTargetSystemInfo for AS: ${getTargetInfoAsVersion}; gcc: ${getTargetInfoGccVersion}; type: ${getTargetSystemType}`);
 	const targetSystemInfo = await BREnvironment.getGccTargetSystemInfo(getTargetInfoAsVersion, getTargetInfoGccVersion, getTargetSystemType);
-	console.log(targetSystemInfo);
+	logger.info('BREnvironment.getGccTargetSystemInfo(asVersion, gccVersion, targetSystem)', {
+		asVersion: getTargetInfoAsVersion,
+		gccVersion: getTargetInfoGccVersion,
+		targetSystem: getTargetSystemType,
+		result: targetSystemInfo
+	});
 	// Update PVI versions
 	if (await Dialogs.yesNoDialog('Update PVI versions?')) {
-		console.log('BREnvironment.updateAvailablePviVersions');
-		console.time('BREnvironment.updateAvailablePviVersions');
-		await BREnvironment.updateAvailablePviVersions();
-		console.timeEnd('BREnvironment.updateAvailablePviVersions');
+		logger.info('BREnvironment.updateAvailablePviVersions() start');
+		const result = await BREnvironment.updateAvailablePviVersions();
+		logger.info('BREnvironment.updateAvailablePviVersions() done', { result: result });
 	}
 	// get PVI version info
-	console.log('BREnvironment.getAvailablePviVersions');
 	const pviVersions = await BREnvironment.getAvailablePviVersions();
-	console.log(pviVersions);
+	logger.info('BREnvironment.getAvailablePviVersions()', { result: pviVersions });
 	// get PVITransfer.exe
 	const inputPviVersion = await vscode.window.showInputBox({prompt: 'Enter a PVI version to find PVITransfer.exe'});
-	console.log(`BREnvironment.getPviTransferExe for version: ${inputPviVersion}`);
 	const transferExe = await BREnvironment.getPviTransferExe(inputPviVersion);
-	console.log(transferExe);
+	logger.info('BREnvironment.getPviTransferExe(requested)', { requested: inputPviVersion, result: transferExe });
 
 	// end
-	console.warn('Test BREnvironment end');
+	logHeader('Test BREnvironment end');
 }
 
 
 async function testBRConfiguration() {
-	console.warn('Test BRConfiguration start');
-	// build
-	console.log('build.defaultBuildMode');
-	console.log(extensionConfiguration.build.defaultBuildMode);
-	// environment
-	console.log('environment.automationStudioInstallPaths');
-	console.log(extensionConfiguration.environment.automationStudioInstallPaths);
-	console.log('environment.pviInstallPaths');
-	console.log(extensionConfiguration.environment.pviInstallPaths);
-	// logging
-	console.log('logging.logLevel');
-	console.log(extensionConfiguration.logging.logLevel);
-	// notifications
-	console.log('notifications.hideActivationMessage');
-	console.log(extensionConfiguration.notifications.hideActivationMessage);
-	console.log('notifications.hideNewVersionMessage');
-	console.log(extensionConfiguration.notifications.hideNewVersionMessage);
+	logHeader('Test BRConfiguration start');
+	logger.info('Get configuration values', {
+		build: {
+			defaultBuildMode: extensionConfiguration.build.defaultBuildMode
+		},
+		environment: {
+			automationStudioInstallPaths: extensionConfiguration.environment.automationStudioInstallPaths,
+			pviInstallPaths: extensionConfiguration.environment.pviInstallPaths
+		},
+		logging: {
+			logLevel: extensionConfiguration.logging.logLevel,
+			prettyPrintAdditionalData: extensionConfiguration.logging.prettyPrintAdditionalData
+		},
+		notifications: {
+			hideActivationMessage: extensionConfiguration.notifications.hideActivationMessage,
+			hideNewVersionMessage: extensionConfiguration.notifications.hideNewVersionMessage
+		}
+	});
 	// end
-	console.warn('Test BRConfiguration end');
+	logHeader('Test BRConfiguration end');
 }
 
 
 async function testBRAsProjectWorkspace() {
-	console.warn('Test BRAsProjectWorkspace start');
+	logHeader('Test BRAsProjectWorkspace start');
 	// Update AS projects
 	if (await Dialogs.yesNoDialog('Update AS projects in workspace?')) {
-		console.log('BRAsProjectWorkspace.updateWorkspaceProjects');
-		console.time('BRAsProjectWorkspace.updateWorkspaceProjects');
+		logger.info('BRAsProjectWorkspace.updateWorkspaceProjects() start');
 		const numProjects = await BRAsProjectWorkspace.updateWorkspaceProjects();
-		console.timeEnd('BRAsProjectWorkspace.updateWorkspaceProjects');
-		console.log(`${numProjects} found`);
+		logger.info('BRAsProjectWorkspace.updateWorkspaceProjects() done', { result: numProjects });
 	}
 	// Get AS projects info
-	console.log('BRAsProjectWorkspace.getWorkspaceProjects');
 	const projectsData = await BRAsProjectWorkspace.getWorkspaceProjects();
-	console.log(projectsData);
+	logger.info('BRAsProjectWorkspace.getWorkspaceProjects()', { result: projectsData });
 	// find project for path
 	const pathToGetProject = await vscode.window.showInputBox({prompt: 'Enter path to get corresponding project'});
 	if (pathToGetProject) {
-		console.log(`BRAsProjectWorkspace.getProjectForUri(${pathToGetProject})`);
-		const projectForPath = await BRAsProjectWorkspace.getProjectForUri(vscode.Uri.file(pathToGetProject));
-		console.log(projectForPath);
+		const uri = vscode.Uri.file(pathToGetProject);
+		const projectForPath = await BRAsProjectWorkspace.getProjectForUri(uri);
+		logger.info('BRAsProjectWorkspace.getProjectForUri(uri)', { uri: uri.toString(true), result: projectForPath });
 	}
 	// Get header directories
 	const pathToGetHeaderDirs = await vscode.window.showInputBox({prompt: 'Enter path to get corresponding header directories'});
 	if (pathToGetHeaderDirs) {
-		console.log(`BRAsProjectWorkspace.getProjectHeaderIncludeDirs(${pathToGetHeaderDirs})`);
-		const headerDirsForPath = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(vscode.Uri.file(pathToGetHeaderDirs));
-		console.log(headerDirsForPath);
+		const uri = vscode.Uri.file(pathToGetHeaderDirs);
+		const headerDirsForPath = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri);
+		logger.info('BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri)', { uri: uri.toString(true), result: headerDirsForPath });
 	}
 
 	//TODO add library in test project
@@ -400,12 +409,12 @@ async function testBRAsProjectWorkspace() {
 	console.log(urisWithTypes);
 	*/
 	// end
-	console.warn('Test BRAsProjectWorkspace end');
+	logHeader('Test BRAsProjectWorkspace end');
 }
 
 
 async function testBrAsProjectFiles(): Promise<void> {
-	console.warn('Test BrAsProjectFiles start');
+	logHeader('Test BrAsProjectFiles start');
 	// get AS project for further tests
     const asProjects = await BRAsProjectWorkspace.getWorkspaceProjects();
     if (asProjects.length === 0) {
@@ -413,63 +422,55 @@ async function testBrAsProjectFiles(): Promise<void> {
     }
 	const asProject = asProjects[0];
 	// test *.apj info
-	console.log(`BrAsProjectFiles.getProjectFileInfo`);
 	const projectInfo = await BrAsProjectFiles.getProjectFileInfo(asProject.projectFile);
-	console.log(projectInfo);
+	logger.info('BrAsProjectFiles.getProjectFileInfo(prjFile)', { prjFile: asProject.projectFile.toString(false), result: projectInfo });
 	// test Physical.pkg info
-	console.log('BrAsProjectFiles.getPhysicalPackageInfo');
-	const physicalInfo = await BrAsProjectFiles.getPhysicalPackageInfo(uriTools.pathJoin(asProject.physical, 'Physical.pkg'));
-	console.log(physicalInfo);
+	const physicalPkgFile = uriTools.pathJoin(asProject.physical, 'Physical.pkg');
+	const physicalInfo = await BrAsProjectFiles.getPhysicalPackageInfo(physicalPkgFile);
+	logger.info('BrAsProjectFiles.getPhysicalPackageInfo(physicalPkgFile)', { physicalPkgFile: physicalPkgFile.toString(false), result: physicalInfo });
 	// test *.set info
-	console.log('BrAsProjectFiles.getUserSettingsInfo');
-	const settingFiles = await vscode.workspace.findFiles({base: asProject.baseUri.fsPath, pattern: '*.set'});
-	const settingsInfos = await Promise.all(
-			settingFiles.map(async (file) => {
-				return {uri: file, data: await BrAsProjectFiles.getUserSettingsInfo(file)};
-			})
-		);
-	console.log(settingsInfos);
+	const settingFiles = await vscode.workspace.findFiles({ base: asProject.baseUri.fsPath, pattern: '*.set' });
+	for (const file of settingFiles) {
+		const result = await BrAsProjectFiles.getUserSettingsInfo(file);
+		logger.info('BrAsProjectFiles.getUserSettingsInfo(uri)', { uri: file.toString(true), result: result });
+	}
 	// test Config.pkg info
-	console.log('BrAsProjectFiles.getConfigPackageInfo');
 	const configPkgFiles = await vscode.workspace.findFiles({base: asProject.physical.fsPath, pattern: '*/Config.pkg'});
-	const configPkgInfos = await Promise.all(
-		configPkgFiles.map(async (file) => {
-			return {uri: file, data: await BrAsProjectFiles.getConfigPackageInfo(file)};
-		})
-	);
-	console.log(configPkgInfos);
+	for (const file of configPkgFiles) {
+		const result = await BrAsProjectFiles.getConfigPackageInfo(file);
+		logger.info('BrAsProjectFiles.getConfigPackageInfo(uri)', { uri: file.toString(true), result: result });	
+	}
 	// test Cpu.pkg info
 	console.log('BrAsProjectFiles.getCpuPackageInfo');
-	const cpuPkgFiles = await vscode.workspace.findFiles({base: asProject.physical.fsPath, pattern: '*/*/Cpu.pkg'});
-	const cpuPkgInfos = await Promise.all(
-		cpuPkgFiles.map(async (file) => {
-			return {uri: file, data: await BrAsProjectFiles.getCpuPackageInfo(file)};
-		})
-	);
-	console.log(cpuPkgInfos);
+	const cpuPkgFiles = await vscode.workspace.findFiles({ base: asProject.physical.fsPath, pattern: '*/*/Cpu.pkg' });
+	for (const file of cpuPkgFiles) {
+		const result = await BrAsProjectFiles.getCpuPackageInfo(file);
+		logger.info('BrAsProjectFiles.getCpuPackageInfo(uri)', { uri: file.toString(true), result: result });
+	}
 	//end
-    console.warn('Test BrAsProjectFiles end');
+    logHeader('Test BrAsProjectFiles end');
 }
 
 
 async function testVsCodeExtensionContext(context: vscode.ExtensionContext) : Promise<void> {
 	//TODO can be used for generated files, user query flags...
 	// see https://code.visualstudio.com/api/extension-capabilities/common-capabilities#data-storage
-	console.warn('Test VsCodeExtensionContext start');
+	logHeader('Test VsCodeExtensionContext start');
 	// Storage for temporary files, e.g. generated headers, PIL files...
-	console.log('globalStoragePath, storagePath, logPath:');
-	console.log(context.globalStoragePath);
-	console.log(context.storagePath);
-	console.log(context.logPath);
-	// Temporary flags, values... e.g. last built configuration, build time...
-	context.workspaceState;
-	context.globalState;
-	console.warn('Test VsCodeExtensionContext end');
+	logger.info('vscode.ExtensionContext values', {
+		extensionPath: context.extensionPath,
+		extensionUri: context.extensionUri.toString(true),
+		extensionMode: context.extensionMode,
+		globalStorageUri: context.globalStorageUri.toString(true),
+		storageUri: context.storageUri?.toString(true),
+		logUri: context.logUri.toString(true)
+	});
+	logHeader('Test VsCodeExtensionContext end');
 }
 
 
 async function testBrLog(context: vscode.ExtensionContext): Promise<void> {
-	console.warn('Test BrLog start');
+	logHeader('Test BrLog start');
 	// log messages of various levels
 	logger.fatal('Some fatal 1');
 	logger.error('Some error 1');
@@ -487,6 +488,14 @@ async function testBrLog(context: vscode.ExtensionContext): Promise<void> {
 	logger.fatal('Obj', { data: someObj });
 	const someArray = [{ a: 33, b: { b1: 33, b2: false } }, undefined, 'hello', 33, false, null, { q: 'testQ', r: 'testR' }];
 	logger.fatal('Array', { data: someArray });
-	console.warn('Test BrLog end');
+	logHeader('Test BrLog end');
 }
 
+function logHeader(text: string): void {
+	const separator = ''.padEnd(100, '*');
+	logger.info('');
+	logger.info(separator);
+	logger.info(text);
+	logger.info(separator);
+	logger.info('');
+}

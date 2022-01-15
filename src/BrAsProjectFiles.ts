@@ -386,7 +386,6 @@ function getRootElement(xmlBase: XMLBuilder, requiredName?: string): xmlDom.Elem
         }
         return rootElement;
     } catch (error) {
-        console.log(error);
         return undefined;
     }
 }
