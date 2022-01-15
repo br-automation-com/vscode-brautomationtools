@@ -8,6 +8,10 @@
     "plugins": [
         "@typescript-eslint"
     ],
+    "env": {
+        "node": true,
+        "mocha": true
+    },
     "extends": "eslint:recommended", //TODO check for duplicates of recommended in defined rules
     "rules": {
         // naming
@@ -41,8 +45,7 @@
         "arrow-spacing": "error",
         //TODO rules which should probably be enabled in future (set to error in eslint:recommended)
         "no-unused-vars": "off",
-        "no-useless-escape": "off",
-        "no-undef": "off" // most of the undef are console
+        "no-useless-escape": "off"
         //TODO set spacing rules as I like it ;)
         //"space-before-function-paren": ["warn", "never"],
     },
