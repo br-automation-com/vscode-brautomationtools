@@ -248,10 +248,12 @@ async function findAvailableASVersionsInUri(uri: vscode.Uri): Promise<ASVersionI
 	for (const match of matching) {
 		// create full URI
 		const versionBaseUri = uriTools.pathJoin(uri, match![0]);
-		// create semantic version
-		const version = semver.coerce(`${match![1]}.${match![2]}.0`);
+		// create semantic version, handling for AS V3.X is different than V4.X
+		const major = parseInt(match![1]);
+		const minor = major === 3 ? 0 : parseInt(match![2]);
+		const bugfix = major === 3 ? parseInt(match![2]) : 0;
+		const version = semver.coerce(`${major}.${minor}.${bugfix}`);
 		if (!version) {
-			//TODO why does AS 3.0.90 not work?
 			//TODO more user friendly message
 			logger.error('Cannot create semantic version from URI: ' + versionBaseUri.fsPath);
 			continue;
