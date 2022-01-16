@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import * as BREnvironment from './BREnvironment';
-import * as BRDialogs from './BRDialogs';
+import * as BRDialogs from './UI/BrDialogs';
 
 
 /**

@@ -9,7 +9,7 @@ import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
 import * as Helpers from './Helpers';
 import * as uriTools from './UriTools';
 import * as fileTools from './FileTools';
-import * as Dialogs from './Dialogs';
+import * as Dialogs from '../UI/Dialogs';
 import * as BREnvironment from '../BREnvironment';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
 import * as BrAsProjectFiles from '../BrAsProjectFiles';

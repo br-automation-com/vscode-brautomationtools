@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import * as childProcess from 'child_process';
 import * as BrAsProjectWorkspace from './BRAsProjectWorkspace';
 import * as BrEnvironment from './BREnvironment';
-import * as BrDialogs from './BRDialogs';
+import * as BrDialogs from './UI/BrDialogs';
 import { logger } from './BrLog';
 import { extensionConfiguration } from './BRConfiguration';
 import { timeDiffString } from './Tools/Helpers';

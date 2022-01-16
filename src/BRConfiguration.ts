@@ -7,7 +7,7 @@
 
 import * as vscode from 'vscode';
 import { logger, LogLevel } from './BrLog';
-import { notifications } from './BrNotifications';
+import { notifications } from './UI/Notifications';
 import { isString, isStringArray } from './Tools/TypeGuards';
 
 //#region local functions

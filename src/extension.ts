@@ -11,7 +11,7 @@ import {registerTaskProviders as registerBuildTaskProviders} from './BrAsBuildTa
 import {registerTaskProviders as registerTransferTaskProviders} from './BrAsTransferTaskProvider';
 import {registerApiTests} from './Tools/ApiTests';
 import {registerProjectWorkspace} from './BRAsProjectWorkspace';
-import { notifications } from './BrNotifications';
+import { notifications } from './UI/Notifications';
 import { extensionState } from './BrExtensionState';
 import { extensionConfiguration } from './BRConfiguration';
 
