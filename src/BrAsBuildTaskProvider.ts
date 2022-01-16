@@ -10,6 +10,7 @@ import * as BrEnvironment from './BREnvironment';
 import * as BrDialogs from './BRDialogs';
 import { logger } from './BrLog';
 import { extensionConfiguration } from './BRConfiguration';
+import { timeDiffString } from './Tools/Helpers';
 
 
 /**
@@ -281,36 +282,55 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
         if (!usedDefinition) {
             this.writeLine('Dialog cancelled by user or setting not found.');
             this.writeLine('No build will be executed.');
-            this.done(1);
+            this.done(41);
             return;
         }
         // Get project data to get BR.AS.Build.exe in matching version
         if (!usedDefinition.asProjectFile) {
             this.writeLine(`ERROR: No project file selected for build`);
-            this.done(1);
+            this.done(42);
             return;
         }
         const asProject = await BrAsProjectWorkspace.getProjectForUri(vscode.Uri.file(usedDefinition.asProjectFile));
         if (!asProject) {
             this.writeLine(`ERROR: Project ${usedDefinition.asProjectFile} not found`);
-            this.done(2);
+            this.done(43);
             return;
         }
         const buildExe = await BrEnvironment.getBrAsBuilExe(asProject.asVersion);
         if (!buildExe) {
             this.writeLine(`ERROR: BR.AS.Build.exe not found for AS Version: ${asProject.asVersion}`);
-            this.done(2);
+            this.done(44);
             return;
         }
         // start build process
+        const startTime = new Date();
         this.writeLine('Starting Automation Studio build task');
+        this.writeLine(`Start of build: ${startTime.toLocaleString()}`);
         const buildArgs = taskDefinitionToBuildArgs(usedDefinition);
         this.writeLine(`${buildExe.fsPath} ${buildArgs.join(' ')}`);
         this.writeLine();
         this.buildProcess = childProcess.spawn(buildExe.fsPath, buildArgs);
-        this.buildProcess.stdout.on('data', (data) => this.write(String(data)));
-        this.buildProcess.stderr.on('data', (data) => this.write(String(data)));
-        this.buildProcess.on('exit', (code) => this.done(code ?? 0));
+        // print data with timestamp on data
+        this.buildProcess.stdout.on('data', (data) => {
+            const time = new Date().toLocaleTimeString();
+            const dataStr = String(data);
+            this.write(`${time} ${dataStr}`);
+        });
+        this.buildProcess.stderr.on('data', (data) => {
+            const time = new Date().toLocaleTimeString();
+            const dataStr = String(data);
+            this.write(`${time} ${dataStr}`);
+        });
+        // print build duration on exit
+        this.buildProcess.on('exit', (code) => {
+            const endTime = new Date();
+            const durationStr = timeDiffString(startTime, endTime);
+            this.writeLine();
+            this.writeLine(`End of build: ${endTime.toLocaleString()}`);
+            this.writeLine(`Build duration: ${durationStr}`);
+            this.done(code ?? 0);
+        });
     }
 
 

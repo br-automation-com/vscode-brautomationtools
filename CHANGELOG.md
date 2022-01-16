@@ -5,6 +5,14 @@ All notable changes to the "vscode-brautomationtools" extension will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+Add new but unreleased features, fixes... here during development
+
+### Added
+- The build of an Automation Studio project now shows timestamps and the total duration of the build
+  [#31](https://github.com/br-automation-com/vscode-brautomationtools/issues/31)
+
+
 ## [0.0.5] - 2022-01-16
 This release fixes some bugs which prevented IntelliSense to work. There are also new notification and logging settings.
 
