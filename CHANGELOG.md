@@ -11,6 +11,8 @@ Add new but unreleased features, fixes... here during development
 ### Added
 - The build of an Automation Studio project now shows timestamps and the total duration of the build
   [#31](https://github.com/br-automation-com/vscode-brautomationtools/issues/31)
+- A new notification is shown, if a setting which requires a reload was changed. A reload can be triggered directly in the notification.
+  [#18](https://github.com/br-automation-com/vscode-brautomationtools/issues/18)
 
 
 ## [0.0.5] - 2022-01-16

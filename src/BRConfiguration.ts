@@ -7,15 +7,18 @@
 
 import * as vscode from 'vscode';
 import { logger, LogLevel } from './BrLog';
+import { notifications } from './BrNotifications';
 import { isString, isStringArray } from './Tools/TypeGuards';
 
 //#region local functions
+
+const configRootKey = 'vscode-brautomationtools';
 
 /**
  * Get configuration of this extension
  */
 function getConfiguration() {
-    return vscode.workspace.getConfiguration('vscode-brautomationtools');
+    return vscode.workspace.getConfiguration(configRootKey);
 }
 
 
@@ -64,7 +67,29 @@ class ExtensionConfiguration {
     public static getInstance(): ExtensionConfiguration {
         return this.#instance;
     }
-    private constructor() { }
+    private constructor() {
+        vscode.workspace.onDidChangeConfiguration(this.#configChangedListener);
+    }
+
+
+    #configChangedListener(ev: vscode.ConfigurationChangeEvent) {
+        const reloadRequiredList = [
+            'environment.automationStudioInstallPaths',
+            'environment.pviInstallPaths',
+            'logging.logLevel',
+            'logging.prettyPrintAdditionalData',
+        ];
+        let reloadRequired = false;
+        for (const key of reloadRequiredList) {
+            const fullKey = `${configRootKey}.${key}`;
+            if (ev.affectsConfiguration(fullKey)) {
+                reloadRequired = true;
+            }
+        }
+        if (reloadRequired) {
+            notifications.configChangedMessage();
+        }
+    }
 
 
     /** Build configuration */

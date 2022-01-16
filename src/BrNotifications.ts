@@ -90,10 +90,28 @@ async function newVersionMessage(): Promise<void> {
 }
 
 
+async function configChangedMessage(): Promise<void> {
+    // Check context
+    if (!extensionContext) {
+        logger.debug(`BrNotifications.configChangedMessage() was called before initialization`);
+        return;
+    }
+    // Show pop-up message if activated
+    const extensionName = extensionContext.extension.packageJSON.displayName;
+    const message = `${extensionName} configuration was changed. Please reload window for changes to take effect.`;
+    const reloadButton = 'Reload';
+    const result = await vscode.window.showInformationMessage(message, reloadButton);
+    if (result === reloadButton) {
+        await vscode.commands.executeCommand('workbench.action.reloadWindow');
+    }
+}
+
+
 export const notifications = {
     initialize: initialize,
     activationMessage: activationMessage,
-    newVersionMessage: newVersionMessage
+    newVersionMessage: newVersionMessage,
+    configChangedMessage: configChangedMessage,
 };
 
 
