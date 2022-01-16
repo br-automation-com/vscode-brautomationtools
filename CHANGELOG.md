@@ -5,18 +5,28 @@ All notable changes to the "vscode-brautomationtools" extension will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-Add new but unreleased features, fixes... here during development
+## [0.0.5] - 2022-01-16
+This release fixes some bugs which prevented IntelliSense to work. There are also new notification and logging settings.
 
 ### Added
 - A new notification is shown after an update of the extension. By clicking the `Show changes` button you will be redirected to the changelog on GitHub.<br/>
   If you don't like the notification you can click the `Don't show again after update` button and we will not bother you anymore.<br/>
   The setting to hide the notification can also be set in the settings menu under `vscode-brautomationtools.notifications.hideNewVersionMessage`
+  [#26](https://github.com/br-automation-com/vscode-brautomationtools/issues/26)
 - The activation notification message can now be hidden by clicking the `Don't show on activation` button or in the settings under `vscode-brautomationtools.notifications.hideActivationMessage`
 - The additional data added by some logger entries can now be pretty printed by setting the new configuration value `vscode-brautomationtools.logging.prettyPrintAdditionalData` to `true`. This can make it easier to analyze the data but the log output will use multiple lines for one entry.
 
+### Fixed
+- Multiple build options were not provided to the C/C++ extension in the correct way. Therefore IntelliSense was not working when multiple build options were set.
+  [#27](https://github.com/br-automation-com/vscode-brautomationtools/issues/27)
+- Providing data to the C/C++ extension was too slow, which lead to unhandled exceptions in the C/C++ extension runtime status.
+  IntelliSense was still working as soon as our extension finished activation.
+  With this version our extension will directly provided the first data to the C/C++ extension and update the data after new information is available.
+  [#29](https://github.com/br-automation-com/vscode-brautomationtools/issues/29)
+
 ### Changed
-- The default setting for the log level `vscode-brautomationtools.logging.logLevel` was changed from `Debug` to `Info`
+- The default setting for the log level `vscode-brautomationtools.logging.logLevel` was changed from `Debug` to `Info`.
+  This was done to prevent too many log entries for normal users.
 
 
 ## [0.0.4] - 2021-12-04
