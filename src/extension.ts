@@ -14,7 +14,7 @@ import {getWorkspaceProjects, registerProjectWorkspace} from './BRAsProjectWorks
 import { notifications } from './UI/Notifications';
 import { extensionState } from './BrExtensionState';
 import { extensionConfiguration } from './BRConfiguration';
-import { getAvailableAutomationStudioVersions, getAvailablePviVersions } from './BREnvironment';
+import { getAvailableAutomationStudioVersions, getAvailablePviVersions } from './Environment/BREnvironment';
 import { statusBar } from './UI/StatusBar';
 
 

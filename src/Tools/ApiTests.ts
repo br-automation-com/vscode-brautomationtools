@@ -10,7 +10,7 @@ import * as Helpers from './Helpers';
 import * as uriTools from './UriTools';
 import * as fileTools from './FileTools';
 import * as Dialogs from '../UI/Dialogs';
-import * as BREnvironment from '../BREnvironment';
+import * as BREnvironment from '../Environment/BREnvironment';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
 import * as BrAsProjectFiles from '../BrAsProjectFiles';
 import { logger } from '../BrLog';

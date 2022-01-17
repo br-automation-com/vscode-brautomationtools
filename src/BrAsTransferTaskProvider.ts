@@ -16,7 +16,7 @@ import * as uriTools from './Tools/UriTools';
 import * as fileTools from './Tools/FileTools';
 import * as Dialogs from './UI/Dialogs';
 import * as BrAsProjectWorkspace from './BRAsProjectWorkspace';
-import * as BrEnvironment from './BREnvironment';
+import * as BrEnvironment from './Environment/BREnvironment';
 import * as BrDialogs from './UI/BrDialogs';
 import * as BrConfiguration from './BRConfiguration';
 import { logger } from './BrLog';

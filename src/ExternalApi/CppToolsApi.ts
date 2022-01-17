@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 import * as cppTools from 'vscode-cpptools';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
-import * as BREnvironment from '../BREnvironment';
+import * as BREnvironment from '../Environment/BREnvironment';
 import { logger } from '../BrLog';
 import * as Helpers from '../Tools/Helpers';
 import * as uriTools from '../Tools/UriTools';

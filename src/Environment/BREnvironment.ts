@@ -5,10 +5,10 @@
 //TODO get version information once on startup, only specify an array of base install paths in the configuration
 
 import * as vscode from 'vscode';
-import { logger } from './BrLog';
-import * as uriTools from './Tools/UriTools';
+import { logger } from '../BrLog';
+import * as uriTools from '../Tools/UriTools';
 import * as semver from 'semver';
-import { extensionConfiguration } from './BRConfiguration';
+import { extensionConfiguration } from '../BRConfiguration';
 
 
 //#region exported interfaces

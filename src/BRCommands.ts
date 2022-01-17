@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import * as BREnvironment from './BREnvironment';
+import * as BREnvironment from './Environment/BREnvironment';
 import * as BRDialogs from './UI/BrDialogs';
 
 
