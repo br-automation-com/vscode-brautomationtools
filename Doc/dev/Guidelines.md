@@ -1,6 +1,7 @@
 # Release procedure
 
 1. Adjust version in package.json
+   - run npm install to also update package-lock.json
 2. Adjust CHANGELOG
    - Create new header for version `## [x.y.z]`
    - Move all changes listed under `## [Unreleased]` to the new version header
