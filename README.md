@@ -25,6 +25,8 @@ B&R ressources such as executuable binaries etc. are not provided by this extens
   - [Transfer the project to a PLC or ArSim](#transfer-the-project-to-a-plc-or-arsim)
   - [Detecting installed B&R PVI versions](#detecting-installed-br-pvi-versions)
 - [Logging](#logging)
+- [UI Elements](#ui-elements)
+- [Commands](#commands)
 - [Settings](#settings)
 - [Requirements](#requirements)
 - [Known issues](#known-issues)
@@ -335,6 +337,22 @@ logging.prettyPrintAdditionalData = true;
   }
 }
 ```
+
+## UI Elements
+
+### Status Bar
+
+#### Busy indicator
+
+The busy indicator in the status bar is shown whenever the extension is busy with a longer running task such as parsing the Automation Studio projects in the workspace. When hovering the indicator with the mouse pointer, a tooltip shows which tasks are currently executing.
+
+![Status bar busy indicator](Doc/Screenshots/StatusBarBusyIndicator.png)
+
+At the moment this indicator is only shown during extension activation.
+
+## Commands
+
+TODO command descriptions
 
 ## Settings
 

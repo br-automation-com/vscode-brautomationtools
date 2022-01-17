@@ -15,6 +15,7 @@ import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
 import * as BrAsProjectFiles from '../BrAsProjectFiles';
 import { logger } from '../BrLog';
 import { extensionConfiguration } from '../BRConfiguration';
+import { statusBar } from '../UI/StatusBar';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -67,6 +68,9 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	}
 	if (await Dialogs.yesNoDialog('Run tests for BrLog')) {
 		await testBrLog(context);
+	}
+	if (await Dialogs.yesNoDialog('Run tests for StatusBar')) {
+		await testStatusBar(context);
 	}
 	// end
 	logHeader('Test command end');
@@ -490,6 +494,29 @@ async function testBrLog(context: vscode.ExtensionContext): Promise<void> {
 	logger.fatal('Array', { data: someArray });
 	logHeader('Test BrLog end');
 }
+
+
+async function testStatusBar(context: vscode.ExtensionContext): Promise<void> {
+	logHeader('Test StatusBar start');
+	// start multiple timers
+	const resolveIn5 = new Promise((resolve) => setTimeout(resolve, 5000));
+	const resolveIn10 = new Promise((resolve) => setTimeout(resolve, 10000));
+	const resolveIn15 = new Promise((resolve) => setTimeout(resolve, 15000));
+	const rejectIn20 = new Promise((resolve, reject) => setTimeout(reject, 20000));
+	const resolveIn25 = new Promise((resolve) => setTimeout(resolve, 25000));
+	const resolveIn30 = new Promise((resolve) => setTimeout(resolve, 30000));
+	// Normal busy items
+	statusBar.addBusyItem(resolveIn5, 'Resolve in 5 seconds');
+	statusBar.addBusyItem(resolveIn10, 'Resolve in 10 seconds');
+	statusBar.addBusyItem(rejectIn20, 'Reject in 20 seconds');
+	// manual remove busy item
+	const manualRemove = statusBar.addBusyItem(resolveIn15, 'Resolve in 15 seconds, but remove after 10');
+	resolveIn10.then(() => statusBar.removeBusyItem(manualRemove));
+	// empty busy item coming later
+	resolveIn25.then(() => statusBar.addBusyItem(resolveIn30));
+	logHeader('Test StatusBar end');
+}
+
 
 function logHeader(text: string): void {
 	const separator = ''.padEnd(100, '*');

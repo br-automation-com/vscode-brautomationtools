@@ -13,6 +13,9 @@ Add new but unreleased features, fixes... here during development
   [#31](https://github.com/br-automation-com/vscode-brautomationtools/issues/31)
 - A new notification is shown, if a setting which requires a reload was changed. A reload can be triggered directly in the notification.
   [#18](https://github.com/br-automation-com/vscode-brautomationtools/issues/18)
+- A StatusBar item was added which shows that the extension is currently busy. When hovering it with the mouse, a tooltip shows which tasks are currently executed.
+  At the moment it is only shown during activation of the extension, but in the future other events, such as running builds etc. may be added.
+  [#6](https://github.com/br-automation-com/vscode-brautomationtools/issues/6)
 
 
 ## [0.0.5] - 2022-01-16
