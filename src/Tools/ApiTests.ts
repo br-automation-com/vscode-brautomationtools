@@ -514,6 +514,8 @@ async function testStatusBar(context: vscode.ExtensionContext): Promise<void> {
 	resolveIn10.then(() => statusBar.removeBusyItem(manualRemove));
 	// empty busy item coming later
 	resolveIn25.then(() => statusBar.addBusyItem(resolveIn30));
+	// Show look and feel test dummys
+	statusBar.showConfigAndDeployedDummy(resolveIn30);
 	logHeader('Test StatusBar end');
 }
 

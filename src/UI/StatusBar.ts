@@ -81,6 +81,32 @@ class StatusBar {
         this.#busyStatus.show();
     }
 
+
+    /**     */
+    showConfigAndDeployedDummy(hideWhenDone: Promise<any>) {
+        //TODO this is only for testing the look and feel of the status bar items. It has to be done in the proper place
+        //     in the extension, so an update works in both ways...
+        // select configuration
+        const selectConfig = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+        selectConfig.name = 'AS Configuration';
+        selectConfig.text = '$(gear) Config1';
+        selectConfig.tooltip = 'Select active configuration';
+        selectConfig.command = 'vscode-brautomationtools.dialogSelectBuildMode';
+        selectConfig.show();
+        // select deployed object
+        const selectDeployed = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+        selectDeployed.name = 'AS Deployed';
+        selectDeployed.text = '$(extensions) Program1';
+        selectDeployed.tooltip = 'Select deployed instance';
+        selectDeployed.command = 'vscode-brautomationtools.dialogSelectBuildMode';
+        selectDeployed.show();
+        // hide when resolved
+        hideWhenDone.then(() => {
+            selectConfig.dispose();
+            selectDeployed.dispose();
+        });
+    }
+
     dispose() {
         this.#busyStatus.dispose();
     }
