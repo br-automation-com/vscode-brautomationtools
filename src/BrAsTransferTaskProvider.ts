@@ -20,6 +20,7 @@ import * as BrEnvironment from './Environment/BREnvironment';
 import * as BrDialogs from './UI/BrDialogs';
 import * as BrConfiguration from './BRConfiguration';
 import { logger } from './BrLog';
+import { Pvi } from './Environment/Pvi';
 
 
 /**
@@ -407,9 +408,10 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
             return;
         }
         // Get PVITransfer.exe in highest version
-        const pviTransferExe = await BrEnvironment.getPviTransferExe();
+        // TODO Maybe start process in PviTransferExe.ts
+        const pviTransferExe = (await Pvi.getPviVersion())?.pviTransfer.filePath;
         if (!pviTransferExe) {
-            this.writeLine(`ERROR: PVITransfer.exe not found for AS Version: ${asProject.asVersion}`);
+            this.writeLine(`ERROR: No PVI version found`);
             this.done(70);
             return;
         }

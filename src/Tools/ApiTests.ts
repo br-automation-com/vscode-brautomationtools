@@ -16,6 +16,7 @@ import * as BrAsProjectFiles from '../BrAsProjectFiles';
 import { logger } from '../BrLog';
 import { extensionConfiguration } from '../BRConfiguration';
 import { statusBar } from '../UI/StatusBar';
+import { Pvi } from '../Environment/Pvi';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -53,6 +54,9 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	}
 	if (await Dialogs.yesNoDialog('Run tests for BREnvironment?')) {
 		await testBREnvironment();
+	}
+	if (await Dialogs.yesNoDialog('Run tests for PVI?')) {
+		await testPvi(context);
 	}
 	if (await Dialogs.yesNoDialog('Run tests for BRConfiguration?')) {
 		await testBRConfiguration();
@@ -284,22 +288,29 @@ async function testBREnvironment() {
 		targetSystem: getTargetSystemType,
 		result: targetSystemInfo
 	});
-	// Update PVI versions
-	if (await Dialogs.yesNoDialog('Update PVI versions?')) {
-		logger.info('BREnvironment.updateAvailablePviVersions() start');
-		const result = await BREnvironment.updateAvailablePviVersions();
-		logger.info('BREnvironment.updateAvailablePviVersions() done', { result: result });
-	}
-	// get PVI version info
-	const pviVersions = await BREnvironment.getAvailablePviVersions();
-	logger.info('BREnvironment.getAvailablePviVersions()', { result: pviVersions });
-	// get PVITransfer.exe
-	const inputPviVersion = await vscode.window.showInputBox({prompt: 'Enter a PVI version to find PVITransfer.exe'});
-	const transferExe = await BREnvironment.getPviTransferExe(inputPviVersion);
-	logger.info('BREnvironment.getPviTransferExe(requested)', { requested: inputPviVersion, result: transferExe });
 
 	// end
 	logHeader('Test BREnvironment end');
+}
+
+
+async function testPvi(context: vscode.ExtensionContext): Promise<void> {
+	logHeader('Test PVI start');
+	const highestPvi = await Pvi.getPviVersion();
+	logger.info('highest PVI', { pvi: highestPvi?.rootUri.fsPath });
+	const pviV48 = await Pvi.getPviVersion('4.8');
+	logger.info('PVI V4.8 not strict', { pvi: pviV48?.rootUri.fsPath });
+	const pviV48Strict = await Pvi.getPviVersion('4.8', true);
+	logger.info('PVI V4.8 strict', { pvi: pviV48Strict?.rootUri.fsPath });
+	const pviV46 = await Pvi.getPviVersion('4.6');
+	logger.info('PVI V4.6 not strict', { pvi: pviV46?.rootUri.fsPath });
+	const pviV46Strict = await Pvi.getPviVersion('4.6', true);
+	logger.info('PVI V4.6 strict', { pvi: pviV46Strict?.rootUri.fsPath });
+	const update = await Dialogs.yesNoDialog('Update PVI versions?');
+	if (update) {
+		await Pvi.updatePviVersions();
+	}
+	logHeader('Test PVI end');
 }
 
 

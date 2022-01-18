@@ -14,8 +14,9 @@ import {getWorkspaceProjects, registerProjectWorkspace} from './BRAsProjectWorks
 import { notifications } from './UI/Notifications';
 import { extensionState } from './BrExtensionState';
 import { extensionConfiguration } from './BRConfiguration';
-import { getAvailableAutomationStudioVersions, getAvailablePviVersions } from './Environment/BREnvironment';
+import { getAvailableAutomationStudioVersions } from './Environment/BREnvironment';
 import { statusBar } from './UI/StatusBar';
+import { Pvi } from './Environment/Pvi';
 
 
 // Activation event
@@ -37,7 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// get promises for long running activation events and add to status bar
 	const waitAsVersion = getAvailableAutomationStudioVersions();
 	statusBar.addBusyItem(waitAsVersion, 'Searching for installed AS versions');
-	const waitPviVersions = getAvailablePviVersions();
+	const waitPviVersions = Pvi.getPviVersions();
 	statusBar.addBusyItem(waitPviVersions, 'Searching for installed PVI versions');
 	const waitWorkspaceProjects = getWorkspaceProjects();
 	statusBar.addBusyItem(waitWorkspaceProjects, 'Parsing AS projects in workspace');
