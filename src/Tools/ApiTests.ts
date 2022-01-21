@@ -16,7 +16,7 @@ import * as BrAsProjectFiles from '../BrAsProjectFiles';
 import { logger } from '../BrLog';
 import { extensionConfiguration } from '../BRConfiguration';
 import { statusBar } from '../UI/StatusBar';
-import { Pvi } from '../Environment/Pvi';
+import { Environment } from '../Environment/Environment';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -297,19 +297,22 @@ async function testBREnvironment() {
 
 async function testPvi(context: vscode.ExtensionContext): Promise<void> {
 	logHeader('Test PVI start');
-	const highestPvi = await Pvi.getPviVersion();
-	logger.info('highest PVI', { pvi: highestPvi?.rootUri.fsPath });
-	const pviV48 = await Pvi.getPviVersion('4.8');
-	logger.info('PVI V4.8 not strict', { pvi: pviV48?.rootUri.fsPath });
-	const pviV48Strict = await Pvi.getPviVersion('4.8', true);
-	logger.info('PVI V4.8 strict', { pvi: pviV48Strict?.rootUri.fsPath });
-	const pviV46 = await Pvi.getPviVersion('4.6');
-	logger.info('PVI V4.6 not strict', { pvi: pviV46?.rootUri.fsPath });
-	const pviV46Strict = await Pvi.getPviVersion('4.6', true);
-	logger.info('PVI V4.6 strict', { pvi: pviV46Strict?.rootUri.fsPath });
+	// Test queries for specific PVI versions
+	const highestPvi = await Environment.getPviVersion();
+	logger.info('highest PVI', { pvi: highestPvi });
+	const pviV48 = await Environment.getPviVersion('4.8');
+	logger.info('PVI V4.8 not strict', { pvi: pviV48 });
+	const pviV48Strict = await Environment.getPviVersion('4.8', true);
+	logger.info('PVI V4.8 strict', { pvi: pviV48Strict });
+	const pviV46 = await Environment.getPviVersion('4.6');
+	logger.info('PVI V4.6 not strict', { pvi: pviV46 });
+	const pviV46Strict = await Environment.getPviVersion('4.6', true);
+	logger.info('PVI V4.6 strict', { pvi: pviV46Strict });
+	// Update PVI
 	const update = await Dialogs.yesNoDialog('Update PVI versions?');
 	if (update) {
-		await Pvi.updatePviVersions();
+		const allVersions = await Environment.updatePviVersions();
+		logger.info('PVI versions found:', { versions: allVersions });
 	}
 	logHeader('Test PVI end');
 }

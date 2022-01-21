@@ -9,13 +9,19 @@ export class PviTransferExe {
     //TODO implement
 
     constructor(executable: vscode.Uri) {
-        this.#filePath = executable;
+        this.#executable = executable;
     }
-
-
+    
     /** The path to the PVITransfer.exe file */
-    public get filePath() : vscode.Uri {
-        return this.#filePath;
+    public get executable() : vscode.Uri {
+        return this.#executable;
     }
-    #filePath: vscode.Uri;
+    #executable: vscode.Uri;
+
+    /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
+    public toJSON(): any {
+        return {
+            executable: this.executable.toString(true),
+        };
+    }
 }
