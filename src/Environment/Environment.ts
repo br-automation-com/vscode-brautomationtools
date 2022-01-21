@@ -8,7 +8,7 @@ import { logger } from '../BrLog';
 import * as semver from 'semver';
 import { extensionConfiguration } from '../BRConfiguration';
 import { requestVersion } from './SemVerTools';
-import { PviVersion } from './Pvi';
+import { PviVersion } from './PviVersion';
 
 
 export class Environment {
