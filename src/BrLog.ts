@@ -137,6 +137,11 @@ class Logger {
     }
     #debug: LogFunction = this.#logDummy;
 
+    /** Shows the logger in the UI */
+    public showOutput() {
+        Logger.#logChannel.show(true);
+    }
+
 
     /** Create Logger with default settings */
     constructor() {

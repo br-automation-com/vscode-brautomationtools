@@ -35,6 +35,7 @@ export function registerApiTests(context: vscode.ExtensionContext) {
 
 
 async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContext) {
+	logger.showOutput();
 	logHeader('Test command start');
 	// select tests to execute
 	if (await Dialogs.yesNoDialog('Run various tests?')) {
