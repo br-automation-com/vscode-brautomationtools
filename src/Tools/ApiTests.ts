@@ -17,6 +17,8 @@ import { logger } from '../BrLog';
 import { extensionConfiguration } from '../BRConfiguration';
 import { statusBar } from '../UI/StatusBar';
 import { Environment } from '../Environment/Environment';
+import { GccVersion } from '../Environment/GccVersion';
+import { SystemGeneration, TargetArchitecture } from '../Environment/CommonTypes';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -55,6 +57,9 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	}
 	if (await Dialogs.yesNoDialog('Run tests for BREnvironment?')) {
 		await testBREnvironment();
+	}
+	if (await Dialogs.yesNoDialog('Run tests for gcc?')) {
+		await testGcc(context);
 	}
 	if (await Dialogs.yesNoDialog('Run tests for PVI?')) {
 		await testPvi(context);
@@ -292,6 +297,39 @@ async function testBREnvironment() {
 
 	// end
 	logHeader('Test BREnvironment end');
+}
+
+
+async function testGcc(context: vscode.ExtensionContext): Promise<void> {
+	logHeader('Test gcc start');
+	// get gcc versions for AS V4.10
+	const gccBase = vscode.Uri.file('C:\\BrAutomation\\AS410\\AS\\gnuinst');
+	const gccVersions = await GccVersion.searchVersionsInDir(gccBase);
+	logger.info('Gcc versions', {
+		base: gccBase.fsPath,
+		versions: gccVersions,
+	});
+	const gccVersionSelItems = gccVersions.map((gcc) => ({value: gcc, label: gcc.version.version}));
+	// Get targets
+	do {
+		const selectedGcc = await Dialogs.getQuickPickSingleValue(gccVersionSelItems, { title: 'Select gcc version' });
+		const sysGen = await Dialogs.getQuickPickSingleValue<SystemGeneration>([
+			{ value: 'SGC', label: 'SGC' },
+			{ value: 'SG3', label: 'SG3' },
+			{ value: 'SG4', label: 'SG4' },
+			{ value: 'UNKNOWN', label: 'UNKNOWN' },
+		], { title: 'Select SG' });
+		const arch = await Dialogs.getQuickPickSingleValue<TargetArchitecture>([
+			{ value: 'M68K', label: 'M68K' },
+			{ value: 'IA32', label: 'IA32' },
+			{ value: 'Arm', label: 'Arm' },
+			{ value: 'UNKNOWN', label: 'UNKNOWN' },
+		], { title: 'Select architecture' });
+		const strict = await Dialogs.yesNoDialog('Strict search?');
+		const matchingTarget = selectedGcc?.getTarget(sysGen, arch, strict);
+		logger.info('Matching target:', { result: matchingTarget });
+	} while (await Dialogs.yesNoDialog('Try again?'));
+	logHeader('Test gcc end');
 }
 
 
