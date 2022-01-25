@@ -1,5 +1,3 @@
-//TODO rename files to something...
-
 import { coerce, compare, satisfies, SemVer } from 'semver';
 import { logger } from '../BrLog';
 
@@ -7,7 +5,6 @@ import { logger } from '../BrLog';
 export interface HasVersion {
     version: SemVer
 }
-
 
 /**
  * Get a specific version object. If used in non strict mode, the highest available version will be returned.
@@ -42,8 +39,11 @@ export function requestVersion<T extends HasVersion>(source: T[], requested?: Se
     }
 }
 
-
-function highestVersion<T extends HasVersion>(source: T[]): T | undefined {
+/**
+ * Get the object of a collection with the highest version
+ * @returns The object with the highest version in the collection, or `undefined` if the collection is empty
+ */
+export function highestVersion<T extends HasVersion>(source: T[]): T | undefined {
     // direct return if no versions available
     if (source.length <= 0) {
         return undefined;

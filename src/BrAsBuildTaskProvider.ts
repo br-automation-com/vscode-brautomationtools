@@ -6,11 +6,11 @@
 import * as vscode from 'vscode';
 import * as childProcess from 'child_process';
 import * as BrAsProjectWorkspace from './BRAsProjectWorkspace';
-import * as BrEnvironment from './Environment/BREnvironment';
 import * as BrDialogs from './UI/BrDialogs';
 import { logger } from './BrLog';
 import { extensionConfiguration } from './BRConfiguration';
 import { timeDiffString } from './Tools/Helpers';
+import { Environment } from './Environment/Environment';
 
 
 /**
@@ -297,7 +297,7 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
             this.done(43);
             return;
         }
-        const buildExe = await BrEnvironment.getBrAsBuilExe(asProject.asVersion);
+        const buildExe = (await Environment.automationStudio.getVersion(asProject.asVersion))?.buildExe.exePath;
         if (!buildExe) {
             this.writeLine(`ERROR: BR.AS.Build.exe not found for AS Version: ${asProject.asVersion}`);
             this.done(44);

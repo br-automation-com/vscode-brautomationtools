@@ -1,20 +1,16 @@
 import * as vscode from 'vscode';
 
 /**
- * Representation of PVITransfer.exe
+ * Representation of Automation Studio build exe (BR.AS.Build.exe)
  */
-export class PviTransferExe {
+export class BrAsBuildExe {
     //TODO maybe implement execution, args, ... directly in here
 
-    /**
-     * Creates a PVITransfer.exe representation
-     * @param exePath URI to the PVITransfer.exe
-     */
     public constructor(exePath: vscode.Uri) {
         this.#exePath = exePath;
     }
     
-    /** The path to the PVITransfer.exe file */
+    /** The path to the BR.AS.Build.exe file */
     public get exePath() : vscode.Uri {
         return this.#exePath;
     }

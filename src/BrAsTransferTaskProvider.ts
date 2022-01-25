@@ -16,9 +16,7 @@ import * as uriTools from './Tools/UriTools';
 import * as fileTools from './Tools/FileTools';
 import * as Dialogs from './UI/Dialogs';
 import * as BrAsProjectWorkspace from './BRAsProjectWorkspace';
-import * as BrEnvironment from './Environment/BREnvironment';
 import * as BrDialogs from './UI/BrDialogs';
-import * as BrConfiguration from './BRConfiguration';
 import { logger } from './BrLog';
 import { Environment } from './Environment/Environment';
 
@@ -409,7 +407,7 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
         }
         // Get PVITransfer.exe in highest version
         // TODO Maybe start process in PviTransferExe.ts
-        const pviTransferExe = (await Environment.getPviVersion())?.pviTransfer.executable;
+        const pviTransferExe = (await Environment.pvi.getVersion())?.pviTransfer.exePath;
         if (!pviTransferExe) {
             this.writeLine(`ERROR: No PVI version found`);
             this.done(70);

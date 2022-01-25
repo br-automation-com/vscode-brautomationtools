@@ -6,10 +6,10 @@
 import * as vscode from 'vscode';
 import * as cppTools from 'vscode-cpptools';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
-import * as BREnvironment from '../Environment/BREnvironment';
 import { logger } from '../BrLog';
 import * as Helpers from '../Tools/Helpers';
 import * as uriTools from '../Tools/UriTools';
+import { Environment } from '../Environment/Environment';
 
 
 /**
@@ -51,7 +51,7 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
         }
         this.#cppApi.registerCustomConfigurationProvider(this);
         // Ready only parsing of workspace and environment (required for proper includes)
-        BREnvironment.getAvailableAutomationStudioVersions().then(() => this.didChangeCppToolsConfig());
+        Environment.automationStudio.getVersions().then(() => this.didChangeCppToolsConfig());
         BRAsProjectWorkspace.getWorkspaceProjects().then(() => this.didChangeCppToolsConfig());
         this.#cppApi.notifyReady(this);
         return true;
@@ -155,8 +155,9 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
             return undefined;
         }
         // get gcc data
-        const gccInfo = await BREnvironment.getGccTargetSystemInfo(asProjectInfo.asVersion, activeCfg.buildSettings.gccVersion, 'SG4 Ia32'); //TODO parameter targetSystem not hard coded (#11)
-        if (!gccInfo) {
+        const gccExe = (await Environment.automationStudio.getVersion(asProjectInfo.asVersion))
+            ?.gccInstallation.getExecutable(activeCfg.buildSettings.gccVersion, 'SG4', 'Arm');
+        if (!gccExe) {
             return undefined;
         }
         // get compiler arguments
@@ -172,7 +173,7 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
                 intelliSenseMode: undefined,
                 standard:         undefined,
                 compilerArgs:     compilerArgs,
-                compilerPath:     gccInfo.gccExe.fsPath,
+                compilerPath:     gccExe.exePath.fsPath,
             }
         };
         return config;

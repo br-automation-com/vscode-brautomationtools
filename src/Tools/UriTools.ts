@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode';
 import {posix} from 'path'; // always use posix style path for vscode.Uri.path: https://github.com/microsoft/vscode-extension-samples/blob/master/fsconsumer-sample/README.md
+import { isString } from './TypeGuards';
 
 //#region implementations of path.posix for vscode.Uri
 // see also https://nodejs.org/docs/latest/api/path.html
@@ -38,6 +39,8 @@ export function pathDirname(uri: vscode.Uri): vscode.Uri {
  */
 export function pathJoin(baseUri: vscode.Uri, ...append: string[]): vscode.Uri {
     //TODO obsolete? -> vscode.Uri.joinPath
+    //TODO no! go back to uriTools.pathJoin for uniform code structure. vscode api still lacks others, e.g. relative, resolve...
+    //     behaviour is same as vscode api
     const basePath = baseUri.path;
     const joinedPath = posix.join(basePath, ...append);
     const joinedUri = baseUri.with({path: joinedPath});
@@ -196,29 +199,57 @@ export async function isDirectory(uri: vscode.Uri): Promise<boolean> {
 /**
  * Lists the names of all subdirectories within a base URI.
  * @param baseUri The base for the list
+ * @param filter An optional filter for the directory name.
  */
-export async function listSubDirectoryNames(baseUri: vscode.Uri): Promise<string[]> {
-    return await listSubsOfType(baseUri, vscode.FileType.Directory);
+export async function listSubDirectoryNames(baseUri: vscode.Uri, filter?: string | RegExp): Promise<string[]> {
+    return await listSubsOfType(baseUri, vscode.FileType.Directory, filter);
 }
 
 
 /**
  * Lists the full URIs of all subdirectories within a base URI.
  * @param baseUri The base for the list.
+ * @param filter An optional filter for the directory name.
  */
-export async function listSubDirectories(baseUri: vscode.Uri) {
-    const dirNames = await listSubDirectoryNames(baseUri);
+export async function listSubDirectories(baseUri: vscode.Uri, filter?: string | RegExp) {
+    const dirNames = await listSubDirectoryNames(baseUri, filter);
     return dirNames.map((name) => pathJoin(baseUri, name));
+}
+
+
+/**
+ * Lists the names of all the files within a base URI.
+ * @param baseUri The base for the list.
+ * @param filter An optional filter for the file name.
+ */
+export async function listSubFileNames(baseUri: vscode.Uri, filter?: string | RegExp): Promise<string[]> {
+    return await listSubsOfType(baseUri, vscode.FileType.File, filter);
 }
 
 
 /**
  * Lists the full URIs of all the files within a base URI.
  * @param baseUri The base for the list.
+ * @param filter An optional filter for the file name.
  */
-export async function listSubFiles(baseUri: vscode.Uri): Promise<vscode.Uri[]> {
-    const fileNames = await listSubsOfType(baseUri, vscode.FileType.File);
+export async function listSubFiles(baseUri: vscode.Uri, filter?: string | RegExp): Promise<vscode.Uri[]> {
+    const fileNames = await listSubFileNames(baseUri, filter);
     return fileNames.map((name) => pathJoin(baseUri, name));
+}
+
+/**
+ * Lists the full URIs of all subdirectories within multiple base URIs as a flat array.
+ * This can be helpful e.g. for a breadth first tree search
+ * @param baseUris The base URIs for the list.
+ * @returns A flat array containing the URIs to the sub directories of all base URIs
+ */
+async function listAllSubDirectories(...baseUris: vscode.Uri[]): Promise<vscode.Uri[]> {
+    const result: vscode.Uri[] = [];
+    for (const uri of baseUris) {
+        const subs = await listSubDirectories(uri);
+        result.push(...subs);
+    }
+    return result;
 }
 
 
@@ -226,14 +257,20 @@ export async function listSubFiles(baseUri: vscode.Uri): Promise<vscode.Uri[]> {
  * Lists the names of all sub filesystem objects of a specified type within a base URI.
  * @param baseUri The base URI to search in.
  * @param fileType The file type to search for.
+ * @param filter An optional filter for the sub element name.
  */
-async function listSubsOfType(baseUri: vscode.Uri, fileType: vscode.FileType): Promise<string[]> {
+async function listSubsOfType(baseUri: vscode.Uri, fileType: vscode.FileType, filter?: string | RegExp): Promise<string[]> {
     const subs = await vscode.workspace.fs.readDirectory(baseUri);
     const subsOfType = subs.filter((sub) => sub[1] === fileType);
     const subNames = subsOfType.map((sub) => sub[0]);
-    return subNames;
+    if (filter === undefined) {
+        return subNames;
+    } else if (isString(filter)) {
+        return subNames.filter((name) => name === filter);
+    } else {
+        return subNames.filter((name) => filter.test(name));
+    }
 }
-
 
 /**
  * Creates a `vscode.RelativePattern` which matches only the specified file URI.
@@ -243,4 +280,38 @@ export function uriToSingleFilePattern(uri: vscode.Uri): vscode.RelativePattern 
     const fileName = pathBasename(uri);
     const dirName = pathDirname(uri).fsPath;
     return {base: dirName, pattern: fileName};
+}
+
+/**
+ * Recursive search for a directory. A breadth first search is used and the first match will be returned.
+ * This function can have better performance than `vscode.workspace.findFiles()` in some cases.
+ * @param rootUri The starting point for the search
+ * @param filter The used filter for the search. Use string for an exact match, or a RegExp for a pattern match
+ * @param depth The maximum level of subdirectories in which is searched. Depth 0 means only direct children of `rootUri` will be searched.
+ * @returns The first found directory which matches the criteria, or undefined if no such was found
+ */
+export async function findDirectory(rootUri: vscode.Uri, depth: number, filter: string | RegExp): Promise<vscode.Uri | undefined> {
+    // prepare result and current search level
+    let result: vscode.Uri | undefined = undefined;
+    let actDepthUris: vscode.Uri[] = [rootUri];
+    // search loop
+    for (let actDepth = 0; actDepth <= depth; actDepth++) {
+        // get all subdirectories of the current depth
+        const subDirs = await listAllSubDirectories(...actDepthUris);
+        // find match
+        let match = undefined;
+        if (isString(filter)) {
+            match = subDirs.find((dir) => pathBasename(dir) === filter);
+        } else {
+            match = subDirs.find((dir) => filter.test(pathBasename(dir)));
+        }
+        // finish on first match
+        if (match !== undefined) {
+            result = match;
+            break;
+        }
+        // set new starting point for next iteration
+        actDepthUris = subDirs;
+    }
+    return result;
 }

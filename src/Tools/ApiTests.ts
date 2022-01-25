@@ -10,15 +10,18 @@ import * as Helpers from './Helpers';
 import * as uriTools from './UriTools';
 import * as fileTools from './FileTools';
 import * as Dialogs from '../UI/Dialogs';
-import * as BREnvironment from '../Environment/BREnvironment';
 import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
 import * as BrAsProjectFiles from '../BrAsProjectFiles';
+import * as semver from 'semver';
 import { logger } from '../BrLog';
 import { extensionConfiguration } from '../BRConfiguration';
 import { statusBar } from '../UI/StatusBar';
 import { Environment } from '../Environment/Environment';
-import { GccVersion } from '../Environment/GccVersion';
+import { GccInstallation } from '../Environment/GccInstallation';
 import { SystemGeneration, TargetArchitecture } from '../Environment/CommonTypes';
+import { AutomationStudioVersion } from '../Environment/AutomationStudioVersion';
+import { spawnSync } from 'child_process';
+import { spawnAsync } from './ChildProcess';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -40,6 +43,9 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	logger.showOutput();
 	logHeader('Test command start');
 	// select tests to execute
+	if (await Dialogs.yesNoDialog('Run tests for temporary stuff?')) {
+		await testTemp(context);
+	}
 	if (await Dialogs.yesNoDialog('Run various tests?')) {
 		await testVarious(arg1, arg2);
 	}
@@ -55,8 +61,8 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	if (await Dialogs.yesNoDialog('Run tests for file system events?')) {
 		await testFileSystemEvents();
 	}
-	if (await Dialogs.yesNoDialog('Run tests for BREnvironment?')) {
-		await testBREnvironment();
+	if (await Dialogs.yesNoDialog('Run tests for AutomationStudioVersion?')) {
+		await testAutomationStudioVersion(context);
 	}
 	if (await Dialogs.yesNoDialog('Run tests for gcc?')) {
 		await testGcc(context);
@@ -84,6 +90,11 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	}
 	// end
 	logHeader('Test command end');
+}
+
+async function testTemp(context: vscode.ExtensionContext): Promise<void> {
+	logHeader('Test temporary stuff start');
+	logHeader('Test temporary stuff end');
 }
 
 async function testVarious(arg1: any, arg2: any) {
@@ -266,37 +277,26 @@ async function testHelpers() {
 }
 
 
-async function testBREnvironment() {
-	logHeader('Test BREnvironment start');
+async function testAutomationStudioVersion(context: vscode.ExtensionContext): Promise<void> {
+	logHeader('Test AutomationStudioVersion start');
 	// Update AS versions
-	if (await Dialogs.yesNoDialog('Update AS versions?')) {
-		logger.info('BREnvironment.updateAvailableAutomationStudioVersions() start');
-		const result = await BREnvironment.updateAvailableAutomationStudioVersions();
-		logger.info('BREnvironment.updateAvailableAutomationStudioVersions() done', { result: result });
+	const update = await Dialogs.yesNoDialog('Update AS versions?');
+	if (update) {
+		const allVersions = await Environment.automationStudio.updateVersions();
+		logger.info('AS versions found:', { versions: allVersions });
 	}
-	// get AS version info
-	const asVersions = await BREnvironment.getAvailableAutomationStudioVersions();
-	logger.info('BREnvironment.getAvailableAutomationStudioVersions()', { result: asVersions });
-	// get BR.AS.Build.exe
-	const inputAsVersion = await vscode.window.showInputBox({prompt: 'Enter an AS version to find BR.AS.Build.exe'});
-	if (inputAsVersion) {
-		const buildExe = await BREnvironment.getBrAsBuilExe(inputAsVersion);
-		logger.info('BREnvironment.getBrAsBuilExe(requested)', { requested: inputAsVersion, result: buildExe });
-	}
-	// get gcc target system info
-	const getTargetInfoAsVersion = '4.6.5';
-	const getTargetInfoGccVersion = '4.1.2';
-	const getTargetSystemType = 'SG4 Ia32';
-	const targetSystemInfo = await BREnvironment.getGccTargetSystemInfo(getTargetInfoAsVersion, getTargetInfoGccVersion, getTargetSystemType);
-	logger.info('BREnvironment.getGccTargetSystemInfo(asVersion, gccVersion, targetSystem)', {
-		asVersion: getTargetInfoAsVersion,
-		gccVersion: getTargetInfoGccVersion,
-		targetSystem: getTargetSystemType,
-		result: targetSystemInfo
-	});
-
-	// end
-	logHeader('Test BREnvironment end');
+	// Test queries for specific AS versions
+	const highestAs = await Environment.automationStudio.getVersion();
+	logger.info('highest AS', { as: highestAs });
+	const asV48 = await Environment.automationStudio.getVersion('4.8');
+	logger.info('AS V4.8 not strict', { as: asV48 });
+	const asV48Strict = await Environment.automationStudio.getVersion('4.8', true);
+	logger.info('AS V4.8 strict', { as: asV48Strict });
+	const asV46 = await Environment.automationStudio.getVersion('4.6');
+	logger.info('AS V4.6 not strict', { as: asV46 });
+	const asV46Strict = await Environment.automationStudio.getVersion('4.6', true);
+	logger.info('AS V4.6 strict', { as: asV46Strict });
+	logHeader('Test AutomationStudioVersion end');
 }
 
 
@@ -304,15 +304,15 @@ async function testGcc(context: vscode.ExtensionContext): Promise<void> {
 	logHeader('Test gcc start');
 	// get gcc versions for AS V4.10
 	const gccBase = vscode.Uri.file('C:\\BrAutomation\\AS410\\AS\\gnuinst');
-	const gccVersions = await GccVersion.searchVersionsInDir(gccBase);
+	const gccInstall = await GccInstallation.searchAutomationStudioGnuinst(gccBase);
 	logger.info('Gcc versions', {
 		base: gccBase.fsPath,
-		versions: gccVersions,
+		gccInstall: gccInstall,
 	});
-	const gccVersionSelItems = gccVersions.map((gcc) => ({value: gcc, label: gcc.version.version}));
 	// Get targets
 	do {
-		const selectedGcc = await Dialogs.getQuickPickSingleValue(gccVersionSelItems, { title: 'Select gcc version' });
+		const gccVersionStr = await vscode.window.showInputBox({title: 'Enter gcc version'});
+		const gccVersion = semver.coerce(gccVersionStr) ?? undefined;
 		const sysGen = await Dialogs.getQuickPickSingleValue<SystemGeneration>([
 			{ value: 'SGC', label: 'SGC' },
 			{ value: 'SG3', label: 'SG3' },
@@ -326,32 +326,36 @@ async function testGcc(context: vscode.ExtensionContext): Promise<void> {
 			{ value: 'UNKNOWN', label: 'UNKNOWN' },
 		], { title: 'Select architecture' });
 		const strict = await Dialogs.yesNoDialog('Strict search?');
-		const matchingTarget = selectedGcc?.getTarget(sysGen, arch, strict);
-		logger.info('Matching target:', { result: matchingTarget });
+		const matchingExe = gccInstall.getExecutable(gccVersion, sysGen, arch, strict);
+		logger.info('Matching gcc exe:', { result: matchingExe });
 	} while (await Dialogs.yesNoDialog('Try again?'));
+	// Test mingw gcc
+	const mingwBase = vscode.Uri.file('C:\\msys64\\mingw64');
+	const mingwGcc = await GccInstallation.createFromDir(mingwBase);
+	logger.info('mingw64 gcc', { gcc: mingwGcc });//TODO Gives 64.0.0...
 	logHeader('Test gcc end');
 }
 
 
 async function testPvi(context: vscode.ExtensionContext): Promise<void> {
 	logHeader('Test PVI start');
-	// Test queries for specific PVI versions
-	const highestPvi = await Environment.getPviVersion();
-	logger.info('highest PVI', { pvi: highestPvi });
-	const pviV48 = await Environment.getPviVersion('4.8');
-	logger.info('PVI V4.8 not strict', { pvi: pviV48 });
-	const pviV48Strict = await Environment.getPviVersion('4.8', true);
-	logger.info('PVI V4.8 strict', { pvi: pviV48Strict });
-	const pviV46 = await Environment.getPviVersion('4.6');
-	logger.info('PVI V4.6 not strict', { pvi: pviV46 });
-	const pviV46Strict = await Environment.getPviVersion('4.6', true);
-	logger.info('PVI V4.6 strict', { pvi: pviV46Strict });
 	// Update PVI
 	const update = await Dialogs.yesNoDialog('Update PVI versions?');
 	if (update) {
-		const allVersions = await Environment.updatePviVersions();
+		const allVersions = await Environment.pvi.updateVersions();
 		logger.info('PVI versions found:', { versions: allVersions });
 	}
+	// Test queries for specific PVI versions
+	const highestPvi = await Environment.pvi.getVersion();
+	logger.info('highest PVI', { pvi: highestPvi });
+	const pviV48 = await Environment.pvi.getVersion('4.8');
+	logger.info('PVI V4.8 not strict', { pvi: pviV48 });
+	const pviV48Strict = await Environment.pvi.getVersion('4.8', true);
+	logger.info('PVI V4.8 strict', { pvi: pviV48Strict });
+	const pviV46 = await Environment.pvi.getVersion('4.6');
+	logger.info('PVI V4.6 not strict', { pvi: pviV46 });
+	const pviV46Strict = await Environment.pvi.getVersion('4.6', true);
+	logger.info('PVI V4.6 strict', { pvi: pviV46Strict });
 	logHeader('Test PVI end');
 }
 

@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import * as BREnvironment from './Environment/BREnvironment';
+import { Environment } from './Environment/Environment';
 import * as BRDialogs from './UI/BrDialogs';
 
 
@@ -32,7 +32,7 @@ function registerContributedCommands(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 	// Update configuration of installed AS versions from file system search
 	disposable = vscode.commands.registerCommand('vscode-brautomationtools.updateAvailableAutomationStudioVersions',
-		BREnvironment.updateAvailableAutomationStudioVersions);
+		Environment.automationStudio.updateVersions);
 	context.subscriptions.push(disposable);
 }
 
