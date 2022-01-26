@@ -67,7 +67,7 @@ export class Environment {
             if (foundVersions.length > 0) {
                 logger.info(`Searching for PVI versions done, ${foundVersions.length} versions found`);
             } else {
-                logger.warning(`No PVI versions found. Some functioanlity will not be available.`);
+                logger.warning(`No PVI versions found. Some functionality will not be available.`);
             }
             return foundVersions;
         }
@@ -124,7 +124,7 @@ export class Environment {
             if (foundVersions.length > 0) {
                 logger.info(`Searching for Automation Studio versions done, ${foundVersions.length} versions found`);
             } else {
-                logger.warning(`No Automation Studio versions found. Some functioanlity will not be available.`);
+                logger.warning(`No Automation Studio versions found. Some functionality will not be available.`);
             }
             return foundVersions;
         }
