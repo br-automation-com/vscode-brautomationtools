@@ -356,13 +356,13 @@ function getXmlHeader(xmlBase: XMLBuilder): XmlHeader {
     })?.node;
     const asHeaderData = asHeaderNode?.nodeValue ? ` ${asHeaderNode.nodeValue}` : '';
     // AS version full
-    const asVersionRegEx = /^.*[ \t]+[Vv]ersion=["']*([\d\.]+).*$/gm.exec(asHeaderData);
+    const asVersionRegEx = /^.*[ \t]+[Vv]ersion=["']*([\d\.]+).*$/m.exec(asHeaderData);
     const asVersion = asVersionRegEx ? asVersionRegEx[1] : undefined;
     // AS working version
-    const asWorkingVersionRegEx = /^.*[ \t]+WorkingVersion="([\d\.]+)".*$/gm.exec(asHeaderData);
+    const asWorkingVersionRegEx = /^.*[ \t]+WorkingVersion="([\d\.]+)".*$/m.exec(asHeaderData);
     const asWorkingVersion = asWorkingVersionRegEx ? asWorkingVersionRegEx[1] : undefined;
     // AS file version
-    const asFileVersionRegEx = /^.*[ \t]+FileVersion="([\d\.]+)".*$/gm.exec(asHeaderData);
+    const asFileVersionRegEx = /^.*[ \t]+FileVersion="([\d\.]+)".*$/m.exec(asHeaderData);
     const asFileVersion = asFileVersionRegEx ? asFileVersionRegEx[1] : undefined;
     // return value
     return {

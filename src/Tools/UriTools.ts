@@ -4,8 +4,8 @@
  */
 
 import * as vscode from 'vscode';
-import {posix} from 'path'; // always use posix style path for vscode.Uri.path: https://github.com/microsoft/vscode-extension-samples/blob/master/fsconsumer-sample/README.md
-import { isString } from './TypeGuards';
+import { posix } from 'path'; // always use posix style path for vscode.Uri.path: https://github.com/microsoft/vscode-extension-samples/blob/master/fsconsumer-sample/README.md
+import { testStringFilter } from './Helpers';
 
 //#region implementations of path.posix for vscode.Uri
 // see also https://nodejs.org/docs/latest/api/path.html
@@ -263,13 +263,7 @@ async function listSubsOfType(baseUri: vscode.Uri, fileType: vscode.FileType, fi
     const subs = await vscode.workspace.fs.readDirectory(baseUri);
     const subsOfType = subs.filter((sub) => sub[1] === fileType);
     const subNames = subsOfType.map((sub) => sub[0]);
-    if (filter === undefined) {
-        return subNames;
-    } else if (isString(filter)) {
-        return subNames.filter((name) => name === filter);
-    } else {
-        return subNames.filter((name) => filter.test(name));
-    }
+    return subNames.filter((name) => testStringFilter(name, filter));
 }
 
 /**
@@ -299,12 +293,7 @@ export async function findDirectory(rootUri: vscode.Uri, depth: number, filter: 
         // get all subdirectories of the current depth
         const subDirs = await listAllSubDirectories(...actDepthUris);
         // find match
-        let match = undefined;
-        if (isString(filter)) {
-            match = subDirs.find((dir) => pathBasename(dir) === filter);
-        } else {
-            match = subDirs.find((dir) => filter.test(pathBasename(dir)));
-        }
+        const match = subDirs.find((dir) => testStringFilter(pathBasename(dir), filter));
         // finish on first match
         if (match !== undefined) {
             result = match;

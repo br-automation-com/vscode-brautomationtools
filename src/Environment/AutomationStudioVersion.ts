@@ -127,7 +127,7 @@ async function parseAutomationStudioVersion(asRoot: vscode.Uri): Promise<semver.
     try {
         const prodInfoDoc = await vscode.workspace.openTextDocument(prodInfoPath);
         const prodInfoText = prodInfoDoc.getText();
-        const versionRegex = /^Version=[\D]*([\d.]*)[\D]*$/gm;
+        const versionRegex = /^Version=[\D]*([\d.]*)[\D]*$/m;
         const versionMatch = versionRegex.exec(prodInfoText);
         if (versionMatch) {
             version = semver.coerce(versionMatch[0]) ?? undefined;
