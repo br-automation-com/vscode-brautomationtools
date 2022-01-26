@@ -4,8 +4,8 @@
  */
 
 import {ValueQuickPickItem, ValueQuickPickOptions, ValueQuickPickInitialValues, getQuickPickSingleValue} from './Dialogs';
-import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
-import { extensionConfiguration } from '../BRConfiguration';
+import * as BRAsProjectWorkspace from '../Workspace/BRAsProjectWorkspace';
+import { extensionConfiguration } from '../ExtensionConfiguration';
 
 
 /**

@@ -5,8 +5,8 @@
 
 import * as vscode from 'vscode';
 import * as cppTools from 'vscode-cpptools';
-import * as BRAsProjectWorkspace from '../BRAsProjectWorkspace';
-import { logger } from '../BrLog';
+import * as BRAsProjectWorkspace from '../Workspace/BRAsProjectWorkspace';
+import { logger } from '../Tools/Logger';
 import * as Helpers from '../Tools/Helpers';
 import * as uriTools from '../Tools/UriTools';
 import { Environment } from '../Environment/Environment';

@@ -5,9 +5,9 @@
 //TODO class as e.g. in ExtensionState
 
 import * as vscode from 'vscode';
-import { extensionConfiguration } from '../BRConfiguration';
-import { extensionState } from '../BrExtensionState';
-import { logger } from '../BrLog';
+import { extensionConfiguration } from '../ExtensionConfiguration';
+import { extensionState } from '../ExtensionState';
+import { logger } from '../Tools/Logger';
 
 
 //#region local types

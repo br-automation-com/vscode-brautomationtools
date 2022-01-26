@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { logger } from '../BrLog';
+import { logger } from '../Tools/Logger';
 import * as uriTools from '../Tools/UriTools';
 import * as semver from 'semver';
 import { PviTransferExe } from './PviTransferExe';

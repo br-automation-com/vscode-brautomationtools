@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as uriTools from '../Tools/UriTools';
 import * as semver from 'semver';
-import { logger } from '../BrLog';
+import { logger } from '../Tools/Logger';
 import { SystemGeneration, TargetArchitecture } from './CommonTypes';
 import { GccExecutable } from './GccExecutable';
 

@@ -4,16 +4,16 @@
  */
 
 import * as vscode from 'vscode';
-import { logger } from './BrLog';
-import {registerCommands} from './BRCommands';
+import { logger } from './Tools/Logger';
+import {registerCommands} from './ExtensionCommands';
 import {registerCppToolsConfigurationProvider} from './ExternalApi/CppToolsApi';
-import {registerTaskProviders as registerBuildTaskProviders} from './BrAsBuildTaskProvider';
-import {registerTaskProviders as registerTransferTaskProviders} from './BrAsTransferTaskProvider';
+import {registerTaskProviders as registerBuildTaskProviders} from './TaskProviders/BrAsBuildTaskProvider';
+import {registerTaskProviders as registerTransferTaskProviders} from './TaskProviders/BrAsTransferTaskProvider';
 import {registerApiTests} from './Tools/ApiTests';
-import {getWorkspaceProjects, registerProjectWorkspace} from './BRAsProjectWorkspace';
+import {getWorkspaceProjects, registerProjectWorkspace} from './Workspace/BRAsProjectWorkspace';
 import { notifications } from './UI/Notifications';
-import { extensionState } from './BrExtensionState';
-import { extensionConfiguration } from './BRConfiguration';
+import { extensionState } from './ExtensionState';
+import { extensionConfiguration } from './ExtensionConfiguration';
 import { statusBar } from './UI/StatusBar';
 import { Environment } from './Environment/Environment';
 

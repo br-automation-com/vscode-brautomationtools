@@ -1,5 +1,5 @@
 import { coerce, compare, satisfies, SemVer } from 'semver';
-import { logger } from '../BrLog';
+import { logger } from './Logger';
 
 
 export interface HasVersion {

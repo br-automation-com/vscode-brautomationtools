@@ -4,9 +4,9 @@
 */
 
 import * as vscode from 'vscode';
-import { logger } from '../BrLog';
+import { logger } from '../Tools/Logger';
 import * as semver from 'semver';
-import { extensionConfiguration } from '../BRConfiguration';
+import { extensionConfiguration } from '../ExtensionConfiguration';
 import { requestVersion } from '../Tools/SemVer';
 import { PviVersion } from './PviVersion';
 import { AutomationStudioVersion } from './AutomationStudioVersion';
