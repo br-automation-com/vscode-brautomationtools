@@ -52,6 +52,18 @@ export function timeDiffString(start: Date, end: Date): string {
     return `${hh}:${mm}:${ss}.${fff}`;
 }
 
+/**
+ * Checks if a sting fullfills a specified filter.
+ * @param value string value to check
+ * @param filter filter value, if a RegExp with /g flag is used, it is automatically reset before testing
+ * @returns 
+ * 
+ * `value` === filter if filter is `string`
+ * 
+ * `filter.test(value)` if filter is `RegExp`
+ * 
+ * `true` if filter is `undefined` (all pass)
+ */
 export function testStringFilter(value: string, filter: string | RegExp | undefined): boolean {
     if (filter === undefined) {
         return true;
