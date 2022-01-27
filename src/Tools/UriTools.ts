@@ -128,6 +128,44 @@ export interface ParsedPathUri {
     name: string;
 }
 
+/**
+ * Converts a windows style path to a posix style path in the following manner:
+ * 
+ * Absolute drive letter paths: `C:\Temp\Test.txt` → `/C:/Temp/Test.txt`
+ * 
+ * UNC paths: `\\Server\Share\Temp\Test.txt` → `/Server/Share/Temp/Test.txt`
+ * 
+ * Relative paths: `Temp\Test.txt` → `./Temp/Test.txt` and `..\Temp\Test.txt` → `./../Temp/Test.txt`
+ * 
+ * Absolute to current drive: `\Temp\Test.txt` → `./Temp/Test.txt`
+ * Such paths are used in Automation Studio projects as relative to the project root. These paths
+ * are interpreted relative, so they can be resolved properly when the context is known.
+ * 
+ * see also https://docs.microsoft.com/en-us/dotnet/standard/io/file-path-formats
+ * @param winPath Windows style path as e.g. found in AS project package files
+ * @returns Posix style relative or absolute path which can be used in `pathJoin()` or `pathResolve()`
+ */
+export function winPathToPosixPath(winPath: string): string {
+    // replace all \ first, so later checks can directly return result
+    const preparedPath = winPath.split('\\').join('/');
+    // Absolute drive letter path
+    const driveLetterRegExp = /^([a-zA-Z]:)\//;
+    const driveLetterSubst = '/$1/';
+    if (driveLetterRegExp.test(preparedPath)) {
+        return preparedPath.replace(driveLetterRegExp, driveLetterSubst);
+    }
+    // UNC paths
+    if (preparedPath.startsWith('//')) {
+        return preparedPath.substring(1);
+    }
+    // Absolute to current drive → handled as relative
+    if (preparedPath.startsWith('/')) {
+        return `.${preparedPath}`;
+    }
+    // all remaining ones are already relative
+    return preparedPath;
+}
+
 //#endregion implementations of path.posix for vscode.Uri
 
 

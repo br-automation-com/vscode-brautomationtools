@@ -8,6 +8,9 @@ import * as BrAsProjectFiles from './BrAsProjectFiles';
 import * as uriTools from '../Tools/UriTools';
 import * as CppToolsApi from '../ExternalApi/CppToolsApi'; // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
 import { logger } from '../Tools/Logger';
+import { AsPackageFile } from './Files/AsPackageFile';
+import { ConfigPackageFile } from './Files/ConfigPackageFile';
+import { CpuPackageFile } from './Files/CpuPackageFile';
 
 
 //#region exported types
@@ -333,37 +336,37 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
     const result: AsConfigurationInfo[] = [];
     // get available configurations from Physical.pkg
     const packageUri = uriTools.pathJoin(physicalUri, 'Physical.pkg');
-    const physicalInfo = await BrAsProjectFiles.getPhysicalPackageInfo(packageUri);
-    if (!physicalInfo) {
+    const physicalPkg = await AsPackageFile.createFromPath(packageUri);
+    if (!physicalPkg) {
         return [];
     }
     // get detail information of all found configurations
-    for (const config of physicalInfo.configurations) {
-        const configBaseUri = uriTools.pathJoin(physicalUri, config.relativePath);
+    for (const config of physicalPkg.getChildrenOfType('Configuration')) {
+        const configBaseUri = config.resolvePath(projectRootUri);
         // get data from Config.pkg
         const configPkgUri  = uriTools.pathJoin(configBaseUri, 'Config.pkg');
-        const configPkgInfo = await BrAsProjectFiles.getConfigPackageInfo(configPkgUri);
-        if (!configPkgInfo) {
+        const configPkg = await ConfigPackageFile.createFromPath(configPkgUri);
+        if (!configPkg) {
             logger.warning(`No configuration data found in ${configPkgUri.fsPath}. Configuration will be skipped!`);
             continue;
         }
-        const cpuPkgDirUri = uriTools.pathJoin(configBaseUri, configPkgInfo.cpuPackageName);
+        const cpuPkgDirUri = configPkg.cpuChildObject.resolvePath(projectRootUri);
         // get data from Cpu.pkg
         const cpuPkgUri  = uriTools.pathJoin(cpuPkgDirUri, 'Cpu.pkg');
-        const cpuPkgInfo = await BrAsProjectFiles.getCpuPackageInfo(cpuPkgUri);
-        const ansiCIncludeDirs = cpuPkgInfo?.build.ansiCIncludeDirectories?.map((path) => uriTools.pathResolve(projectRootUri, path));
+        const cpuPkg = await CpuPackageFile.createFromPath(cpuPkgUri);
+        const ansiCIncludeDirs = cpuPkg?.cpuConfig.build.resolveAnsiCIncludeDirs(projectRootUri);
         // push to result
         const configData: AsConfigurationInfo = {
-            name:           config.relativePath,
+            name:           config.path,
             description:    config.description,
             baseUri:        configBaseUri,
             cpuPackageUri:  cpuPkgDirUri,
-            cpuPackageName: configPkgInfo.cpuPackageName,
+            cpuPackageName: configPkg.cpuChildObject.path,
             buildSettings: {
-                gccVersion:                  cpuPkgInfo?.build?.gccVersion,
-                additionalBuildOptions:      cpuPkgInfo?.build.additionalBuildOptions ?? [],
-                ansiCAdditionalBuildOptions: cpuPkgInfo?.build.ansiCAdditionalBuildOptions ?? [],
-                iecAdditionalBuildOptions:   cpuPkgInfo?.build.iecAdditionalBuildOptions ?? [],
+                gccVersion:                  cpuPkg?.cpuConfig.build.gccVersion,
+                additionalBuildOptions:      cpuPkg?.cpuConfig.build.additionalBuildOptions ?? [],
+                ansiCAdditionalBuildOptions: cpuPkg?.cpuConfig.build.ansiCAdditionalBuildOptions ?? [],
+                iecAdditionalBuildOptions:   cpuPkg?.cpuConfig.build.iecAdditionalBuildOptions ?? [],
                 ansiCIncludeDirectories:     ansiCIncludeDirs ?? []
             }
         };

@@ -102,3 +102,27 @@ export function stringToBoolOrUndefined(value: string | undefined | null): boole
 export function stringToBool(value: string | undefined | null): boolean {
     return stringToBoolOrUndefined(value) ?? false;
 }
+
+/**
+ * Split a raw string of shell arguments into an array of its separate commands / parameters.
+ * This can be used to prevent automatic escaping of strings, containing white spaces by some
+ * functions.
+ * 
+ * Already escaped parts of the string (e.g. `'-include "C:\My Path\SomeHeader.h"'`) will be split on each whitespace
+ * and therefore break in the current implementation!
+ * 
+ * @param rawArgs Raw command line arguments contained in a single string. e.g. `'-D MY_DEFINE -D OTHER_DEFINE -Wall'`
+ * @returns An array with all the build options separated on each whitespace. e.g. `['-D', 'MY_DEFINE', '-D', 'OTHER_DEFINE', '-Wall']`
+ * 
+ * If input is `undefined`, `null` or an empty string, an empty array is returned
+ */
+export function splitShellArgs(rawArgs: string | undefined | null): string[] {
+    // #30 - When splitting will handle escapes properly use a new function argument `escapeChar?: string | string[] | RegExp`
+    // directly return for empty options
+    if ((!rawArgs) || (rawArgs.length === 0)) {
+        return [];
+    }
+    const options = rawArgs.split(/\s/gm);
+    return options;
+}
+

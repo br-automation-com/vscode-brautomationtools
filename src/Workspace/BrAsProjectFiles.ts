@@ -42,20 +42,6 @@ export interface ProjectFileInfo {
 
 
 /**
- * Contains information from a physical package file (Physical.pkg)
- */
-export interface PhysicalPackageInfo {
-    /** Automation Studio version used in the file */
-    header: XmlHeader;
-    /** Configurations within the package file */
-    configurations: {
-        relativePath: string;
-        description?: string;
-    }[];
-}
-
-
-/**
  * Contains information from project user settings (LastUser.set, <username>.set)
  */
 export interface UserSettingsInfo {
@@ -65,45 +51,6 @@ export interface UserSettingsInfo {
     activeConfiguration?: string;
     /** Deployment target for newly added programs (e.g. active configuration) */
     deploymentTarget?: string;
-}
-
-
-/**
- * Contains information from CPU package of the configuration (Cpu.pkg)
- */
-export interface CpuPackageInfo {
-    /** Automation Studio version used in the file */
-    header: XmlHeader;
-    /** Automation Runtime version used in the configuration */
-    arVersion?: string;
-    /** Module ID of the CPU module */
-    cpuModuleId?: string;
-    /** Configurations for build */
-    build: {
-        /** Used gcc version */
-        gccVersion?: string;
-        /** General additional build options */
-        additionalBuildOptions: string[];
-        /** Additional build options for ANSI C programs */
-        ansiCAdditionalBuildOptions: string[];
-        /** Additional build options for IEC programs */
-        iecAdditionalBuildOptions: string[];
-        /** ANSI C include directories as paths in posix style (absolute or relative to AS project base) */
-        ansiCIncludeDirectories: string[];
-    }
-}
-
-
-/**
- * Contains information from the root package of the configuration (Config.pkg)
- */
-export interface ConfigPackageInfo {
-    /** Automation Studio version used in the file */
-    header: XmlHeader;
-    /** Name of the CPU package (package which contains most files of the configuration) */
-    cpuPackageName: string;
-    /** Description of the CPU package */
-    cpuPackageDescription?: string;
 }
 
 //#endregion exported interfaces
@@ -144,47 +91,6 @@ export async function getProjectFileInfo(projectFile: vscode.Uri): Promise<Proje
 
 
 /**
- * Gets information from a specified physical package file.
- * @param physicalPackageFile URI to the Physical.pkg
- */
-export async function getPhysicalPackageInfo(physicalPackageFile: vscode.Uri): Promise<PhysicalPackageInfo | undefined> {
-    // getting of basic XML content
-    const xmlBase = await xmlCreateFromUri(physicalPackageFile);
-    if (!xmlBase) {
-        logger.error(`File '${physicalPackageFile.fsPath}' does not exist or is no valid XML file`);
-        return undefined;
-    }
-    const xmlHeader = getXmlHeader(xmlBase);
-    const rootElement = getRootElement(xmlBase, 'Physical');
-    if (!rootElement) {
-        logger.error(`Invalid file ${physicalPackageFile.fsPath}: No XML root element with name <Physical> found`);
-        return undefined;
-    }
-    // get configurations
-    const objectsElement = getChildElements(rootElement, 'Objects');
-    if (objectsElement.length === 0) {
-        logger.error(`Invalid file ${physicalPackageFile.fsPath}: No <Objects> elements found`);
-        return undefined;
-    }
-    const configElements = getChildElements(objectsElement[0], 'Object', {name: 'Type', value: 'Configuration'});
-    const configDataRaw = configElements.map((element) => {
-        const description = element.getAttribute('Description') ?? undefined;
-        const relativePath = element.textContent ?? undefined;
-        if (relativePath) {
-            return {relativePath: relativePath, description: description};
-        }
-    });
-    const configData: {relativePath: string, description?: string}[] = [];
-    Helpers.pushDefined(configData, ...configDataRaw);
-    // return info data
-    return {
-        header: xmlHeader,
-        configurations: configData
-    };
-}
-
-
-/**
  * Gets information from a specified user settings file.
  * @param settingsFile URI to the user settings file (*.set)
  */
@@ -212,109 +118,6 @@ export async function getUserSettingsInfo(settingsFile: vscode.Uri): Promise<Use
         header: xmlHeader,
         activeConfiguration: activeConfiguration,
         deploymentTarget: deploymentTarget
-    };
-}
-
-
-/**
- * Gets information from a specified CPU package file.
- * @param cpuFile URI to the CPU package file (Cpu.pkg)
- */
-export async function getCpuPackageInfo(cpuFile: vscode.Uri): Promise<CpuPackageInfo | undefined> {
-    // getting of basic XML content
-    const xmlBase = await xmlCreateFromUri(cpuFile);
-    if (!xmlBase) {
-        logger.error(`File '${cpuFile.fsPath}' does not exist or is no valid XML file`);
-        return undefined;
-    }
-    const xmlHeader = getXmlHeader(xmlBase);
-    const rootElement = getRootElement(xmlBase, 'Cpu');
-    if (!rootElement) {
-        logger.error(`Invalid file ${cpuFile.fsPath}: No XML root element with name <Cpu> found`);
-        return undefined;
-    }
-    const configElement = getChildElements(rootElement, 'Configuration').pop();
-    if (!configElement) {
-        logger.error(`Invalid file ${cpuFile.fsPath}: No <Configuration> element found`);
-        return undefined;
-    }
-    // Get CPU module ID
-    const cpuModuleId = configElement.getAttribute('ModuleId') ?? undefined;
-    if (!cpuModuleId) {
-        logger.warning(`Failed to get ModuleId from CPU package file '${cpuFile.fsPath}'`);
-    }
-    // get Automation Runtime configuration values
-    const arConfigElement = getChildElements(configElement, 'AutomationRuntime').pop();
-    const arVersion = arConfigElement?.getAttribute('Version') ?? undefined;
-    if (!arVersion) {
-        logger.warning(`Failed to get AR version from CPU package file '${cpuFile.fsPath}'`);
-    }
-    // get build configuration values
-    const buildConfigElement = getChildElements(configElement, 'Build').pop();
-    const gccVersion = buildConfigElement?.getAttribute('GccVersion') ?? undefined;
-    const additionalBuildOptionsRaw = buildConfigElement?.getAttribute('AdditionalBuildOptions') ?? undefined;
-    const additionalBuildOptions = splitBuildOptions(additionalBuildOptionsRaw);
-    const ansiCAdditionalBuildOptionsRaw = buildConfigElement?.getAttribute('AnsicAdditionalBuildOptions') ?? undefined;
-    const ansiCAdditionalBuildOptions = splitBuildOptions(ansiCAdditionalBuildOptionsRaw);
-    const iecAdditionalBuildOptionsRaw = buildConfigElement?.getAttribute('IecAdditionalBuildOptions') ?? undefined;
-    const iecAdditionalBuildOptions = splitBuildOptions(iecAdditionalBuildOptionsRaw);
-    const ansiCIncludeDirectoriesRaw = buildConfigElement?.getAttribute('AnsicIncludeDirectories')?.split(',');
-    const ansiCIncludeDirectories = projectPathsToUriPaths(ansiCIncludeDirectoriesRaw);
-    // return info data
-    return {
-        header:   xmlHeader,
-        arVersion:   arVersion,
-        cpuModuleId: cpuModuleId,
-        build: {
-            gccVersion:                  gccVersion,
-            additionalBuildOptions:      additionalBuildOptions,
-            ansiCAdditionalBuildOptions: ansiCAdditionalBuildOptions,
-            iecAdditionalBuildOptions:   iecAdditionalBuildOptions,
-            ansiCIncludeDirectories:     ansiCIncludeDirectories
-        }
-    };
-}
-
-
-/**
- * Gets information from a specified configuration package file.
- * @param configPackageFile URI to the Config.pkg
- */
-export async function getConfigPackageInfo(configPackageFile: vscode.Uri): Promise<ConfigPackageInfo | undefined> {
-    // getting of basic XML content
-    const xmlBase = await xmlCreateFromUri(configPackageFile);
-    if (!xmlBase) {
-        logger.error(`File '${configPackageFile.fsPath}' does not exist or is no valid XML file`);
-        return undefined;
-    }
-    const xmlHeader = getXmlHeader(xmlBase);
-    const rootElement = getRootElement(xmlBase, 'Configuration');
-    if (!rootElement) {
-        logger.error(`Invalid file ${configPackageFile.fsPath}: No XML root element with name <Configuration> found`);
-        return undefined;
-    }
-    // get CPU objects (<Object Type="Cpu">)
-    const objectsElement = getChildElements(rootElement, 'Objects');
-    if (objectsElement.length === 0) {
-        logger.error(`Invalid file ${configPackageFile.fsPath}: No <Objects> elements found`);
-        return undefined;
-    }
-    const cpuElements = getChildElements(objectsElement[0], 'Object', {name: 'Type', value: 'Cpu'});
-    if (cpuElements.length !== 1) {
-        logger.error(`Invalid file ${configPackageFile.fsPath}: None or multiple Cpu elements (<Object Type="Cpu">) found. Number of elements: ${cpuElements.length}`);
-        return undefined;
-    }
-    const cpuElement = cpuElements[0];
-    const cpuPackageName = cpuElement.textContent ?? undefined;
-    const cpuPackageDescription = cpuElement.getAttribute('Description') ?? undefined;
-    if (!cpuPackageName) {
-        logger.error(`Invalid file ${configPackageFile.fsPath}: CPU Object element is empty`);
-        return undefined;
-    }
-    return {
-        header:             xmlHeader,
-        cpuPackageName:        cpuPackageName,
-        cpuPackageDescription: cpuPackageDescription
     };
 }
 
