@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 Add new but unreleased features, fixes... here during development
 
+### Added
+- Many new logger information, warning and error messages due to the new architecture.
+  [#12](https://github.com/br-automation-com/vscode-brautomationtools/issues/12)
+
+### Changed
+- Reworked most of the underlying code architecture. The functionality should be same, but this will make us more flexible for new features and bug fixes. If you find some functionality which does not work anymore, please [create an issue](https://github.com/br-automation-com/vscode-brautomationtools/issues).
+  [#5](https://github.com/br-automation-com/vscode-brautomationtools/issues/5)
+
 
 ## [0.0.6] - 2022-01-17
 This release adds some small usability features.

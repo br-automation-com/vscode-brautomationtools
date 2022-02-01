@@ -25,6 +25,7 @@ import { spawnAsync } from './ChildProcess';
 import { AsPackageFile } from '../Workspace/Files/AsPackageFile';
 import { CpuPackageFile } from '../Workspace/Files/CpuPackageFile';
 import { ConfigPackageFile } from '../Workspace/Files/ConfigPackageFile';
+import { AsProjectFile } from '../Workspace/Files/AsProjectFile';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -489,14 +490,9 @@ async function testProjectFiles(): Promise<void> {
 	}
 	const asProject = asProjects[0];
 	// test *.apj info
-	//const projectInfo = await BrAsProjectFiles.getProjectFileInfo(asProject.projectFile);
-	//logger.info('BrAsProjectFiles.getProjectFileInfo(prjFile)', { prjFile: asProject.projectFile.toString(false), result: projectInfo });
-	// test *.set info
-	//const settingFiles = await vscode.workspace.findFiles({ base: asProject.baseUri.fsPath, pattern: '*.set' });
-	//for (const file of settingFiles) {
-	//	const result = await BrAsProjectFiles.getUserSettingsInfo(file);
-	//	logger.info('BrAsProjectFiles.getUserSettingsInfo(uri)', { uri: file.toString(true), result: result });
-	//}
+	const projectFilePath = asProject.projectFile;
+	const projectFile = await AsProjectFile.createFromPath(projectFilePath);
+	logger.info('AsProjectFile.createFromPath(uri)', { uri: projectFilePath.toString(true), result: projectFile });
 	// test Physical.pkg
 	const physicalPkgPath = uriTools.pathJoin(asProject.physical, 'Physical.pkg');
 	const physicalPkg = await AsPackageFile.createFromPath(physicalPkgPath);
@@ -529,6 +525,12 @@ async function testProjectFiles(): Promise<void> {
 			includes: cpuPkg?.cpuConfig.build.resolveAnsiCIncludeDirs(asProject.baseUri).map((uri) => uri.toString(true)),
 		});
 	}
+	// test *.set info
+	//const settingFiles = await vscode.workspace.findFiles({ base: asProject.baseUri.fsPath, pattern: '*.set' });
+	//for (const file of settingFiles) {
+	//	const result = await BrAsProjectFiles.getUserSettingsInfo(file);
+	//	logger.info('BrAsProjectFiles.getUserSettingsInfo(uri)', { uri: file.toString(true), result: result });
+	//}
 	//end
 	logHeader('Test project files end');
 }
@@ -542,9 +544,6 @@ async function testBrAsProjectFiles(): Promise<void> {
         return;
     }
 	const asProject = asProjects[0];
-	// test *.apj info
-	const projectInfo = await BrAsProjectFiles.getProjectFileInfo(asProject.projectFile);
-	logger.info('BrAsProjectFiles.getProjectFileInfo(prjFile)', { prjFile: asProject.projectFile.toString(false), result: projectInfo });
 	// test *.set info
 	const settingFiles = await vscode.workspace.findFiles({ base: asProject.baseUri.fsPath, pattern: '*.set' });
 	for (const file of settingFiles) {

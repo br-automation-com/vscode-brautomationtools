@@ -120,7 +120,7 @@ export class AsPackageFile extends AsXmlFile {
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
     public toJSON(): any {
         const obj = super.toJSON();
-        obj.rootPath = this.dirPath.toString(true);
+        obj.dirPath = this.dirPath.toString(true);
         obj.type = this.type;
         obj.subType = this.subType;
         obj.childObjects = this.childObjects;

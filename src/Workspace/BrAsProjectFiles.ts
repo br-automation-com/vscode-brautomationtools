@@ -7,7 +7,6 @@ import * as vscode from 'vscode';
 import * as xmlbuilder2 from 'xmlbuilder2';
 import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
 import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
-import * as Helpers from '../Tools/Helpers';
 import { logger } from '../Tools/Logger';
 
 
@@ -31,17 +30,6 @@ export interface XmlHeader {
 
 
 /**
- * Contains information from the AS project file (*.apj)
- */
-export interface ProjectFileInfo {
-    /** Automation Studio version used in the project file */
-    header: XmlHeader;
-    /** Description of the project */
-    description?: string;
-}
-
-
-/**
  * Contains information from project user settings (LastUser.set, <username>.set)
  */
 export interface UserSettingsInfo {
@@ -57,37 +45,6 @@ export interface UserSettingsInfo {
 
 
 //#region exported functions
-
-
-/**
- * Gets information from a specified project file (*.apj)
- * @param projectFile URI to the AS project file
- */
-export async function getProjectFileInfo(projectFile: vscode.Uri): Promise<ProjectFileInfo | undefined> {
-    // getting of basic XML content
-    const xmlBase = await xmlCreateFromUri(projectFile);
-    if (!xmlBase) {
-        logger.error(`File '${projectFile.fsPath}' does not exist or is no valid XML file`);
-        return undefined;
-    }
-    const xmlHeader = getXmlHeader(xmlBase);
-    if ( (!xmlHeader.asVersion) && (!xmlHeader.asWorkingVersion) ) {
-        logger.error(`Invalid file ${projectFile.fsPath}: Failed to parse AS Version or WorkingVersion`);
-        return undefined;
-    }
-    const rootElement = getRootElement(xmlBase, 'Project');
-    if (!rootElement) {
-        logger.error(`Invalid file ${projectFile.fsPath}: No XML root element with name <Project> found`);
-        return undefined;
-    }
-    // get data from the project root
-    const description = rootElement.getAttribute('Description') ?? undefined;
-    // return info data
-    return {
-        header: xmlHeader,
-        description: description
-    };
-}
 
 
 /**

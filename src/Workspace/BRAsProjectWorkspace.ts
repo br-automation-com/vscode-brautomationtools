@@ -11,6 +11,7 @@ import { logger } from '../Tools/Logger';
 import { AsPackageFile } from './Files/AsPackageFile';
 import { ConfigPackageFile } from './Files/ConfigPackageFile';
 import { CpuPackageFile } from './Files/CpuPackageFile';
+import { AsProjectFile } from './Files/AsProjectFile';
 
 
 //#region exported types
@@ -258,22 +259,23 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
     for (const uri of projectUris) {
         // collect data
         const uriData = deriveAsProjectUriData(uri);
-        const projectFileData = await BrAsProjectFiles.getProjectFileInfo(uriData.projectFileUri);
-        const asVersion = projectFileData?.header.asWorkingVersion ?? projectFileData?.header.asVersion;
-        if (!projectFileData || !asVersion) {
-            //TODO Better log message, what does 'is not supported' mean?
-            logger.error(`Project '${uriData.baseUri.fsPath}' is not supported by the extension`);
+        const projectFile = await AsProjectFile.createFromPath(uriData.projectFileUri);
+        if (!projectFile) { continue; }
+        if (!projectFile.version) {
+            //TODO make it optional in new architecture and only mandatory for build process -> Check there if undefined
+            //     still print a warning to the logger and provide data from the newest AS version available
+            logger.error(`Failed to get Automation Studio version of project '${uriData.baseUri.toString(true)}'`);
             continue;
         }
         const configurationsData = await findAsConfigurationInfo(uriData.physicalUri, uriData.baseUri);
         const activeConfiguration = await getActiveConfiguration(configurationsData, uriData.userSettingsUri);
         // push to result
         const projectData: AsProjectInfo = {
-            name:                uriData.projectName,
-            description:         projectFileData.description,
-            asVersion:           asVersion,
-            baseUri:             uriData.baseUri,
-            projectFile:         uriData.projectFileUri,
+            name:                projectFile.projectName,
+            description:         projectFile.projectDescription,
+            asVersion:           projectFile.version,
+            baseUri:             projectFile.projectRoot,
+            projectFile:         projectFile.filePath,
             logical:             uriData.logicalUri,
             physical:            uriData.physicalUri,
             temporary:           uriData.temporaryUri,
@@ -285,6 +287,7 @@ async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]>
                 userSettingsWatcher.dispose();
             }
         };
+        logger.info(`Project '${projectFile.projectName}' found in workspace`);
         result.push(projectData);
         // Register file system events for LastUser.set -> change active configuration
         const userSettingsWatcher = vscode.workspace.createFileSystemWatcher(uriTools.uriToSingleFilePattern(uriData.userSettingsUri));
