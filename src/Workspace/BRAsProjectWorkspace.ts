@@ -4,7 +4,6 @@
  */
 
 import * as vscode from 'vscode';
-import * as BrAsProjectFiles from './BrAsProjectFiles';
 import * as uriTools from '../Tools/UriTools';
 import * as CppToolsApi from '../ExternalApi/CppToolsApi'; // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
 import { logger } from '../Tools/Logger';
@@ -12,6 +11,7 @@ import { AsPackageFile } from './Files/AsPackageFile';
 import { ConfigPackageFile } from './Files/ConfigPackageFile';
 import { CpuPackageFile } from './Files/CpuPackageFile';
 import { AsProjectFile } from './Files/AsProjectFile';
+import { UserSettingsFile } from './Files/UserSettingsFile';
 
 
 //#region exported types
@@ -379,13 +379,13 @@ async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: 
 }
 
 
-async function getActiveConfiguration(configurations: AsConfigurationInfo[], userSettingsUri: vscode.Uri): Promise<AsConfigurationInfo | undefined> {
+async function getActiveConfiguration(configurations: AsConfigurationInfo[], userSettingsPath: vscode.Uri): Promise<AsConfigurationInfo | undefined> {
     if (configurations.length === 0) {
-        logger.debug('getActiveConfiguration(configs, uri) -> configurations.length === 0', {uri: userSettingsUri});
+        logger.debug('getActiveConfiguration(configs, uri) -> configurations.length === 0', {uri: userSettingsPath});
         return undefined;
     }
-    const userSettingsData = await BrAsProjectFiles.getUserSettingsInfo(userSettingsUri);
-    let activeConfiguration = configurations.find((config) => config.name === userSettingsData?.activeConfiguration);
+    const userSettingsFile = await UserSettingsFile.createFromPath(userSettingsPath);
+    let activeConfiguration = configurations.find((config) => config.name === userSettingsFile?.activeConfiguration);
     if (!activeConfiguration) {
         activeConfiguration = configurations[0];
         logger.warning(`LastUser.set file was not found or is invalid. '${activeConfiguration.name}' will be used as active configuration`);

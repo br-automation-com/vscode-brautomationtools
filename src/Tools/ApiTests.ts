@@ -11,7 +11,6 @@ import * as uriTools from './UriTools';
 import * as fileTools from './FileTools';
 import * as Dialogs from '../UI/Dialogs';
 import * as BRAsProjectWorkspace from '../Workspace/BRAsProjectWorkspace';
-import * as BrAsProjectFiles from '../Workspace/BrAsProjectFiles';
 import * as semver from 'semver';
 import { logger } from './Logger';
 import { extensionConfiguration } from '../ExtensionConfiguration';
@@ -26,6 +25,7 @@ import { AsPackageFile } from '../Workspace/Files/AsPackageFile';
 import { CpuPackageFile } from '../Workspace/Files/CpuPackageFile';
 import { ConfigPackageFile } from '../Workspace/Files/ConfigPackageFile';
 import { AsProjectFile } from '../Workspace/Files/AsProjectFile';
+import { UserSettingsFile } from '../Workspace/Files/UserSettingsFile';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -80,11 +80,8 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	if (await Dialogs.yesNoDialog('Run tests for BRAsProjectWorkspace?')) {
 		await testBRAsProjectWorkspace();
 	}
-	if (await Dialogs.yesNoDialog('Run tests for project files? (NEW)')) {
+	if (await Dialogs.yesNoDialog('Run tests for workspace project files?')) {
 		await testProjectFiles();
-	}
-	if (await Dialogs.yesNoDialog('Run tests for BrAsProjectFiles?')) {
-		await testBrAsProjectFiles();
 	}
 	if (await Dialogs.yesNoDialog('Run tests for VS Code extension context?')) {
 		await testVsCodeExtensionContext(context);
@@ -526,32 +523,13 @@ async function testProjectFiles(): Promise<void> {
 		});
 	}
 	// test *.set info
-	//const settingFiles = await vscode.workspace.findFiles({ base: asProject.baseUri.fsPath, pattern: '*.set' });
-	//for (const file of settingFiles) {
-	//	const result = await BrAsProjectFiles.getUserSettingsInfo(file);
-	//	logger.info('BrAsProjectFiles.getUserSettingsInfo(uri)', { uri: file.toString(true), result: result });
-	//}
-	//end
-	logHeader('Test project files end');
-}
-
-
-async function testBrAsProjectFiles(): Promise<void> {
-	logHeader('Test BrAsProjectFiles start');
-	// get AS project for further tests
-    const asProjects = await BRAsProjectWorkspace.getWorkspaceProjects();
-    if (asProjects.length === 0) {
-        return;
-    }
-	const asProject = asProjects[0];
-	// test *.set info
 	const settingFiles = await vscode.workspace.findFiles({ base: asProject.baseUri.fsPath, pattern: '*.set' });
 	for (const file of settingFiles) {
-		const result = await BrAsProjectFiles.getUserSettingsInfo(file);
-		logger.info('BrAsProjectFiles.getUserSettingsInfo(uri)', { uri: file.toString(true), result: result });
+		const result = await UserSettingsFile.createFromPath(file);
+		logger.info('UserSettingsFile.createFromPath(uri)', { uri: file.toString(true), result: result });
 	}
 	//end
-    logHeader('Test BrAsProjectFiles end');
+	logHeader('Test project files end');
 }
 
 
