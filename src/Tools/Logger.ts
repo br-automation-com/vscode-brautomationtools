@@ -22,8 +22,10 @@ export enum LogLevel {
     warning = 2,
     /** Info -> Normal insight to whats happening */
     info = 3,
-    /** Debug -> Detailed insight what is happening */
-    debug = 4
+    /** Detail -> Detailed insight what is happening */
+    detail = 4,
+    /** Debug -> All information for debugging purposes */
+    debug = 5
 }
 
 
@@ -128,6 +130,16 @@ class Logger {
     #info: LogFunction = this.#logDummy;
 
 
+    /** Write log with level verbose */
+    public get detail() {
+        return this.#detail;
+    }
+    private set detail(logFunction: LogFunction) {
+        this.#detail = logFunction;
+    }
+    #detail: LogFunction = this.#logDummy;
+
+
     /** Write log with level debug */
     public get debug() {
         return this.#debug;
@@ -161,6 +173,7 @@ class Logger {
                 this.error = this.#logDummy;
                 this.warning = this.#logDummy;
                 this.info = this.#logDummy;
+                this.detail = this.#logDummy;
                 this.debug = this.#logDummy;
                 break;
 
@@ -169,6 +182,7 @@ class Logger {
                 this.error = this.#logError;
                 this.warning = this.#logDummy;
                 this.info = this.#logDummy;
+                this.detail = this.#logDummy;
                 this.debug = this.#logDummy;
                 break;
 
@@ -177,6 +191,7 @@ class Logger {
                 this.error = this.#logError;
                 this.warning = this.#logWarning;
                 this.info = this.#logDummy;
+                this.detail = this.#logDummy;
                 this.debug = this.#logDummy;
                 break;
 
@@ -185,6 +200,16 @@ class Logger {
                 this.error = this.#logError;
                 this.warning = this.#logWarning;
                 this.info = this.#logInfo;
+                this.detail = this.#logDummy;
+                this.debug = this.#logDummy;
+                break;
+
+            case LogLevel.detail:
+                this.fatal = this.#logFatal;
+                this.error = this.#logError;
+                this.warning = this.#logWarning;
+                this.info = this.#logInfo;
+                this.detail = this.#logDetail;
                 this.debug = this.#logDummy;
                 break;
 
@@ -193,6 +218,7 @@ class Logger {
                 this.error = this.#logError;
                 this.warning = this.#logWarning;
                 this.info = this.#logInfo;
+                this.detail = this.#logDetail;
                 this.debug = this.#logDebug;
                 break;
 
@@ -201,6 +227,7 @@ class Logger {
                 this.error = this.#logError;
                 this.warning = this.#logWarning;
                 this.info = this.#logInfo;
+                this.detail = this.#logDetail;
                 this.debug = this.#logDebug;
                 break;
         }
@@ -218,7 +245,7 @@ class Logger {
         // header '[11:33:42.007 - Fatal]'
         const time = logEntry.timestamp.toLocaleTimeString();
         const millis = logEntry.timestamp.getMilliseconds().toString().padStart(3, '0');
-        const level = LogLevel[logEntry.level].padStart(5, ' ');
+        const level = LogLevel[logEntry.level].padStart(7, ' ');
         const header = `[${time}.${millis} - ${level}]`;
         // message and if existing additional data
         const message = logEntry.message;
@@ -271,6 +298,12 @@ class Logger {
 
     #logInfo(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.info, message, additionalData);
+        this.#logBase(entry);
+    }
+
+
+    #logDetail(message: string, additionalData?: LogEntryAdditionalData) {
+        const entry = new LogEntry(LogLevel.detail, message, additionalData);
         this.#logBase(entry);
     }
 

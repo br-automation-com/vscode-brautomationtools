@@ -90,6 +90,7 @@
 						"Error",
 						"Warning",
 						"Info",
+						"Detail",
 						"Debug"
 					],
 					"enumDescriptions": [
@@ -97,6 +98,7 @@
 						"Log error messages",
 						"Log warning messages",
 						"Log information messages",
+						"Log detailed information messages",
 						"Log debug messages"
 					],
 					"default": "Info"

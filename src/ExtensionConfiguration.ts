@@ -46,6 +46,10 @@ function toLogLevel(configValue: any): LogLevel{
         case LogLevel.info:
             result = LogLevel.info;
             break;
+        case 'Detail':
+        case LogLevel.detail:
+            result = LogLevel.detail;
+            break;
         case 'Debug':
         case LogLevel.debug:
             result = LogLevel.debug;

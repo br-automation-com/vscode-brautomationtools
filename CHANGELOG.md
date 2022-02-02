@@ -11,6 +11,7 @@ Add new but unreleased features, fixes... here during development
 ### Added
 - Many new logger information, warning and error messages due to the new architecture.
   [#12](https://github.com/br-automation-com/vscode-brautomationtools/issues/12)
+- There is a new option `Detail` for the log level `vscode-brautomationtools.logging.logLevel` which shows more detailed information of executed processes, but without debugging information. The level can be set by users which are interested on what is done under the hood of the extension.
 
 ### Changed
 - Reworked most of the underlying code architecture. The functionality should be same, but this will make us more flexible for new features and bug fixes. If you find some functionality which does not work anymore, please [create an issue](https://github.com/br-automation-com/vscode-brautomationtools/issues).
