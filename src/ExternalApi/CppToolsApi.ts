@@ -151,19 +151,16 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
             return undefined;
         }
         const activeCfg = asProjectInfo.activeConfiguration;
-        if (!activeCfg?.buildSettings.gccVersion) {
-            return undefined;
-        }
         // get gcc data
         const gccExe = (await Environment.automationStudio.getVersion(asProjectInfo.asVersion))
-            ?.gccInstallation.getExecutable(activeCfg.buildSettings.gccVersion, 'SG4', 'Arm');
+            ?.gccInstallation.getExecutable(activeCfg?.gccVersion, 'SG4', 'Arm');
         if (!gccExe) {
             return undefined;
         }
         // get compiler arguments
-        const compilerArgs = this.defaultCompilerArgs;
-        compilerArgs.push(...activeCfg.buildSettings.additionalBuildOptions);
-        compilerArgs.push(...activeCfg.buildSettings.ansiCAdditionalBuildOptions);
+        const defaultArgs = this.defaultCompilerArgs;
+        const configArgs = activeCfg?.cBuildOptions ?? [];
+        const allArgs = defaultArgs.concat(configArgs);
         // create and return C/C++ configuration
         const config: cppTools.SourceFileConfigurationItem = {
             uri: uri,
@@ -172,7 +169,7 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
                 defines:          [],
                 intelliSenseMode: undefined,
                 standard:         undefined,
-                compilerArgs:     compilerArgs,
+                compilerArgs:     allArgs,
                 compilerPath:     gccExe.exePath.fsPath,
             }
         };

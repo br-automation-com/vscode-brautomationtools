@@ -390,6 +390,11 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
             return;
         }
         // Check if RUC package is existing for selected configuration
+        if (asConfigurationData.cpuPackageName === undefined) {
+            this.writeLine(`ERROR: No CPU package name defined in configuration ${usedDefinition.asConfiguration}.`);
+            this.done(55);
+            return;
+        }
         const rucPackageBaseUri = uriTools.pathJoin(asProject.binaries, usedDefinition.asConfiguration, asConfigurationData.cpuPackageName, 'RUCPackage');
         const rucPackageUri = uriTools.pathJoin(rucPackageBaseUri, 'RUCPackage.zip');
         if (!uriTools.exists(rucPackageUri)) {

@@ -6,6 +6,7 @@
 import {ValueQuickPickItem, ValueQuickPickOptions, ValueQuickPickInitialValues, getQuickPickSingleValue} from './Dialogs';
 import * as BRAsProjectWorkspace from '../Workspace/BRAsProjectWorkspace';
 import { extensionConfiguration } from '../ExtensionConfiguration';
+import { AsProjectConfiguration } from '../Workspace/AsProjectConfiguration';
 
 
 /**
@@ -35,24 +36,24 @@ export async function selectAsProjectFromWorkspace(): Promise<BRAsProjectWorkspa
 /**
  * Dialog to select an AS configuration out of all available AS configurations in the AS project
  */
-export async function selectASProjectConfiguration(asProject: BRAsProjectWorkspace.AsProjectInfo): Promise<BRAsProjectWorkspace.AsConfigurationInfo | undefined> {
+export async function selectASProjectConfiguration(asProject: BRAsProjectWorkspace.AsProjectInfo): Promise<AsProjectConfiguration | undefined> {
     // get items and initial value
     const configurationValues = asProject.configurations;
     const configurationItems = configurationValues.map((config) => {
-        const item: ValueQuickPickItem<BRAsProjectWorkspace.AsConfigurationInfo> = {
+        const item: ValueQuickPickItem<AsProjectConfiguration> = {
             label:  config.name,
             detail: config.description,
             value:  config
         };
         return item;
     });
-    const activeConfigurationItem = configurationItems.find((item) => item.value.baseUri.toString() === asProject.activeConfiguration?.baseUri.toString());
+    const activeConfigurationItem = configurationItems.find((item) => item.value.rootPath.toString() === asProject.activeConfiguration?.rootPath.toString());
     if (activeConfigurationItem) {
         activeConfigurationItem.label += ' (ACTIVE)';
     }
     // set options and get value
     const pickOptions: ValueQuickPickOptions = { title: 'Select configuration' };
-    const pickInitial: ValueQuickPickInitialValues<BRAsProjectWorkspace.AsConfigurationInfo> = { activeItems: activeConfigurationItem };
+    const pickInitial: ValueQuickPickInitialValues<AsProjectConfiguration> = { activeItems: activeConfigurationItem };
     // get selected value
     return await getQuickPickSingleValue(configurationItems, pickOptions, pickInitial);
 }

@@ -26,6 +26,7 @@ import { CpuPackageFile } from '../Workspace/Files/CpuPackageFile';
 import { ConfigPackageFile } from '../Workspace/Files/ConfigPackageFile';
 import { AsProjectFile } from '../Workspace/Files/AsProjectFile';
 import { UserSettingsFile } from '../Workspace/Files/UserSettingsFile';
+import { AsProjectConfiguration } from '../Workspace/AsProjectConfiguration';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -76,6 +77,9 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	}
 	if (await Dialogs.yesNoDialog('Run tests for BRConfiguration?')) {
 		await testBRConfiguration();
+	}
+	if (await Dialogs.yesNoDialog('Run tests for workspace projects (NEW)?')) {
+		await testWorkspaceProjects();
 	}
 	if (await Dialogs.yesNoDialog('Run tests for BRAsProjectWorkspace?')) {
 		await testBRAsProjectWorkspace();
@@ -385,6 +389,49 @@ async function testBRConfiguration() {
 	});
 	// end
 	logHeader('Test BRConfiguration end');
+}
+
+
+async function testWorkspaceProjects() {
+	logHeader('Test workspace projects start');
+	// Get project for directories...
+	const projects = await BRAsProjectWorkspace.getWorkspaceProjects();
+	const project = projects.pop();
+	if (project === undefined) {
+		logger.info('No projects found for tests');
+		return;
+	}
+	// Configuration test
+	const configRootPaths = project.configurations.map((config) => config.rootPath);
+	for (const configRootPath of configRootPaths) {
+		const config = await AsProjectConfiguration.createFromDir(configRootPath, project.baseUri);
+		logger.info('AsProjectConfiguration.createFromDir(uri)', { uri: configRootPath.toString(true), result: config });
+	}
+	// Update AS projects
+	// if (await Dialogs.yesNoDialog('Update AS projects in workspace?')) {
+	// 	logger.info('BRAsProjectWorkspace.updateWorkspaceProjects() start');
+	// 	const numProjects = await BRAsProjectWorkspace.updateWorkspaceProjects();
+	// 	logger.info('BRAsProjectWorkspace.updateWorkspaceProjects() done', { result: numProjects });
+	// }
+	// Get AS projects info
+	// const projectsData = await BRAsProjectWorkspace.getWorkspaceProjects();
+	// logger.info('BRAsProjectWorkspace.getWorkspaceProjects()', { result: projectsData });
+	// find project for path
+	// const pathToGetProject = await vscode.window.showInputBox({ prompt: 'Enter path to get corresponding project' });
+	// if (pathToGetProject) {
+	// 	const uri = vscode.Uri.file(pathToGetProject);
+	// 	const projectForPath = await BRAsProjectWorkspace.getProjectForUri(uri);
+	// 	logger.info('BRAsProjectWorkspace.getProjectForUri(uri)', { uri: uri.toString(true), result: projectForPath });
+	// }
+	// Get header directories
+	// const pathToGetHeaderDirs = await vscode.window.showInputBox({ prompt: 'Enter path to get corresponding header directories' });
+	// if (pathToGetHeaderDirs) {
+	// 	const uri = vscode.Uri.file(pathToGetHeaderDirs);
+	// 	const headerDirsForPath = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri);
+	// 	logger.info('BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri)', { uri: uri.toString(true), result: headerDirsForPath });
+	// }
+	// end
+	logHeader('Test workspace projects end');
 }
 
 
