@@ -7,9 +7,10 @@ import * as vscode from 'vscode';
 import { logger } from '../Tools/Logger';
 import * as semver from 'semver';
 import { extensionConfiguration } from '../ExtensionConfiguration';
-import { requestVersion } from '../Tools/SemVer';
+import { getMatchingVersion } from '../Tools/SemVer';
 import { PviVersion } from './PviVersion';
 import { AutomationStudioVersion } from './AutomationStudioVersion';
+import { statusBar } from '../UI/StatusBar';
 
 
 export class Environment {
@@ -30,6 +31,7 @@ export class Environment {
         public static async getVersions(): Promise<PviVersion[]> {
             if (this.#versions === undefined) {
                 this.#versions = this.#searchVersions();
+                statusBar.addBusyItem(this.#versions, 'Searching for installed PVI versions');
             }
             return await this.#versions;
         }
@@ -42,7 +44,7 @@ export class Environment {
          */
         public static async getVersion(version?: semver.SemVer | string, strict = false): Promise<PviVersion | undefined> {
             const versions = await this.getVersions();
-            return requestVersion(versions, version, strict);
+            return getMatchingVersion(versions, version, strict);
         }
 
         /**
@@ -51,6 +53,7 @@ export class Environment {
          */
         public static async updateVersions(): Promise<PviVersion[]> {
             this.#versions = this.#searchVersions();
+            statusBar.addBusyItem(this.#versions, 'Searching for installed PVI versions');
             return await this.#versions;
         }
         static async #searchVersions(): Promise<PviVersion[]> {
@@ -87,6 +90,7 @@ export class Environment {
         public static async getVersions(): Promise<AutomationStudioVersion[]> {
             if (this.#versions === undefined) {
                 this.#versions = this.#searchVersions();
+                statusBar.addBusyItem(this.#versions, 'Searching for installed AS versions');
             }
             return await this.#versions;
         }
@@ -99,7 +103,7 @@ export class Environment {
          */
         public static async getVersion(version?: semver.SemVer | string, strict = false): Promise<AutomationStudioVersion | undefined> {
             const versions = await this.getVersions();
-            return requestVersion(versions, version, strict);
+            return getMatchingVersion(versions, version, strict);
         }
 
         /**
@@ -108,6 +112,7 @@ export class Environment {
          */
         public static async updateVersions(): Promise<AutomationStudioVersion[]> {
             this.#versions = this.#searchVersions();
+            statusBar.addBusyItem(this.#versions, 'Searching for installed AS versions');
             return await this.#versions;
         }
         static async #searchVersions(): Promise<AutomationStudioVersion[]> {

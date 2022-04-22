@@ -15,10 +15,10 @@ import * as Helpers from '../Tools/Helpers';
 import * as uriTools from '../Tools/UriTools';
 import * as fileTools from '../Tools/FileTools';
 import * as Dialogs from '../UI/Dialogs';
-import * as BrAsProjectWorkspace from '../Workspace/BRAsProjectWorkspace';
 import * as BrDialogs from '../UI/BrDialogs';
 import { logger } from '../Tools/Logger';
 import { Environment } from '../Environment/Environment';
+import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
 
 
 /**
@@ -372,7 +372,7 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
             this.done(20);
             return;
         }
-        const asProject = await BrAsProjectWorkspace.getProjectForUri(vscode.Uri.file(usedDefinition.asProjectFile));
+        const asProject = await WorkspaceProjects.getProjectForUri(vscode.Uri.file(usedDefinition.asProjectFile));
         if (!asProject) {
             this.writeLine(`ERROR: Project ${usedDefinition.asProjectFile} not found`);
             this.done(30);
@@ -390,12 +390,12 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
             return;
         }
         // Check if RUC package is existing for selected configuration
-        if (asConfigurationData.cpuPackageName === undefined) {
+        if (asConfigurationData.outPathOffset === undefined) {
             this.writeLine(`ERROR: No CPU package name defined in configuration ${usedDefinition.asConfiguration}.`);
             this.done(55);
             return;
         }
-        const rucPackageBaseUri = uriTools.pathJoin(asProject.binaries, usedDefinition.asConfiguration, asConfigurationData.cpuPackageName, 'RUCPackage');
+        const rucPackageBaseUri = uriTools.pathJoin(asProject.paths.binaries, asConfigurationData.outPathOffset, 'RUCPackage');
         const rucPackageUri = uriTools.pathJoin(rucPackageBaseUri, 'RUCPackage.zip');
         if (!uriTools.exists(rucPackageUri)) {
             this.writeLine(`ERROR: No RUC package found for configuration ${usedDefinition.asConfiguration}. Please build RUC package first.`);
@@ -567,7 +567,7 @@ async function processTaskDefinitionWithDialogs(baseDefinition: BrAsTransferTask
     // Project file
     let asProjectFile = baseDefinition.asProjectFile;
     if (!asProjectFile) {
-        asProjectFile = (await BrDialogs.selectAsProjectFromWorkspace())?.projectFile.fsPath;
+        asProjectFile = (await BrDialogs.selectAsProjectFromWorkspace())?.paths.projectFile.fsPath;
         if (!asProjectFile) {
             return undefined;
         }
@@ -575,7 +575,7 @@ async function processTaskDefinitionWithDialogs(baseDefinition: BrAsTransferTask
     // Configuration
     let asConfiguration = baseDefinition.asConfiguration;
     if (!asConfiguration) {
-        const asProject = await BrAsProjectWorkspace.getProjectForUri(vscode.Uri.file(asProjectFile));
+        const asProject = await WorkspaceProjects.getProjectForUri(vscode.Uri.file(asProjectFile));
         if (!asProject) {
             return undefined;
         }

@@ -7,18 +7,18 @@ export interface HasVersion {
 }
 
 /**
- * Get a specific version object. If used in non strict mode, the highest available version will be returned.
- * @param versionRequest The requested version which should be prefered. Can be set to `undefined` if any version is ok
+ * Get a specific version object from an array. If used in non strict mode, the highest available version will be returned if no match is found.
+ * @param versionRequest The requested version which should be prefered. Can be set to `undefined` in non strict mode if any version is ok.
  * @param strict Only return object with same major.minor version. Defaults to `false`
  * @returns An object which fullfills the request or `undefined` if no such version was found
  */
-export function requestVersion<T extends HasVersion>(source: T[], requested?: SemVer | string, strict = false): T | undefined {
+export function getMatchingVersion<T extends HasVersion>(source: T[], requested?: SemVer | string, strict = false): T | undefined {
     // direct return if no versions available
     if (source.length <= 0) {
         return undefined;
     }
     // newest if no version defined
-    if (requested === undefined) {
+    if ((requested === undefined) && !strict) {
         return highestVersion(source);
     }
     // find match if version defined

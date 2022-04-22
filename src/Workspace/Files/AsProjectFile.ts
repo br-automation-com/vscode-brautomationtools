@@ -7,7 +7,7 @@ import { stringToBoolOrUndefined } from '../../Tools/Helpers';
 import { pathBasename, pathDirname, pathJoin, pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
 
 /** Project global options for C-code */
-//TODO use in new architecture for some defines
+//TODO use in new architecture for some default defines
 export interface AsProjectCCodeOptions {
     /** Enable declarations of PLC variables in C-code with macros (e.g. `_LOCAL`) */
     readonly enablePlcVarDeclarations?: boolean | undefined,
@@ -35,7 +35,7 @@ export class AsProjectFile extends AsXmlFile {
             if (error instanceof Error) {
                 logger.error(`Failed to read project file from path '${filePath.fsPath}': ${error.message}`);
             } else {
-                logger.error(`Failed to read package file from path '${filePath.fsPath}'`);
+                logger.error(`Failed to read project file from path '${filePath.fsPath}'`);
             }
             logger.debug('Error details:', { error });
             return undefined;
@@ -55,12 +55,11 @@ export class AsProjectFile extends AsXmlFile {
      */
     protected async _initialize(): Promise<void> {
         await super._initialize();
-        this.#projectRoot = pathDirname(this.filePath);
         // assign and check versions
-        this.#version = this.header.asWorkingVersion ?? this.header.asVersion;
+        this.#workingVersion = this.header.asWorkingVersion ?? this.header.asVersion;
         this.#exactVersion = this.header.asVersion ?? this.header.asWorkingVersion;
-        if (!this.#version || !this.#exactVersion) {
-            throw new Error('Could not find Automation Studio version data');
+        if (!this.#workingVersion || !this.#exactVersion) {
+            logger.warning(`Could not find Automation Studio version data in '${this.filePath.toString(true)}'`);
         }
         // Other properties
         this.#projectName = pathBasename(this.filePath);
@@ -70,13 +69,6 @@ export class AsProjectFile extends AsXmlFile {
         this.#isInitialized = true;
     }
     #isInitialized = false;
-
-    /** The project root directory */
-    public get projectRoot() : Uri {
-        if (!this.#isInitialized || !this.#projectRoot) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
-        return this.#projectRoot;
-    }
-    #projectRoot: Uri | undefined;
 
     /** The name of the project */
     public get projectName() : string {
@@ -93,15 +85,15 @@ export class AsProjectFile extends AsXmlFile {
     #projectDescription: string | undefined;
 
     /** The Automation Studio working version (can be less restrictive than `exactVersion`) */
-    public get version() : string {
-        if (!this.#isInitialized || !this.#version) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
-        return this.#version;
+    public get workingVersion() : string | undefined {
+        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
+        return this.#workingVersion;
     }
-    #version: string | undefined;
+    #workingVersion: string | undefined;
 
     /** The exact Automation Studio version used to edit the project */
-    public get exactVersion() : string {
-        if (!this.#isInitialized || !this.#exactVersion) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
+    public get exactVersion() : string | undefined {
+        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#exactVersion;
     }
     #exactVersion: string | undefined;
@@ -116,10 +108,9 @@ export class AsProjectFile extends AsXmlFile {
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
     public toJSON(): any {
         const obj = super.toJSON();
-        obj.projectRoot = this.projectRoot.toString(true);
         obj.projectName = this.projectName;
         obj.projectDescription = this.projectDescription;
-        obj.version = this.version;
+        obj.workingVersion = this.workingVersion;
         obj.exactVersion = this.exactVersion;
         obj.cCodeOptions = this.cCodeOptions;
         return obj;

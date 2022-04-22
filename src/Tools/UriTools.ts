@@ -310,8 +310,8 @@ async function listSubsOfType(baseUri: vscode.Uri, fileType: vscode.FileType, fi
  */
 export function uriToSingleFilePattern(uri: vscode.Uri): vscode.RelativePattern {
     const fileName = pathBasename(uri);
-    const dirName = pathDirname(uri).fsPath;
-    return {base: dirName, pattern: fileName};
+    const dirPath = pathDirname(uri);
+    return new vscode.RelativePattern(dirPath, fileName);
 }
 
 /**

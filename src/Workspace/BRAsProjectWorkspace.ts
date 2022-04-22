@@ -4,54 +4,100 @@
  */
 
 import * as vscode from 'vscode';
-import * as uriTools from '../Tools/UriTools';
+import { isSubOf, isFile, pathParsedUri, pathsFromTo, isDirectory, listSubFiles } from '../Tools/UriTools';
 import * as CppToolsApi from '../ExternalApi/CppToolsApi'; // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
-import { logger } from '../Tools/Logger';
-import { AsPackageFile } from './Files/AsPackageFile';
-import { ConfigPackageFile } from './Files/ConfigPackageFile';
-import { CpuPackageFile } from './Files/CpuPackageFile';
-import { AsProjectFile } from './Files/AsProjectFile';
-import { UserSettingsFile } from './Files/UserSettingsFile';
-import { AsProjectConfiguration } from './AsProjectConfiguration';
+import { AsProject } from './AsProject';
+import { statusBar } from '../UI/StatusBar';
+import { AsProjectCBuildInfo } from '../Environment/AsProjectCBuildData';
 
 
-//#region exported types
+export class WorkspaceProjects {
+    /** static only class */
+    private constructor() { }
 
+    /**
+     * Get all available AS projects within all workspace folders
+     * @returns All available AS projects
+     */
+    public static async getProjects(): Promise<AsProject[]> {
+        if (this.#projects === undefined) {
+            this.#projects = this.#searchProjects();
+            statusBar.addBusyItem(this.#projects, 'Parsing AS projects in workspace');
+        }
+        return await this.#projects;
+    }
 
-/**
- * Information for an AS project
- */
-export interface AsProjectInfo extends vscode.Disposable {
-    /** Name of the AS project */
-    name: string;
-    /** Description of the AS project */
-    description?: string;
-    /** AS version used in the project */
-    asVersion: string;
-    /** Absolute URI to the project base directory */
-    baseUri: vscode.Uri,
-    /** Absolute URI to the project file (*.apj) */
-    projectFile: vscode.Uri,
-    /** Absolute URI to the Logical directory */
-    logical: vscode.Uri,
-    /** Absolute URI to the Physical directory */
-    physical: vscode.Uri,
-    /** Absolute URI to the temporary directory */
-    temporary: vscode.Uri,
-    /** Absolute URI to the temporary includes directory */
-    temporaryIncludes: vscode.Uri
-    /** Absolute URI to the binaries directory */
-    binaries: vscode.Uri;
-    /** Information for all configurations within this project */
-    configurations: AsProjectConfiguration[];
-    /** The currently active configuration */
-    activeConfiguration?: AsProjectConfiguration;
-    //TODO add changed event? Figure out in #5 architectural changes.
+    /**
+     * Gets the AS project to which the given URI belongs.
+     * @param uri URI which is checked to be within an AS project
+     * @returns The AS project to which the URI belongs, or `undefined` if no AS project was found for the given URI.
+     */
+    public static async getProjectForUri(uri: vscode.Uri): Promise<AsProject | undefined> {
+        // get projects and find matches
+        const projects = await this.getProjects();
+        const matches = projects.filter((p) => p.uriIsInProject(uri));
+        // return best fitting match
+        if (matches.length === 0) {
+            return undefined;
+        } else if (matches.length === 1) {
+            return matches[0];
+        } else {
+            // multiple matches -> longest matching path is closest to the result
+            // this could happen for a 'non conventional' folder structure, where you have an AS project within the root folder of another AS project
+            let bestMatch = matches[0];
+            for (const match of matches) {
+                if (match.paths.projectRoot.path.length > bestMatch.paths.projectRoot.path.length) {
+                    bestMatch = match;
+                }
+            }
+            return bestMatch;
+        }
+    }
+
+    /**
+     * Get all C/C++ build information for a file
+     * @param uri Uri to the file for which the build information should be collected
+     */
+    public static async getCBuildInformationForUri(uri: vscode.Uri): Promise<AsProjectCBuildInfo | undefined> {
+        const project = await this.getProjectForUri(uri);
+        return await project?.getCBuildInfo(uri);
+    }
+
+    /**
+     * Starts a new search for available AS projects within all workspace folders
+     * @returns All available AS projects after update
+     */
+    public static async updateProjects(): Promise<AsProject[]> {
+        // dispose old projects
+        //TODO ?????? is it gooooood to do here?
+        const oldProjects = (await this.#projects) ?? [];
+        for (const project of oldProjects) {
+            project.dispose();
+        }
+        // set new projects
+        this.#projects = this.#searchProjects();
+        statusBar.addBusyItem(this.#projects, 'Parsing AS projects in workspace');
+        return await this.#projects;
+    }
+    static async #searchProjects(baseUri?: vscode.Uri): Promise<AsProject[]> {
+        //TODO rework, was directly copied from old findAsProjectInfo() function
+        //TODO move search to AsProject class?
+        const searchPattern: vscode.GlobPattern = baseUri ? { base: baseUri.fsPath, pattern: '**/*.apj' } : '**/*.apj';
+        const projectFileUris = await vscode.workspace.findFiles(searchPattern);
+        const projects: AsProject[] = [];
+        for (const projectFileUri of projectFileUris) {
+            const project = await AsProject.createFromProjectFile(projectFileUri);
+            if (project !== undefined) {
+                projects.push(project);
+            }
+        }
+        await CppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
+        //TODO subscribe new event of AsProject object in C/C++ API adapter
+        return projects;
+    }
+
+    static #projects: Promise<AsProject[]> | undefined;
 }
-
-
-//#endregion exported types
-
 
 //#region exported functions
 
@@ -63,452 +109,9 @@ export interface AsProjectInfo extends vscode.Disposable {
 export async function registerProjectWorkspace(context: vscode.ExtensionContext) {
     // register to update on change of workspace folders
     let disposable: vscode.Disposable;
-    disposable = vscode.workspace.onDidChangeWorkspaceFolders(() => updateWorkspaceProjects());
+    disposable = vscode.workspace.onDidChangeWorkspaceFolders(() => WorkspaceProjects.updateProjects());
     context.subscriptions.push(disposable);
     //TODO also push internal disposables (FileSystemWatcher...)? How? Figure out in #5 architectural changes.
 }
 
-
-/**
- * Get all AS project data within the workspace folders.
- */
-export async function getWorkspaceProjects(): Promise<AsProjectInfo[]> {
-    return await _workspaceProjects;
-}
-
-
-/**
- * Update all AS project data within the workspace folders.
- * @returns The number of projects found within the workspace folders.
- */
-export async function updateWorkspaceProjects(): Promise<Number> {
-    const projectsOld = await _workspaceProjects;
-    for (const project of projectsOld) {
-        project.dispose();
-    }
-    _workspaceProjects = findAsProjectInfo();
-    return (await _workspaceProjects).length;
-}
-
-
-/**
- * Gets the AS project to which the given URI belongs.
- * @param uri URI which is checked to be within a project
- * @returns `undefined` if no AS project was found for the given URI.
- */
-export async function getProjectForUri(uri: vscode.Uri): Promise<AsProjectInfo | undefined> {
-    // get projects
-    const projects = await getWorkspaceProjects();
-    // sort projects so the longest path is first -> when an AS project is within an AS project the right one is found
-    const projectsSorted = projects.sort((a, b) => (b.baseUri.path.length - a.baseUri.path.length));
-    return projectsSorted.find((p) => uriTools.isSubOf(p.baseUri, uri));
-}
-
-
-/**
- * Gets the header include directories for a code file within an AS projects logical directory.
- * @param codeFile A URI to the code file to get the header includes for
- */
-export async function getProjectHeaderIncludeDirs(codeFile: vscode.Uri): Promise<vscode.Uri[]> {
-    const project = await getProjectForUri(codeFile);
-    // check requirements to provide header include directories
-    if (!project) {
-        return [];
-    }
-    if (!uriTools.isSubOf(project.logical, codeFile)) {
-        return [];
-    }
-    if (!await uriTools.isFile(codeFile)) {
-        return [];
-    }
-    // get headers for program or library code files
-    if (await isInLibrary(project, codeFile)) {
-        return getHeaderIncludeDirsForLibrary(project, codeFile);
-    } else {
-        //TODO isInProgram(project, codeFile) -> no special includes otherwise
-        return getHeaderIncludeDirsForProgram(project, codeFile);
-    }
-    //TODO get additonal includes defined in configuration of programs and libraries (Cpu.sw)
-    //TODO get standard headers also here?
-}
-
-
 //#endregion exported functions
-
-
-//#region local variables
-
-
-/** An array containing all project information within the workspace folders. */
-//TODO put functionality in a class to save state, or are local variables like this OK?
-let _workspaceProjects: Promise<AsProjectInfo[]> = findAsProjectInfo();
-
-
-//#endregion local variables
-
-
-//#region local types
-
-
-/** The type of an URI object within the Automation Studio context */
-enum ProjectUriType {
-    /** The URI is undefined in context of the AS project  */
-    undefined,
-    /** The URI is the base directory of an AS project */
-    projectBaseDirectory,
-    /** The URI is the project file of an AS project */
-    projectFile,
-    /** The URI is the root directory of the logical contents */
-    logicalRootDirectory,
-    /** The URI is the root directory of the physical contents */
-    physicalRootDirectory,
-    /** The URI is the root directory of the generated binaries */
-    binariesRootDirectory,
-    /** The URI is the root directory of the logical contents */
-    temporaryRootDirectory,
-    /** The URI is the root directory of a physical configuration */
-    physicalConfigurationRootDirectory,
-    /** The URI is a standard package directory */
-    packageDirectory,
-    /** The URI is a standard package file contents list */
-    packageFileList,
-    /** The URI is an IEC program directory */
-    iecProgramDirectory,
-    /** The URI is an IEC program file contents list */
-    iecProgramFileList,
-    /** The URI is a C program directory */
-    cProgramDirectory,//TODO C++ same? also in all other C values, also check static vs. dynamic Library
-    /** The URI is a C program file contents list */
-    cProgramFileList,
-    /** The URI is a binary library directory */
-    binaryLibraryDirectory,
-    /** The URI is a binary library file contents list */
-    binaryLibraryFileList,
-    /** The URI is an IEC library directory */
-    iecLibraryDirectory,
-    /** The URI is an IEC library file contents list */
-    iecLibraryFileList,
-    /** The URI is a C library directory */
-    cLibraryDirectory,
-    /** The URI is a C library file contents list */
-    cLibraryFileList,
-    /** The URI is an IEC source code file */
-    iecSourceFile,
-    /** The URI is an IEC variables files */
-    iecVariablesFile,
-    /** The URI is an IEC types file */
-    iecTypesFile,
-    /** The URI is an IEC function declaration file */
-    iecFunctionsFile,
-    /** The URI is a C source code file */
-    cSourceFile,
-    /** The URI is a C header file */
-    cHeaderFile
-}
-
-
-//#endregion local types
-
-
-//#region local functions
-
-
-/**
- * Searches for AS projects (*.apj files) within all workspace folders and subfolders and collects information about the projects.
- * @param baseUri If set, projects are only searched within this URI.
- */
-async function findAsProjectInfo(baseUri?: vscode.Uri): Promise<AsProjectInfo[]> {
-    const searchPattern: vscode.GlobPattern = baseUri ? {base: baseUri.fsPath, pattern: '**/*.apj'} : '**/*.apj';
-    const projectUris  = await vscode.workspace.findFiles(searchPattern);
-    const result: AsProjectInfo[] = [];
-    for (const uri of projectUris) {
-        // collect data
-        const uriData = deriveAsProjectUriData(uri);
-        const projectFile = await AsProjectFile.createFromPath(uriData.projectFileUri);
-        if (!projectFile) { continue; }
-        if (!projectFile.version) {
-            //TODO make it optional in new architecture and only mandatory for build process -> Check there if undefined
-            //     still print a warning to the logger and provide data from the newest AS version available
-            logger.error(`Failed to get Automation Studio version of project '${uriData.baseUri.toString(true)}'`);
-            continue;
-        }
-        const configurationsData = await findAsConfigurationInfo(uriData.physicalUri, uriData.baseUri);
-        const activeConfiguration = await getActiveConfiguration(configurationsData, uriData.userSettingsUri);
-        // push to result
-        const projectData: AsProjectInfo = {
-            name:                projectFile.projectName,
-            description:         projectFile.projectDescription,
-            asVersion:           projectFile.version,
-            baseUri:             projectFile.projectRoot,
-            projectFile:         projectFile.filePath,
-            logical:             uriData.logicalUri,
-            physical:            uriData.physicalUri,
-            temporary:           uriData.temporaryUri,
-            temporaryIncludes:   uriData.temporaryIncludesUri,
-            binaries:            uriData.binariesUri,
-            configurations:      configurationsData,
-            activeConfiguration: activeConfiguration,
-            dispose: () => {
-                userSettingsWatcher.dispose();
-            }
-        };
-        logger.info(`Project '${projectFile.projectName}' found in workspace`);
-        result.push(projectData);
-        // Register file system events for LastUser.set -> change active configuration
-        const userSettingsWatcher = vscode.workspace.createFileSystemWatcher(uriTools.uriToSingleFilePattern(uriData.userSettingsUri));
-        userSettingsWatcher.onDidChange(async (uri) => {
-            projectData.activeConfiguration = await getActiveConfiguration(configurationsData, uri);
-            await CppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
-        });
-        userSettingsWatcher.onDidCreate(async (uri) => {
-            projectData.activeConfiguration = await getActiveConfiguration(configurationsData, uri);
-            await CppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
-        });
-        userSettingsWatcher.onDidDelete(async (uri) => {
-            projectData.activeConfiguration = await getActiveConfiguration(configurationsData, uri);
-            await CppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
-        });
-    }
-    await CppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
-    return result;
-}
-
-
-/**
- * Derives information data from an AS project file URI
- * @param projectFileUri URI to the AS project file (*.apj)
- */
-function deriveAsProjectUriData(projectFileUri: vscode.Uri) {
-    const parsedUri = uriTools.pathParsedUri(projectFileUri);
-    return {
-        projectName:          parsedUri.name,
-        projectFileUri:       projectFileUri,
-        baseUri:              parsedUri.dir,
-        logicalUri:           uriTools.pathJoin(parsedUri.dir, 'Logical'),
-        physicalUri:          uriTools.pathJoin(parsedUri.dir, 'Physical'),
-        temporaryUri:         uriTools.pathJoin(parsedUri.dir, 'Temp'),
-        temporaryIncludesUri: uriTools.pathJoin(parsedUri.dir, 'Temp/Includes'),
-        binariesUri:          uriTools.pathJoin(parsedUri.dir, 'Binaries'),
-        userSettingsUri:      uriTools.pathJoin(parsedUri.dir, 'LastUser.set')
-    };
-}
-
-
-/**
- * Searches for configurations within the physical path of an AS project.
- * @param physicalUri The URI to the physical path of the AS project
- * @param projectBaseUri The URI to the AS project root directory
- * @returns An array containing the information of all found configurations
- */
-async function findAsConfigurationInfo(physicalUri: vscode.Uri, projectRootUri: vscode.Uri): Promise<AsProjectConfiguration[]> {
-    const result: AsProjectConfiguration[] = [];
-    // get available configurations from Physical.pkg
-    const packageUri = uriTools.pathJoin(physicalUri, 'Physical.pkg');
-    const physicalPkg = await AsPackageFile.createFromPath(packageUri);
-    if (!physicalPkg) {
-        return [];
-    }
-    // get detail information of all found configurations
-    for (const configChild of physicalPkg.getChildrenOfType('Configuration')) {
-        const configBaseUri = configChild.resolvePath(projectRootUri);
-        const config = await AsProjectConfiguration.createFromDir(configBaseUri, projectRootUri, configChild.description);
-        if (!config) {
-            logger.warning(`Configuration '${configBaseUri.toString(true)}' will not be available.`);
-            continue;
-        }
-        result.push(config);
-    }
-    return result;
-}
-
-
-async function getActiveConfiguration(configurations: AsProjectConfiguration[], userSettingsPath: vscode.Uri): Promise<AsProjectConfiguration | undefined> {
-    if (configurations.length === 0) {
-        logger.debug('getActiveConfiguration(configs, uri) -> configurations.length === 0', {uri: userSettingsPath});
-        return undefined;
-    }
-    const userSettingsFile = await UserSettingsFile.createFromPath(userSettingsPath);
-    let activeConfiguration = configurations.find((config) => config.name === userSettingsFile?.activeConfiguration);
-    if (!activeConfiguration) {
-        activeConfiguration = configurations[0];
-        logger.warning(`LastUser.set file was not found or is invalid. '${activeConfiguration.name}' will be used as active configuration`);
-    }
-    return activeConfiguration;
-}
-
-
-/**
- * Checks if the given URI is within a library (C, IEC and binary) of the AS project.
- * @param asProject The AS project to use
- * @param uri The URI which is checked to be within a library
- * @returns `true` if the uri is within a library directory or any of its subdirectories, `false` otherwise.
- */
-async function isInLibrary(asProject: AsProjectInfo, uri: vscode.Uri): Promise<boolean> {
-    if (!uriTools.isSubOf(asProject.logical, uri)) {
-        return false; // not content of logical
-    }
-    // get all paths from uri to logical
-    const toLogical = uriTools.pathsFromTo(uri, asProject.logical);
-    toLogical.pop(); // remove self uri
-    toLogical.reverse(); // start from highest level
-    // check if one of the paths is a library directory
-    for (const actUri of toLogical) {
-        const actType = await getProjectUriType(actUri);
-        if (actType === ProjectUriType.binaryLibraryDirectory) {
-            return true;
-        }
-        if (actType === ProjectUriType.iecLibraryDirectory) {
-            return true;
-        }
-        if (actType === ProjectUriType.cLibraryDirectory) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
-/**
- * Get header includes for files within a program. No additional checks are done within. Checks need to
- * be done before calling.
- * @param asProject the project to which the code file belongs to
- * @param codeFile the code files for which the header includes are listed. This needs to be an URI to a file.
- */
-function getHeaderIncludeDirsForProgram(asProject: AsProjectInfo, codeFile: vscode.Uri): vscode.Uri[] {
-    const configIncludeDirs = asProject.activeConfiguration?.cIncludeDirectories ?? [];
-    const iecIncludeDirs = uriTools.pathsFromTo(asProject.logical, codeFile, asProject.temporaryIncludes);
-    iecIncludeDirs.pop(); // remove file name
-    iecIncludeDirs.reverse(); // highest folder level needs to be searched first on include
-    return [...configIncludeDirs, ...iecIncludeDirs];
-}
-
-
-/**
- * Get header includes for files within a library. No additional checks are done within. Checks need to
- * be done before calling.
- * @param asProject the project to which the code file belongs to
- * @param codeFile the code files for which the header includes are listed. This needs to be an URI to a file.
- */
-function getHeaderIncludeDirsForLibrary(asProject: AsProjectInfo, codeFile: vscode.Uri): vscode.Uri[] {
-    const configIncludeDirs = asProject.activeConfiguration?.cIncludeDirectories ?? [];
-    return [asProject.temporaryIncludes, ...configIncludeDirs];
-}
-
-
-/**
- * Gets the type of an URI within an AS project context.
- * @param uri The URI to evaluate type
- */
-async function getProjectUriType(uri: vscode.Uri) : Promise<ProjectUriType> {
-    //TODO review implementation and consider to also change input parameters to  (asProject: AsProjectInfo, uri: vscode.Uri)
-    if (await uriTools.isFile(uri)) {
-        const info = uriTools.pathParsedUri(uri);
-        // project organisation files
-        //TODO use switch(info.ext) {...}
-        if (info.ext === '.apj') {
-            return ProjectUriType.projectFile;
-        } else if (info.ext === '.pkg') {
-            //TODO further specify
-            return ProjectUriType.packageFileList;
-        } else if (info.ext === '.lby') {
-            if (info.name.toLowerCase() === 'binary') {
-                return ProjectUriType.binaryLibraryFileList;
-            } else if (info.name.toLowerCase() === 'iec') {
-                return ProjectUriType.iecLibraryFileList;
-            } else if (info.name.toLowerCase() === 'ansic') {
-                return ProjectUriType.cLibraryFileList;
-            } else {
-                return ProjectUriType.undefined;
-            }
-        } else if (info.ext === '.prg') {
-            if (info.name.toLowerCase() === 'iec') {
-                return ProjectUriType.iecProgramFileList;
-            } else if (info.name.toLowerCase() === 'ansic') {
-                return ProjectUriType.cProgramFileList;
-            } else {
-                return ProjectUriType.undefined;
-            }
-        } else if (info.ext === '.var') {
-            return ProjectUriType.iecVariablesFile;
-        } else if (info.ext === '.typ') {
-            return ProjectUriType.iecTypesFile;
-        } else if (info.ext === '.fun') {
-            return ProjectUriType.iecFunctionsFile;
-        } else if (info.ext === '.st') {
-            //TODO other IEC languages
-            return ProjectUriType.iecSourceFile;
-        } else if (info.ext === '.c') {
-            // TODO C++ files
-            return ProjectUriType.cSourceFile;
-        } else if (info.ext === '.h') {
-            // TODO C++ files
-            return ProjectUriType.cHeaderFile;
-        }
-    } else if (await uriTools.isDirectory(uri)) {
-        // get files with types in directory
-        const subFiles = await uriTools.listSubFiles(uri);
-        const subFilesWithTypes: {uri: vscode.Uri, type: ProjectUriType}[] = [];
-        for (const fileUri of subFiles) {
-            const type = await getProjectUriType(fileUri);
-            subFilesWithTypes.push({
-                uri: fileUri,
-                type: type
-            });
-        }
-        // check if specific files are present to define a package type
-        const hasIecProgramFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.iecProgramFileList) ? true : false;
-        if (hasIecProgramFileList) {
-            return ProjectUriType.iecProgramDirectory;
-        }
-        const hasCProgramFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.cProgramFileList) ? true : false;
-        if (hasCProgramFileList) {
-            return ProjectUriType.cProgramDirectory;
-        }
-        const hasBinaryLibraryFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.binaryLibraryFileList) ? true : false;
-        if (hasBinaryLibraryFileList) {
-            return ProjectUriType.binaryLibraryDirectory;
-        }
-        const hasIecLibraryFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.iecLibraryFileList) ? true : false;
-        if (hasIecLibraryFileList) {
-            return ProjectUriType.iecLibraryDirectory;
-        }
-        const hasCLibraryFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.cLibraryFileList) ? true : false;
-        if (hasCLibraryFileList) {
-            return ProjectUriType.cLibraryDirectory;
-        }
-        const hasPackageFileList = subFilesWithTypes.find((f) => f.type === ProjectUriType.packageFileList) ? true : false;
-        if (hasPackageFileList) {
-            return ProjectUriType.packageDirectory;
-        }
-        const hasProjectFile = subFilesWithTypes.find((f) => f.type === ProjectUriType.projectFile) ? true : false;
-        if (hasProjectFile) {
-            return ProjectUriType.projectBaseDirectory;
-        }
-    }
-    // no match until now -> undefined
-    return ProjectUriType.undefined;
-}
-
-
-/**
- * NOT YET IMPLEMENTED
- * Get the settings from the LastUser.set file of the AS project.
- * @param asProject The AS project to get the settings for
- */
-export async function getUserSettings(asProject: AsProjectInfo) {
-    vscode.workspace.textDocuments;
-    //TODO implement properly. File parsing of *.set files should be implemented in module BrAsProjectFiles
-    //TODO maybe create new interface for settings and add property to interface AsProjectInfo
-    //const settingUris = await vscode.workspace.findFiles('*.set');
-    const settingUris = await vscode.workspace.findFiles('LastUser.set');
-    if (settingUris.length === 0) {
-        return undefined;
-    }
-    const usedSettingUri = settingUris[0]; //TODO get username.set if possible
-    const settingDocument = await vscode.workspace.openTextDocument(usedSettingUri);
-    const text = settingDocument.getText();
-    throw new Error('NOT IMPLEMENTED');
-}
-
-
-//#endregion local functions

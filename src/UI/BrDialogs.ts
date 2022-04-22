@@ -4,20 +4,21 @@
  */
 
 import {ValueQuickPickItem, ValueQuickPickOptions, ValueQuickPickInitialValues, getQuickPickSingleValue} from './Dialogs';
-import * as BRAsProjectWorkspace from '../Workspace/BRAsProjectWorkspace';
 import { extensionConfiguration } from '../ExtensionConfiguration';
 import { AsProjectConfiguration } from '../Workspace/AsProjectConfiguration';
+import { AsProject } from '../Workspace/AsProject';
+import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
 
 
 /**
  * Dialog to select a project from all projects within the workspace.
  */
-export async function selectAsProjectFromWorkspace(): Promise<BRAsProjectWorkspace.AsProjectInfo | undefined> {
+export async function selectAsProjectFromWorkspace(): Promise<AsProject | undefined> {
     // get items
-    const projectsData = await BRAsProjectWorkspace.getWorkspaceProjects();
+    const projectsData = await WorkspaceProjects.getProjects();
     const projectItems = projectsData.map((data) => {
-        const item: ValueQuickPickItem<BRAsProjectWorkspace.AsProjectInfo> = {
-            label:  `${data.name} in ${data.baseUri.fsPath}`,
+        const item: ValueQuickPickItem<AsProject> = {
+            label:  `${data.name} in ${data.paths.projectRoot.fsPath}`,
             detail: data.description,
             value:  data
         };
@@ -36,7 +37,7 @@ export async function selectAsProjectFromWorkspace(): Promise<BRAsProjectWorkspa
 /**
  * Dialog to select an AS configuration out of all available AS configurations in the AS project
  */
-export async function selectASProjectConfiguration(asProject: BRAsProjectWorkspace.AsProjectInfo): Promise<AsProjectConfiguration | undefined> {
+export async function selectASProjectConfiguration(asProject: AsProject): Promise<AsProjectConfiguration | undefined> {
     // get items and initial value
     const configurationValues = asProject.configurations;
     const configurationItems = configurationValues.map((config) => {

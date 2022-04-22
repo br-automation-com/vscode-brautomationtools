@@ -55,15 +55,15 @@ export class UserSettingsFile extends AsXmlFile {
     #isInitialized = false;
 
     /** The name of the active configuration */
-    public get activeConfiguration(): string {
-        if (!this.#isInitialized || !this.#activeConfiguration) { throw new Error(`Use of not initialized ${UserSettingsFile.name} object`); }
+    public get activeConfiguration(): string | undefined {
+        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${UserSettingsFile.name} object`); }
         return this.#activeConfiguration;
     }
     #activeConfiguration: string | undefined;
 
     /** Deployment target for newly added programs (e.g. active configuration) */
-    public get deploymentTarget(): string {
-        if (!this.#isInitialized || !this.#deploymentTarget) { throw new Error(`Use of not initialized ${UserSettingsFile.name} object`); }
+    public get deploymentTarget(): string | undefined {
+        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${UserSettingsFile.name} object`); }
         return this.#deploymentTarget;
     }
     #deploymentTarget: string | undefined;

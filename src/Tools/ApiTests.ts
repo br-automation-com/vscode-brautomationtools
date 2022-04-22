@@ -10,7 +10,6 @@ import * as Helpers from './Helpers';
 import * as uriTools from './UriTools';
 import * as fileTools from './FileTools';
 import * as Dialogs from '../UI/Dialogs';
-import * as BRAsProjectWorkspace from '../Workspace/BRAsProjectWorkspace';
 import * as semver from 'semver';
 import { logger } from './Logger';
 import { extensionConfiguration } from '../ExtensionConfiguration';
@@ -27,6 +26,7 @@ import { ConfigPackageFile } from '../Workspace/Files/ConfigPackageFile';
 import { AsProjectFile } from '../Workspace/Files/AsProjectFile';
 import { UserSettingsFile } from '../Workspace/Files/UserSettingsFile';
 import { AsProjectConfiguration } from '../Workspace/AsProjectConfiguration';
+import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -395,7 +395,7 @@ async function testBRConfiguration() {
 async function testWorkspaceProjects() {
 	logHeader('Test workspace projects start');
 	// Get project for directories...
-	const projects = await BRAsProjectWorkspace.getWorkspaceProjects();
+	const projects = await WorkspaceProjects.getProjects();
 	const project = projects.pop();
 	if (project === undefined) {
 		logger.info('No projects found for tests');
@@ -404,7 +404,7 @@ async function testWorkspaceProjects() {
 	// Configuration test
 	const configRootPaths = project.configurations.map((config) => config.rootPath);
 	for (const configRootPath of configRootPaths) {
-		const config = await AsProjectConfiguration.createFromDir(configRootPath, project.baseUri);
+		const config = await AsProjectConfiguration.createFromDir(configRootPath, project.paths.projectRoot);
 		logger.info('AsProjectConfiguration.createFromDir(uri)', { uri: configRootPath.toString(true), result: config });
 	}
 	// Update AS projects
@@ -436,29 +436,30 @@ async function testWorkspaceProjects() {
 
 
 async function testBRAsProjectWorkspace() {
-	logHeader('Test BRAsProjectWorkspace start');
+	//TODO, old, remove
+	logHeader('Test WorkspaceProjects start');
 	// Update AS projects
 	if (await Dialogs.yesNoDialog('Update AS projects in workspace?')) {
-		logger.info('BRAsProjectWorkspace.updateWorkspaceProjects() start');
-		const numProjects = await BRAsProjectWorkspace.updateWorkspaceProjects();
-		logger.info('BRAsProjectWorkspace.updateWorkspaceProjects() done', { result: numProjects });
+		logger.info('WorkspaceProjects.updateProjects() start');
+		const numProjects = await WorkspaceProjects.updateProjects();
+		logger.info('WorkspaceProjects.updateProjects() done', { result: numProjects });
 	}
 	// Get AS projects info
-	const projectsData = await BRAsProjectWorkspace.getWorkspaceProjects();
-	logger.info('BRAsProjectWorkspace.getWorkspaceProjects()', { result: projectsData });
+	const projectsData = await WorkspaceProjects.getProjects();
+	logger.info('WorkspaceProjects.getProjects()', { result: projectsData });
 	// find project for path
 	const pathToGetProject = await vscode.window.showInputBox({prompt: 'Enter path to get corresponding project'});
 	if (pathToGetProject) {
 		const uri = vscode.Uri.file(pathToGetProject);
-		const projectForPath = await BRAsProjectWorkspace.getProjectForUri(uri);
-		logger.info('BRAsProjectWorkspace.getProjectForUri(uri)', { uri: uri.toString(true), result: projectForPath });
+		const projectForPath = await WorkspaceProjects.getProjectForUri(uri);
+		logger.info('WorkspaceProjects.getProjectForUri(uri)', { uri: uri.toString(true), result: projectForPath });
 	}
-	// Get header directories
-	const pathToGetHeaderDirs = await vscode.window.showInputBox({prompt: 'Enter path to get corresponding header directories'});
+	// Get build settings for file / URI
+	const pathToGetHeaderDirs = await vscode.window.showInputBox({ prompt: 'Enter path to get corresponding header directories' });
 	if (pathToGetHeaderDirs) {
 		const uri = vscode.Uri.file(pathToGetHeaderDirs);
-		const headerDirsForPath = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri);
-		logger.info('BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri)', { uri: uri.toString(true), result: headerDirsForPath });
+		const buildInfo = await WorkspaceProjects.getCBuildInformationForUri(uri);
+		logger.info('WorkspaceProjects.getCBuildInformationForUri(uri)', { uri: uri.toString(true), result: buildInfo });
 	}
 
 	//TODO add library in test project
@@ -521,56 +522,56 @@ async function testBRAsProjectWorkspace() {
 	console.log(urisWithTypes);
 	*/
 	// end
-	logHeader('Test BRAsProjectWorkspace end');
+	logHeader('Test WorkspaceProjects end');
 }
 
 
 async function testProjectFiles(): Promise<void> {
 	logHeader('Test project files start');
 	// get AS project for further tests
-	const asProjects = await BRAsProjectWorkspace.getWorkspaceProjects();
+	const asProjects = await WorkspaceProjects.getProjects();
 	if (asProjects.length === 0) {
 		return;
 	}
 	const asProject = asProjects[0];
 	// test *.apj info
-	const projectFilePath = asProject.projectFile;
+	const projectFilePath = asProject.paths.projectFile;
 	const projectFile = await AsProjectFile.createFromPath(projectFilePath);
 	logger.info('AsProjectFile.createFromPath(uri)', { uri: projectFilePath.toString(true), result: projectFile });
 	// test Physical.pkg
-	const physicalPkgPath = uriTools.pathJoin(asProject.physical, 'Physical.pkg');
+	const physicalPkgPath = uriTools.pathJoin(asProject.paths.physical, 'Physical.pkg');
 	const physicalPkg = await AsPackageFile.createFromPath(physicalPkgPath);
 	logger.info('AsPackageFile.createFromPath(uri)', { uri: physicalPkgPath.toString(true), result: physicalPkg });
 	logger.info('Resolve child object paths for package uri', {
 		filePath: physicalPkg?.filePath.toString(true),
-		children: physicalPkg?.childObjects.map((child) => child.resolvePath(asProject.baseUri).toString(true)),
+		children: physicalPkg?.childObjects.map((child) => child.resolvePath(asProject.paths.projectRoot).toString(true)),
 	});
 	// test Config.pkg
-	const configPkgPaths = await vscode.workspace.findFiles({ base: asProject.physical.fsPath, pattern: '*/Config.pkg' });
+	const configPkgPaths = await vscode.workspace.findFiles({ base: asProject.paths.physical.fsPath, pattern: '*/Config.pkg' });
 	for (const configPkgPath of configPkgPaths) {
 		const configPkg = await ConfigPackageFile.createFromPath(configPkgPath);
 		logger.info('ConfigPackageFile.createFromPath(uri)', { uri: configPkgPath.toString(true), result: configPkg });
 		logger.info('Resolve child object paths for package uri', {
 			filePath: configPkg?.filePath.toString(true),
-			children: configPkg?.childObjects.map((child) => child.resolvePath(asProject.baseUri).toString(true)),
+			children: configPkg?.childObjects.map((child) => child.resolvePath(asProject.paths.projectRoot).toString(true)),
 		});
 	}
 	// test Cpu.pkg
-	const cpuPkgPaths = await vscode.workspace.findFiles({ base: asProject.physical.fsPath, pattern: '*/*/Cpu.pkg' });
+	const cpuPkgPaths = await vscode.workspace.findFiles({ base: asProject.paths.physical.fsPath, pattern: '*/*/Cpu.pkg' });
 	for (const cpuPkgPath of cpuPkgPaths) {
 		const cpuPkg = await CpuPackageFile.createFromPath(cpuPkgPath);
 		logger.info('CpuPackageFile.createFromPath(uri)', { uri: cpuPkgPath.toString(true), result: cpuPkg });
 		logger.info('Resolve child object paths for package uri', {
 			filePath: cpuPkg?.filePath.toString(true),
-			children: cpuPkg?.childObjects.map((child) => child.resolvePath(asProject.baseUri).toString(true)),
+			children: cpuPkg?.childObjects.map((child) => child.resolvePath(asProject.paths.projectRoot).toString(true)),
 		});
 		logger.info('Resolve include dirs for package uri', {
 			filePath: cpuPkg?.filePath.toString(true),
-			includes: cpuPkg?.cpuConfig.build.resolveAnsiCIncludeDirs(asProject.baseUri).map((uri) => uri.toString(true)),
+			includes: cpuPkg?.cpuConfig.build.resolveAnsiCIncludeDirs(asProject.paths.projectRoot).map((uri) => uri.toString(true)),
 		});
 	}
 	// test *.set info
-	const settingFiles = await vscode.workspace.findFiles({ base: asProject.baseUri.fsPath, pattern: '*.set' });
+	const settingFiles = await vscode.workspace.findFiles({ base: asProject.paths.projectRoot.fsPath, pattern: '*.set' });
 	for (const file of settingFiles) {
 		const result = await UserSettingsFile.createFromPath(file);
 		logger.info('UserSettingsFile.createFromPath(uri)', { uri: file.toString(true), result: result });

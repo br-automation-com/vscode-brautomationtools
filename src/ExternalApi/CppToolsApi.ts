@@ -5,11 +5,11 @@
 
 import * as vscode from 'vscode';
 import * as cppTools from 'vscode-cpptools';
-import * as BRAsProjectWorkspace from '../Workspace/BRAsProjectWorkspace';
 import { logger } from '../Tools/Logger';
 import * as Helpers from '../Tools/Helpers';
 import * as uriTools from '../Tools/UriTools';
 import { Environment } from '../Environment/Environment';
+import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
 
 
 /**
@@ -52,7 +52,7 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
         this.#cppApi.registerCustomConfigurationProvider(this);
         // Ready only parsing of workspace and environment (required for proper includes)
         Environment.automationStudio.getVersions().then(() => this.didChangeCppToolsConfig());
-        BRAsProjectWorkspace.getWorkspaceProjects().then(() => this.didChangeCppToolsConfig());
+        WorkspaceProjects.getProjects().then(() => this.didChangeCppToolsConfig());
         this.#cppApi.notifyReady(this);
         return true;
     }
@@ -73,14 +73,14 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
 
     async canProvideConfiguration(uri: vscode.Uri): Promise<boolean> {
         // Check if file is within an AS project
-        const asProject = await BRAsProjectWorkspace.getProjectForUri(uri);
+        const asProject = await WorkspaceProjects.getProjectForUri(uri);
         let canProvide = false;
         if (!asProject) {
             canProvide = false;
         } else {
             // Only files in logical view can provide info
             //TODO is it also required for headers in Temp?
-            canProvide = uriTools.isSubOf(asProject.logical, uri);
+            canProvide = uriTools.isSubOf(asProject.paths.logical, uri);
         }
         logger.debug('CppConfigurationProvider.canProvideConfiguration(uri)', { uri: uri.toString(true), return: canProvide });
         return canProvide;
@@ -142,26 +142,31 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
      * @param uri The uri to get the configuration from
      */
     private async _getConfiguration(uri: vscode.Uri): Promise<cppTools.SourceFileConfigurationItem | undefined> {
-        // get project include directories
-        const headerUris = await BRAsProjectWorkspace.getProjectHeaderIncludeDirs(uri);
-        const headerPaths = headerUris.map((u) => u.fsPath);
+        const headerUris: vscode.Uri[] = [];
+        const buildArgs: string[] = [];
+        // TODO implement with new API
+        const buildInfo = await WorkspaceProjects.getCBuildInformationForUri(uri);
+        if (buildInfo === undefined) {
+            return undefined;
+        }
+        headerUris.push(...buildInfo.systemIncludes);
+        headerUris.push(...buildInfo.userIncludes);
+        buildArgs.push(...buildInfo.buildOptions);
+        buildArgs.push(...this.defaultCompilerArgs); // TODO should come from AS project API
         // get project info for further queries and check required properties
-        const asProjectInfo = await BRAsProjectWorkspace.getProjectForUri(uri);
+        const asProjectInfo = await WorkspaceProjects.getProjectForUri(uri);
         if (!asProjectInfo) {
             return undefined;
         }
         const activeCfg = asProjectInfo.activeConfiguration;
-        // get gcc data
-        const gccExe = (await Environment.automationStudio.getVersion(asProjectInfo.asVersion))
-            ?.gccInstallation.getExecutable(activeCfg?.gccVersion, 'SG4', 'Arm');
+        // TODO get gcc data should com from AS project API
+        const gccExe = (await Environment.automationStudio.getVersion(asProjectInfo.workingVersion))
+            ?.gccInstallation.getExecutable(activeCfg?.gccVersion, 'SG4', 'Arm');//TODO use proper logic to get gcc. Maybe create new environment API to get best matching gcc, if AS is not installed...
         if (!gccExe) {
             return undefined;
         }
-        // get compiler arguments
-        const defaultArgs = this.defaultCompilerArgs;
-        const configArgs = activeCfg?.cBuildOptions ?? [];
-        const allArgs = defaultArgs.concat(configArgs);
         // create and return C/C++ configuration
+        const headerPaths = headerUris.map((u) => u.fsPath);
         const config: cppTools.SourceFileConfigurationItem = {
             uri: uri,
             configuration: {
@@ -169,7 +174,7 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
                 defines:          [],
                 intelliSenseMode: undefined,
                 standard:         undefined,
-                compilerArgs:     allArgs,
+                compilerArgs:     buildArgs,
                 compilerPath:     gccExe.exePath.fsPath,
             }
         };

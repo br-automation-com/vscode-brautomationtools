@@ -5,12 +5,12 @@
 
 import * as vscode from 'vscode';
 import { logger } from './Tools/Logger';
-import {registerCommands} from './ExtensionCommands';
-import {registerCppToolsConfigurationProvider} from './ExternalApi/CppToolsApi';
-import {registerTaskProviders as registerBuildTaskProviders} from './TaskProviders/BrAsBuildTaskProvider';
-import {registerTaskProviders as registerTransferTaskProviders} from './TaskProviders/BrAsTransferTaskProvider';
-import {registerApiTests} from './Tools/ApiTests';
-import {getWorkspaceProjects, registerProjectWorkspace} from './Workspace/BRAsProjectWorkspace';
+import { registerCommands } from './ExtensionCommands';
+import { registerCppToolsConfigurationProvider } from './ExternalApi/CppToolsApi';
+import { registerTaskProviders as registerBuildTaskProviders } from './TaskProviders/BrAsBuildTaskProvider';
+import { registerTaskProviders as registerTransferTaskProviders } from './TaskProviders/BrAsTransferTaskProvider';
+import { registerApiTests } from './Tools/ApiTests';
+import { WorkspaceProjects, registerProjectWorkspace } from './Workspace/BRAsProjectWorkspace';
 import { notifications } from './UI/Notifications';
 import { extensionState } from './ExtensionState';
 import { extensionConfiguration } from './ExtensionConfiguration';
@@ -36,11 +36,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerTransferTaskProviders(context);
 	// get promises for long running activation events and add to status bar
 	const waitAsVersion = Environment.automationStudio.getVersions();
-	statusBar.addBusyItem(waitAsVersion, 'Searching for installed AS versions');
 	const waitPviVersions = Environment.pvi.getVersions();
-	statusBar.addBusyItem(waitPviVersions, 'Searching for installed PVI versions');
-	const waitWorkspaceProjects = getWorkspaceProjects();
-	statusBar.addBusyItem(waitWorkspaceProjects, 'Parsing AS projects in workspace');
+	const waitWorkspaceProjects = WorkspaceProjects.getProjects();
 	// TODO do we need to await these? Will probably be remove after architectural changes #5
 	await registerCppToolsConfigurationProvider(context);
 	await registerProjectWorkspace(context);

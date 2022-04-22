@@ -5,12 +5,12 @@
 
 import * as vscode from 'vscode';
 import * as childProcess from 'child_process';
-import * as BrAsProjectWorkspace from '../Workspace/BRAsProjectWorkspace';
 import * as BrDialogs from '../UI/BrDialogs';
 import { logger } from '../Tools/Logger';
 import { extensionConfiguration } from '../ExtensionConfiguration';
 import { timeDiffString } from '../Tools/Helpers';
 import { Environment } from '../Environment/Environment';
+import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
 
 
 /**
@@ -291,16 +291,21 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
             this.done(42);
             return;
         }
-        const asProject = await BrAsProjectWorkspace.getProjectForUri(vscode.Uri.file(usedDefinition.asProjectFile));
+        const asProject = await WorkspaceProjects.getProjectForUri(vscode.Uri.file(usedDefinition.asProjectFile));
         if (!asProject) {
             this.writeLine(`ERROR: Project ${usedDefinition.asProjectFile} not found`);
             this.done(43);
             return;
         }
-        const buildExe = (await Environment.automationStudio.getVersion(asProject.asVersion))?.buildExe.exePath;
-        if (!buildExe) {
-            this.writeLine(`ERROR: BR.AS.Build.exe not found for AS Version: ${asProject.asVersion}`);
+        if (asProject.workingVersion === undefined) {
+            this.writeLine(`ERROR: No AS version defined in "${asProject.paths.projectFile.toString(true)}"`);
             this.done(44);
+            return;
+        }
+        const buildExe = (await Environment.automationStudio.getVersion(asProject.workingVersion))?.buildExe.exePath; //TODO strict search?
+        if (!buildExe) {
+            this.writeLine(`ERROR: BR.AS.Build.exe not found for AS Version: ${asProject.workingVersion}`);
+            this.done(45);
             return;
         }
         // start build process
@@ -440,7 +445,7 @@ async function processTaskDefinitionWithDialogs(baseDefinition: BrAsBuildTaskDef
     // Project file
     let asProjectFile = baseDefinition.asProjectFile;
     if (!asProjectFile) {
-        asProjectFile = (await BrDialogs.selectAsProjectFromWorkspace())?.projectFile.fsPath;
+        asProjectFile = (await BrDialogs.selectAsProjectFromWorkspace())?.paths.projectFile.fsPath;
         if (!asProjectFile) {
             return undefined;
         }
@@ -448,7 +453,7 @@ async function processTaskDefinitionWithDialogs(baseDefinition: BrAsBuildTaskDef
     // Configuration
     let asConfiguration = baseDefinition.asConfiguration;
     if (!asConfiguration) {
-        const asProject = await BrAsProjectWorkspace.getProjectForUri(vscode.Uri.file(asProjectFile));
+        const asProject = await WorkspaceProjects.getProjectForUri(vscode.Uri.file(asProjectFile));
         if (!asProject) {
             return undefined;
         }
