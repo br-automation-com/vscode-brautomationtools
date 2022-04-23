@@ -72,14 +72,14 @@ export class AsProjectFile extends AsXmlFile {
 
     /** The name of the project */
     public get projectName() : string {
-        if (!this.#isInitialized || !this.#projectName) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
+        if (!this.#isInitialized || (this.#projectName === undefined)) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#projectName;
     }
     #projectName: string | undefined;
 
     /** The description text of the project */
     public get projectDescription(): string {
-        if (!this.#isInitialized || !this.#projectDescription) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
+        if (!this.#isInitialized || (this.#projectDescription === undefined)) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#projectDescription;
     }
     #projectDescription: string | undefined;
