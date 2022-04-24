@@ -4,6 +4,7 @@ import * as semver from 'semver';
 import { logger } from '../Tools/Logger';
 import { SystemGeneration, TargetArchitecture } from './CommonTypes';
 import { spawnSync } from 'child_process';
+import { AsProjectCBuildInfo } from './AsProjectCBuildData';
 
 /**
  * Representation of a gcc.exe with additional information
@@ -63,7 +64,7 @@ export class GccExecutable {
         const machinePrefixIdx = exeName.lastIndexOf('-gcc.exe');
         let targetMachine = exeName.substring(0, machinePrefixIdx);
         if (targetMachine.length === 0) {
-            targetMachine = queryGccMachine(exePath) ?? '';
+            targetMachine = queryGccMachine(exePath) ?? ''; // query only when no prefix, because query is slower
         }
         this.#targetMachine = targetMachine;
         // use target machine to set system generation, architecture and include dir
@@ -128,6 +129,16 @@ export class GccExecutable {
         return this.#supportsQuery;
     }
     #supportsQuery: boolean;
+
+    /** C-Build info as a structure */
+    public get cBuildInfo(): AsProjectCBuildInfo {
+        return {
+            compilerPath: this.exePath,
+            systemIncludes: this.supportsQuery ? [] : this.systemIncludes,
+            userIncludes: [],
+            buildOptions: [],
+        };
+    }
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
     public toJSON(): any {

@@ -11,7 +11,6 @@ import * as uriTools from '../Tools/UriTools';
 import { Environment } from '../Environment/Environment';
 import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
 
-
 /**
  * Register the custom configuration provider on the C/C++ Tools extension
  */
@@ -21,13 +20,11 @@ export async function registerCppToolsConfigurationProvider(context: vscode.Exte
     await provider.initialize();
 }
 
-
 // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
 // Works well -> implement properly
 export async function didChangeCppToolsConfig() {
     CppConfigurationProvider.getInstance().didChangeCppToolsConfig();
 }
-
 
 /**
  * The actual class that provides information to the cpptools extension. See
@@ -70,25 +67,22 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
     readonly name = 'B&R Automation Tools';
     readonly extensionId = 'vscode-brautomationtools';
 
-
     async canProvideConfiguration(uri: vscode.Uri): Promise<boolean> {
         // Check if file is within an AS project
         const asProject = await WorkspaceProjects.getProjectForUri(uri);
         let canProvide = false;
-        if (!asProject) {
-            canProvide = false;
-        } else {
-            // Only files in logical view can provide info
-            //TODO is it also required for headers in Temp?
-            canProvide = uriTools.isSubOf(asProject.paths.logical, uri);
+        if (asProject !== undefined) {
+            const isInLogical = uriTools.isSubOf(asProject.paths.logical, uri);
+            const isInPhysical = uriTools.isSubOf(asProject.paths.physical, uri);
+            const isInTemp = uriTools.isSubOf(asProject.paths.temp, uri);
+            canProvide = isInLogical || isInPhysical || isInTemp;
         }
         logger.debug('CppConfigurationProvider.canProvideConfiguration(uri)', { uri: uri.toString(true), return: canProvide });
         return canProvide;
     }
 
-
     async provideConfigurations(uris: vscode.Uri[], token?: vscode.CancellationToken): Promise<cppTools.SourceFileConfigurationItem[]> {
-        const configs = await Promise.all( uris.map((uri) => this._getConfiguration(uri) ) );
+        const configs = await Promise.all(uris.map((uri) => this._getConfiguration(uri)));
         const validConfigs: cppTools.SourceFileConfigurationItem[] = [];
         Helpers.pushDefined(validConfigs, ...configs);
         const logData = {
@@ -101,7 +95,6 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
         return validConfigs;
     }
 
-
     //TODO Investigate if BrowseConfiguration is required or more performant than separate configurations
     // According to https://code.visualstudio.com/docs/cpp/c-cpp-properties-schema-reference 'includePath' is used for most features.
     // Currently 'browse.path' used is still by the C/C++ extension when no compiler is present, but in future versions 'includePath'
@@ -111,82 +104,39 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
     async canProvideBrowseConfigurationsPerFolder(): Promise<boolean> { return false; }
     async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cppTools.WorkspaceBrowseConfiguration> { return { browsePath: [] }; }
 
-
     //#endregion cppTools.CustomConfigurationProvider interface implementation
-
-
-    //#region fields
-
-    /** Standard compiler arguments */
-    private readonly defaultCompilerArgs = [
-        //TODO are the default args somwhere in a config file?
-        '-fPIC',
-        '-O0',
-        '-g',
-        '-Wall',
-        //'-ansi', // if this is used, initializer lists in C++ lead to an error from C/C++ extension, even though a build in AS works (e.g. std::vector<int> v = {1, 2, 42})
-        '-D',
-        '_DEFAULT_INCLUDES',
-        '-D',
-        '_SG4',
-        '-D',
-        '_BUR_FORMAT_BRELF' //TODO investigate if this define needs to be called for all gcc versions (bur/plc.h)
-    ];
-
-
-    //#endregion fields
-
 
     /**
      * Get the SourceFileConfigurationItem for the given URI
      * @param uri The uri to get the configuration from
      */
     private async _getConfiguration(uri: vscode.Uri): Promise<cppTools.SourceFileConfigurationItem | undefined> {
-        const headerUris: vscode.Uri[] = [];
-        const buildArgs: string[] = [];
-        // TODO implement with new API
+        // get build info from AS project API
         const buildInfo = await WorkspaceProjects.getCBuildInformationForUri(uri);
         if (buildInfo === undefined) {
             return undefined;
         }
-        headerUris.push(...buildInfo.systemIncludes);
-        headerUris.push(...buildInfo.userIncludes);
-        buildArgs.push(...buildInfo.buildOptions);
-        buildArgs.push(...this.defaultCompilerArgs); // TODO should come from AS project API
-        // get project info for further queries and check required properties
-        const asProjectInfo = await WorkspaceProjects.getProjectForUri(uri);
-        if (!asProjectInfo) {
-            return undefined;
-        }
-        const activeCfg = asProjectInfo.activeConfiguration;
-        // TODO get gcc data should com from AS project API
-        const gccExe = (await Environment.automationStudio.getVersion(asProjectInfo.workingVersion))
-            ?.gccInstallation.getExecutable(activeCfg?.gccVersion, 'SG4', 'Arm');//TODO use proper logic to get gcc. Maybe create new environment API to get best matching gcc, if AS is not installed...
-        if (!gccExe) {
-            return undefined;
-        }
         // create and return C/C++ configuration
+        const headerUris: vscode.Uri[] = [...buildInfo.systemIncludes, ...buildInfo.userIncludes];
         const headerPaths = headerUris.map((u) => u.fsPath);
         const config: cppTools.SourceFileConfigurationItem = {
             uri: uri,
             configuration: {
-                includePath:      headerPaths,
-                defines:          [],
+                includePath: headerPaths,
+                defines: [],
                 intelliSenseMode: undefined,
-                standard:         undefined,
-                compilerArgs:     buildArgs,
-                compilerPath:     gccExe.exePath.fsPath,
+                standard: undefined,
+                compilerArgs: buildInfo.buildOptions,
+                compilerPath: buildInfo.compilerPath?.fsPath,
             }
         };
         return config;
     }
 
-
     /** Dispose all disposable resources */
     dispose() {
         this.#cppApi?.dispose();
     }
-
 
     /**
      * Version of Cpptools API

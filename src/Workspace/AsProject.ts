@@ -7,6 +7,7 @@ import { UserSettingsFile } from './Files/UserSettingsFile';
 import { AsProjectPaths } from './AsProjectPaths';
 import { AsProjectCBuildInfo, mergeAsProjectCBuildInfo } from '../Environment/AsProjectCBuildData';
 import { AsProjectLogical } from './AsProjectLogical';
+import { Environment } from '../Environment/Environment';
 
 /**
  * Representation of an Automation Studio project
@@ -150,6 +151,7 @@ export class AsProject implements vscode.Disposable {
         if (this.#projectFile?.cCodeOptions.enableDefaultIncludes) {
             options.push('-D', '_DEFAULT_INCLUDES');
         }
+        options.push(...this.#defaultCompilerArgs);
         return {
             compilerPath: undefined,
             systemIncludes: [],
@@ -161,6 +163,20 @@ export class AsProject implements vscode.Disposable {
     #projectFile: AsProjectFile | undefined;
     #userSettingsPath: vscode.Uri | undefined;
     #disposables: vscode.Disposable[] = [];
+
+    /** Standard compiler arguments for AS projects */
+    readonly #defaultCompilerArgs = [
+        //TODO are the default args somwhere in a config file?
+        '-fPIC',
+        '-O0',
+        '-g',
+        '-Wall',
+        //'-ansi', // if this is used, initializer lists in C++ lead to an error from C/C++ extension, even though a build in AS works (e.g. std::vector<int> v = {1, 2, 42})
+        '-D',
+        '_SG4', //TODO this -D _SG4 should come from the configuration, depending on the system generation
+        '-D',
+        '_BUR_FORMAT_BRELF' //TODO investigate if this define needs to be called for all gcc versions / targets (bur/plc.h)
+    ];
 
     /** Dispose all allocated resources */
     public dispose() {
@@ -197,7 +213,7 @@ export class AsProject implements vscode.Disposable {
      * @param uri URI of the file for which the build data will be returned
      * @returns All data for C/C++ build, or `undefined` if the URI is not within this AS project
      */
-    public getCBuildInfo(uri: vscode.Uri): AsProjectCBuildInfo | undefined {
+    public async getCBuildInfo(uri: vscode.Uri): Promise<AsProjectCBuildInfo | undefined> {
         // return if URI is not in project
         if (!this.uriIsInProject(uri)) {
             return undefined;
@@ -206,8 +222,10 @@ export class AsProject implements vscode.Disposable {
         const prjData = this.cBuildInfo;
         const pouData = this.#getCBuildDataForPou(uri);
         const configData = this.activeConfiguration?.cBuildInfo;
+        const gccData = (await Environment.automationStudio.getVersion(this.workingVersion))
+            ?.gccInstallation.getExecutable(this.activeConfiguration?.gccVersion, 'SG4', 'Arm')?.cBuildInfo; //TODO get target system and architecture
         // merge build info from all sources
-        return mergeAsProjectCBuildInfo(prjData, pouData, configData);
+        return mergeAsProjectCBuildInfo(prjData, pouData, configData, gccData);
     }
 
     /**
