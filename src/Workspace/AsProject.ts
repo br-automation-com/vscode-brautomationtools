@@ -221,9 +221,10 @@ export class AsProject implements vscode.Disposable {
         // collect build info
         const prjData = this.cBuildInfo;
         const pouData = this.#getCBuildDataForPou(uri);
-        const configData = this.activeConfiguration?.cBuildInfo;
+        const activeCfg = this.activeConfiguration;
+        const configData = activeCfg?.cBuildInfo;
         const gccData = (await Environment.automationStudio.getVersion(this.workingVersion))
-            ?.gccInstallation.getExecutable(this.activeConfiguration?.gccVersion, 'SG4', 'Arm')?.cBuildInfo; //TODO get target system and architecture
+            ?.gccInstallation.getExecutable(activeCfg?.gccVersion, activeCfg?.plcSystemGeneration, activeCfg?.plcCpuArchitecture, false)?.cBuildInfo;
         // merge build info from all sources
         return mergeAsProjectCBuildInfo(prjData, pouData, configData, gccData);
     }

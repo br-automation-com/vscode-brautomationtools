@@ -5,6 +5,8 @@ import { ConfigPackageFile } from './Files/ConfigPackageFile';
 import { CpuPackageFile } from './Files/CpuPackageFile';
 import { AsPackageFile } from './Files/AsPackageFile';
 import { AsProjectCBuildInfo } from '../Environment/AsProjectCBuildData';
+import { SystemGeneration, TargetArchitecture } from '../Environment/CommonTypes';
+import { getPlcProperties } from '../Environment/PlcLookup';
 
 /**
  * Representation of an Automation Studio project configuration
@@ -75,13 +77,12 @@ export class AsProjectConfiguration {
         const configPkgPath = uriTools.pathJoin(this.#rootPath, 'Config.pkg');
         this.#configPkg = await ConfigPackageFile.createFromPath(configPkgPath);
         if (!this.#configPkg) {
-            throw new Error('TODO message'); //TODO message
+            throw new Error('Configuration package could not be parsed');
         }
         // Get optional cpu package
         const cpuRootPath = this.#configPkg.cpuChildObject.resolvePath(this.#projectRoot);
         const cpuPkgPath = uriTools.pathJoin(cpuRootPath, 'Cpu.pkg');
         this.#cpuPkg = await CpuPackageFile.createFromPath(cpuPkgPath);
-        //TODO
         // init done
         this.#isInitialized = true;
     }
@@ -128,6 +129,18 @@ export class AsProjectConfiguration {
         return this.#cpuPkg?.cpuConfig.cpuModuleId;
     }
 
+    /** System generation of the configured PLC */
+    public get plcSystemGeneration(): SystemGeneration {
+        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        return getPlcProperties(this.plcModuleId).systemGeneration;
+    }
+
+    /** CPU architecture of the configured PLC */
+    public get plcCpuArchitecture(): TargetArchitecture {
+        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        return getPlcProperties(this.plcModuleId).architecture;
+    }
+
     /** Automation Runtime version used in the configuration */
     public get arVersion(): string | undefined {
         if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
@@ -157,9 +170,8 @@ export class AsProjectConfiguration {
     /** All general configuration level build information for C-Code */
     public get cBuildInfo(): AsProjectCBuildInfo {
         //TODO remove 'cIncludeDirectories' and 'cBuildOptions' properties?
-        //TODO do not build option here, set in initializer or otherwise change to a method instead of a property
         return {
-            compilerPath: undefined, //TODO get gcc from environment here?
+            compilerPath: undefined,
             systemIncludes: [],
             userIncludes: this.cIncludeDirectories,
             buildOptions: this.cBuildOptions,
@@ -200,10 +212,14 @@ export class AsProjectConfiguration {
             name: this.name,
             description: this.description,
             plcModuleId: this.plcModuleId,
+            plcSystemGeneration: this.plcSystemGeneration,
+            plcCpuArchitecture: this.plcCpuArchitecture,
             arVersion: this.arVersion,
             gccVersion: this.gccVersion,
             cIncludeDirectories: this.cIncludeDirectories.map((uri) => uri.toString(true)),
             cBuildOptions: this.cBuildOptions,
+            cBuildInfo: this.cBuildInfo,
+            cBuildInfoGlobals: this.cBuildInfoGlobals,
             iecBuildOptions: this.iecBuildOptions,
         };
     }
