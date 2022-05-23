@@ -28,6 +28,18 @@ export enum LogLevel {
     debug = 5
 }
 
+/**
+ * Mode for showing log output on important messages
+ */
+export enum LogAutoShowMode {
+    /** Show on every new important message */
+    always = 0,
+    /** Show only the first time an important message is written */
+    onFirst = 1,
+    /** Never show automatically */
+    never = 2,
+}
+
 
 /**
  * Configuration of the logger
@@ -35,6 +47,8 @@ export enum LogLevel {
 export interface LogConfiguration {
     /** Used level for logging. All log messages with a lower level will not be written */
     level: LogLevel;
+    /** If activated, the log output will be automatically shown on messages of level Warning or higher */
+    showOutputOnImportantMessage: LogAutoShowMode,
     /** Additional data pretty print */
     prettyPrintAdditionalData: boolean;
 }
@@ -86,6 +100,7 @@ class Logger {
     }
     #configuration: LogConfiguration = {
         level: LogLevel.debug,
+        showOutputOnImportantMessage: LogAutoShowMode.always,
         prettyPrintAdditionalData: false
     };
 
@@ -277,41 +292,67 @@ class Logger {
         // do nothing
     }
 
-
+    /** Default implementation for a 'fatal' log entry */
     #logFatal(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.fatal, message, additionalData);
         this.#logBase(entry);
+        this.#showOutputOnImportantMessage();
     }
 
-
+    /** Default implementation for a 'error' log entry */
     #logError(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.error, message, additionalData);
         this.#logBase(entry);
+        this.#showOutputOnImportantMessage();
     }
 
-
+    /** Default implementation for a 'warning' log entry */
     #logWarning(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.warning, message, additionalData);
         this.#logBase(entry);
+        this.#showOutputOnImportantMessage();
     }
 
-
+    /** Default implementation for a 'info' log entry */
     #logInfo(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.info, message, additionalData);
         this.#logBase(entry);
     }
 
-
+    /** Default implementation for a 'detail' log entry */
     #logDetail(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.detail, message, additionalData);
         this.#logBase(entry);
     }
 
-
+    /** Default implementation for a 'debug' log entry */
     #logDebug(message: string, additionalData?: LogEntryAdditionalData) {
         const entry = new LogEntry(LogLevel.debug, message, additionalData);
         this.#logBase(entry);
     }
+
+    /** Show the output channel on an important message, depending on the configuration */
+    #showOutputOnImportantMessage() {
+        switch (this.#configuration.showOutputOnImportantMessage) {
+            case LogAutoShowMode.always:
+                this.showOutput();
+                break;
+            case LogAutoShowMode.onFirst:
+                if (!this.#importantMessageShown) {
+                    this.showOutput();
+                    this.#importantMessageShown = true;
+                }
+                break;
+            case LogAutoShowMode.never:
+                // do not show
+                break;
+            default:
+                this.showOutput();
+                break;
+        }
+    }
+    /** Flag for LogAutoShowMode.onFirst */
+    #importantMessageShown = false;
 }
 
 

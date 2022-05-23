@@ -362,6 +362,7 @@ TODO command descriptions
 | `vscode-brautomationtools.environment.automationStudioInstallPaths` | Paths where the Automation Studio versions are installed. E.g. if Automation Studio V4.6.x is installed in C:\\BrAutomation\\AS46, the install path is C:\\BrAutomation. See [Detecting installed B&R Automation Studio versions](#detecting-installed-br-automation-studio-versions) |
 | `vscode-brautomationtools.environment.pviInstallPaths`              | Paths where the PVI system is installed. See [Detecting installed B&R PVI versions](#detecting-installed-br-pvi-versions) |
 | `vscode-brautomationtools.logging.logLevel`                         | The level for the log output. See [Logging](#logging) |
+| `vscode-brautomationtools.logging.showOutputOnImportantMessage`     | If activated, the log output will be automatically shown on messages of level Warning or higher. See [Logging](#logging) |
 | `vscode-brautomationtools.logging.prettyPrintAdditionalData`        | Pretty print additional data in logger. This means, that the additional JSON data will be spread over mutliple lines and indented. See [Logging](#logging) |
 | `vscode-brautomationtools.notifications.hideActivationMessage`      | If set to true, no notification is shown after the extension finished the activation |
 | `vscode-brautomationtools.notifications.hideNewVersionMessage`      | If set to true, no notification is shown after a new version was installed |

@@ -6,7 +6,7 @@
 //SYNC Needs to be in sync with package.json/contributes/configuration/properties/*
 
 import * as vscode from 'vscode';
-import { logger, LogLevel } from './Tools/Logger';
+import { LogAutoShowMode, logger, LogLevel } from './Tools/Logger';
 import { notifications } from './UI/Notifications';
 import { isString, isStringArray } from './Tools/TypeGuards';
 
@@ -61,6 +61,32 @@ function toLogLevel(configValue: any): LogLevel{
     return result;
 }
 
+/**
+ * Convert the configuartion value to LogAutoShowMode
+ * @param configValue Value which should be converted
+ * @returns Returns the LogAutoShowMode behind the configValue, or `LogAutoShowMode.always` if the conversion failed
+ */
+function toLogAutoShowMode(configValue: any): LogAutoShowMode {
+    let result = LogAutoShowMode.always;
+    switch (configValue) {
+        case 'Always':
+        case LogAutoShowMode.always:
+            result = LogAutoShowMode.always;
+            break;
+        case 'OnFirst':
+        case LogAutoShowMode.onFirst:
+            result = LogAutoShowMode.onFirst;
+            break;
+        case 'Never':
+        case LogAutoShowMode.never:
+            result = LogAutoShowMode.never;
+            break;
+        default:
+            logger.warning(`Invalid log auto show mode configured, ${LogAutoShowMode.always} will be used`);
+            result = LogAutoShowMode.always;
+    }
+    return result;
+}
 
 //#endregion local functions
 
@@ -81,6 +107,7 @@ class ExtensionConfiguration {
             'environment.automationStudioInstallPaths',
             'environment.pviInstallPaths',
             'logging.logLevel',
+            'logging.showOutputOnImportantMessage',
             'logging.prettyPrintAdditionalData',
         ];
         let reloadRequired = false;
@@ -167,6 +194,16 @@ class ExtensionConfiguration {
         }
         public set logLevel(value: LogLevel | undefined) {
             getConfiguration().update(this.#logLevelKey, value, vscode.ConfigurationTarget.Global);
+        }
+
+
+        readonly #showOutputOnImportantMessageKey = 'logging.showOutputOnImportantMessage';
+        public get showOutputOnImportantMessage(): LogAutoShowMode {
+            const value = getConfiguration().get(this.#showOutputOnImportantMessageKey);
+            return toLogAutoShowMode(value);
+        }
+        public set showOutputOnImportantMessage(value: LogAutoShowMode | undefined) {
+            getConfiguration().update(this.#showOutputOnImportantMessageKey, value, vscode.ConfigurationTarget.Global);
         }
 
 

@@ -103,6 +103,21 @@
 					],
 					"default": "Info"
 				},
+				"vscode-brautomationtools.logging.showOutputOnImportantMessage": {
+					"description": "If activated, the log output will be automatically shown on messages of level Warning or higher",
+					"type": "string",
+					"enum": [
+						"Always",
+						"OnFirst",
+						"Never"
+					],
+					"enumDescriptions": [
+						"Show on every new important message",
+						"Show only the first time an important message is written",
+						"Never show automatically"
+					],
+					"default": "Always"
+				},
 				"vscode-brautomationtools.logging.prettyPrintAdditionalData": {
 					"description": "Pretty print additional data in logger. This means, that the additional JSON data will be spread over mutliple lines and indented.",
 					"type": "boolean",
