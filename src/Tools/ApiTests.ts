@@ -27,6 +27,7 @@ import { AsProjectFile } from '../Workspace/Files/AsProjectFile';
 import { UserSettingsFile } from '../Workspace/Files/UserSettingsFile';
 import { AsProjectConfiguration } from '../Workspace/AsProjectConfiguration';
 import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
+import { getPlcProperties } from '../Environment/PlcLookup';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -95,6 +96,9 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	}
 	if (await Dialogs.yesNoDialog('Run tests for StatusBar')) {
 		await testStatusBar(context);
+	}
+	if (await Dialogs.yesNoDialog('Run tests for PLC lookup table')) {
+		await testPlcLookup(context);
 	}
 	// end
 	logHeader('Test command end');
@@ -642,6 +646,99 @@ async function testStatusBar(context: vscode.ExtensionContext): Promise<void> {
 	// Show look and feel test dummys
 	statusBar.showConfigAndDeployedDummy(resolveIn30);
 	logHeader('Test StatusBar end');
+}
+
+
+async function testPlcLookup(context: vscode.ExtensionContext): Promise<void> {
+	logHeader('Test PLC lookup start');
+	//TODO move to unit tests
+	// internal function to get and log
+	const getAndLog = (moduleId: string): string => {
+		const props = getPlcProperties(moduleId);
+		return `'${moduleId}' -> '${props.familyName}' (${props.systemGeneration}, ${props.architecture})`;
+	};
+	// list of tested modules
+	const moduleIds = [
+		// Generic
+		'PC_any',
+		// X20CP13xx
+		'X20CP1301',
+		'X20cCP1301',
+		'X20CP1381',
+		'X20CP1381-RT',
+		'X20CP1382',
+		'X20CP1382-RT',
+		'X20cCP1382-RT',
+		// X20CP14xx / X20CP34xx
+		'X20CP1483',
+		'X20CP1483-1',
+		'X20CP1484',
+		'X20CP1485-1',
+		'X20CP3484',
+		'X20CP3485-1',
+		// X20CP15xx / X20CP35xx
+		'X20CP1585',
+		'X20cCP1586',
+		'X20CP3585',
+		'X20cCP3586',
+		// X20CP16xx / X2036xx
+		'X20CP1684',
+		'X20CP1685',
+		'X20CP1686X',
+		'X20CP3685',
+		'X20CP3687X',
+		// X20CP04xx
+		'X20CP0410',
+		'X20cCP0410',
+		'X20CP0411',
+		'X20CP0420',
+		'X20CP0483',
+		'X20CP0484-1',
+		// X20EMx6xx
+		'X20EM0611',
+		'X20EM0612',
+		'X20EM0613',
+		'X20EM1611',
+		'X20EM1612',
+		'X20EM1613',
+		// X90CP
+		'X90CP172.24-00',
+		'X90CP172.48-00',
+		'X90CP174.24-00',
+		'X90CP174.48-00',
+		'X90CP174.48-S1',
+		// APC2100 / PPC2100 / APC2200 / PPC2200
+		'5APC2100.BY34-000',
+		'5PPC2100.BY11-000',
+		'5APC2200.AL14-000',
+		'5PPC2200.AL18-000',
+		// APC3100 / PPC3100 / MPC3100
+		'5APC3100.KBU2-000',
+		'5PPC3100.KBU0-000',
+		'5MPC3100.K038-000',
+		// APC910 / PPC910
+		'5PC900.TS17-01',
+		'5PC901.TS17-02',
+		'5PC900.TS77-03',
+		'5PC901.TS77-07',
+		// C30 / C50 / C70 / C80
+		'4PPC30.043F-22B',
+		'4PPC30.0702-21B',
+		'4PPC30.101G-23B',
+		'4PPC50.0702-10B',
+		'4PPC50.121E-10B',
+		'4PPC50.156B-13A',
+		'4PPC70.0573-21W',
+		'4PPC70.057L-22B',
+		'4PPC70.070M-20W',
+		'4PPC70.101N-20B',
+		'4PPC80.0573-11B',
+		'4PPC80.121E-10A',
+		'4PPC80.156B-13B',
+	];
+	// test all modules and log
+	moduleIds.map((id) => logger.info(getAndLog(id)));
+	logHeader('Test PLC lookup end');
 }
 
 
