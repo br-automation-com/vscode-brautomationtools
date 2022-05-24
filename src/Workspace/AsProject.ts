@@ -135,12 +135,13 @@ export class AsProject implements vscode.Disposable {
     private set activeConfiguration(value: AsProjectConfiguration | undefined) {
         this.#activeConfiguration = value;
         if (this.#isInitialized) {
+            logger.info(`Active configuration changed to '${this.activeConfiguration?.name}'`);
             this.#activeConfigurationChangedEmitter.fire(this.activeConfiguration);
         }
     }
     #activeConfiguration: AsProjectConfiguration | undefined;
     #activeConfigurationChangedEmitter = new vscode.EventEmitter<AsProjectConfiguration | undefined>();
-    public onActiveConfigurationChanged = this.#activeConfigurationChangedEmitter.event;
+    public onActiveConfigurationChanged = this.#activeConfigurationChangedEmitter.event; //TODO use event for CppToolsApi update somehow
 
     /** All project level build options for C programs and libraries (including general build options) */
     public get cBuildInfo(): AsProjectCBuildInfo {
