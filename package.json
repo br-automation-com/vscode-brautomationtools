@@ -140,13 +140,13 @@
 		"problemPatterns": [
 			{
 				"name": "BrAsBuildCombinedPattern",
-				"regexp": "^(.*): \\((?:(?:Ln:\\s*(\\d+)(?:,\\s*Col:\\s*){0,1}(\\d+){0,1})|(?:.*))\\)\\s+(warning|error)\\s+(\\d*):(.*)$",
-				"file": 1,
-				"line": 2,
-				"column": 3,
-				"severity": 4,
-				"code": 5,
-				"message": 6
+				"regexp": "^[0-9: ]*(AM |PM )?(.*): \\((?:(?:Ln:\\s*(\\d+)(?:,\\s*Col:\\s*){0,1}(\\d+){0,1})|(?:.*))\\)\\s+(warning|error)\\s+(\\d*):(.*)$",
+				"file": 2,
+				"line": 3,
+				"column": 4,
+				"severity": 5,
+				"code": 6,
+				"message": 7
 			}
 		],
 		"problemMatchers": [
