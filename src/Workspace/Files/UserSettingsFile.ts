@@ -4,14 +4,14 @@ import { getChildElements } from '../../Tools/XmlDom';
 import { AsXmlFile } from './AsXmlFile';
 
 /**
- * User specific project settings file (*.set in the project root)
+ * User specific project settings file representation (*.set in the project root)
  */
 export class UserSettingsFile extends AsXmlFile {
 
     /**
-     * Creates a user settings file from a specified URI to the file
+     * Creates a user settings file representation from a specified URI to the file
      * @param filePath The user settings file path. e.g. `C:\Projects\Test\LastUser.set`
-     * @returns The file which was parsed from the file URI
+     * @returns The user settings file representation which was parsed from the file
      */
     public static async createFromPath(filePath: Uri): Promise<UserSettingsFile | undefined> {
         // Create and initialize object
@@ -21,9 +21,9 @@ export class UserSettingsFile extends AsXmlFile {
             return xmlFile;
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to read user settings file from path '${filePath.fsPath}': ${error.message}`);
+                logger.error(`Failed to read user settings file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
             } else {
-                logger.error(`Failed to read user settings file from path '${filePath.fsPath}'`);
+                logger.error(`Failed to read user settings file from path '${filePath.fsPath}'`); //TODO uri log #33
             }
             logger.debug('Error details:', { error });
             return undefined;
@@ -31,7 +31,7 @@ export class UserSettingsFile extends AsXmlFile {
     }
 
     /** Object is not ready to use after constructor due to async operations,
-     * #initialize() has to be called for the object to be ready to use! */
+     * _initialize() has to be called for the object to be ready to use! */
     protected constructor(filePath: Uri) {
         super(filePath);
         // other properties rely on async and will be initialized in #initialize()

@@ -3,17 +3,16 @@ import { logger } from '../../Tools/Logger';
 import { AsPackageFile, AsPackageObject } from './AsPackageFile';
 
 /**
- * Configuration package file (Config.pkg in configuration directory). This package file contains additional
+ * Configuration package file representation (Config.pkg in configuration directory). This package file contains additional
  * restrictions, as there has to be exactly one child of type 'Cpu'
  */
 export class ConfigPackageFile extends AsPackageFile {
 
     /**
-     * Creates an Automation Studio version from a specified root directory
-     * @param filePath The root directory containing a single Automation Studio installation. e.g. `C:\BrAutomation\AS410`
-     * @returns The version which was parsed from the root URI
+     * Creates a Configuration package file representation from a specified URI to the file
+     * @param filePath The Configuration package file path. e.g. `C:\Projects\Test\Physical\TestCOnfig\Config.pkg`
+     * @returns The Configuration package file representation which was parsed from the file
      */
-    //TODO description in all files...
     public static async createFromPath(filePath: Uri): Promise<ConfigPackageFile | undefined> {
         // Create and initialize object
         try {
@@ -22,9 +21,9 @@ export class ConfigPackageFile extends AsPackageFile {
             return xmlFile;
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to read Config package file from path '${filePath.fsPath}': ${error.message}`);
+                logger.error(`Failed to read Config package file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
             } else {
-                logger.error(`Failed to read Config package file from path '${filePath.fsPath}'`);
+                logger.error(`Failed to read Config package file from path '${filePath.fsPath}'`); //TODO uri log #33
             }
             logger.debug('Error details:', { error });
             return undefined;

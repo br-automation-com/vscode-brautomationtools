@@ -30,15 +30,15 @@ export interface CpuConfiguration {
 }
 
 /**
- * Cpu package file (Cpu.pkg in configuration directory). This package file contains additional
+ * Cpu package file representation (Cpu.pkg in configuration directory). This package file contains additional
  * Cpu and build configuration data.
  */
 export class CpuPackageFile extends AsPackageFile {
 
     /**
-     * Creates an Automation Studio version from a specified root directory
-     * @param filePath The root directory containing a single Automation Studio installation. e.g. `C:\BrAutomation\AS410`
-     * @returns The version which was parsed from the root URI
+     * Creates a Cpu package file representation from a specified URI to the file
+     * @param filePath The Cpu package file path. e.g. `C:\Projects\Test\Physical\TestConfig\TestPLC\Cpu.pkg`
+     * @returns The Cpu package file representation which was parsed from the file
      */
     public static async createFromPath(filePath: Uri): Promise<CpuPackageFile | undefined> {
         // Create and initialize object
@@ -48,9 +48,9 @@ export class CpuPackageFile extends AsPackageFile {
             return xmlFile;
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to read Cpu package file from path '${filePath.fsPath}': ${error.message}`);
+                logger.error(`Failed to read Cpu package file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
             } else {
-                logger.error(`Failed to read Cpu package file from path '${filePath.fsPath}'`);
+                logger.error(`Failed to read Cpu package file from path '${filePath.fsPath}'`); //TODO uri log #33
             }
             logger.debug('Error details:', { error });
             return undefined;
@@ -58,7 +58,7 @@ export class CpuPackageFile extends AsPackageFile {
     }
 
     /** Object is not ready to use after constructor due to async operations,
-     * #initialize() has to be called for the object to be ready to use! */
+     * _initialize() has to be called for the object to be ready to use! */
     protected constructor(filePath: Uri) {
         super(filePath);
         // other properties rely on async and will be initialized in #initialize()
@@ -81,7 +81,7 @@ export class CpuPackageFile extends AsPackageFile {
     #isInitialized = false;
 
     /** CPU and build configuration data */
-    public get cpuConfig() : CpuConfiguration {
+    public get cpuConfig(): CpuConfiguration {
         if (!this.#isInitialized || !this.#cpuConfig) { throw new Error(`Use of not initialized ${CpuPackageFile.name} object`); }
         return this.#cpuConfig;
     }
@@ -98,19 +98,19 @@ export class CpuPackageFile extends AsPackageFile {
     #logWarningsOnInitialized() {
         // Collect missing properties
         const missingProperties: string[] = [];
-        if (!this.cpuConfig.cpuModuleId) {
+        if (this.cpuConfig.cpuModuleId === undefined || this.cpuConfig.cpuModuleId.length === 0) {
             missingProperties.push('CPU type');
         }
-        if (!this.cpuConfig.arVersion) {
+        if (this.cpuConfig.arVersion === undefined || this.cpuConfig.arVersion.length === 0) {
             missingProperties.push('AR version');
         }
-        if (!this.cpuConfig.build.gccVersion) {
+        if (this.cpuConfig.build.gccVersion === undefined || this.cpuConfig.build.gccVersion.length === 0) {
             missingProperties.push('gcc version');
         }
         // warn if there are missing properties
         if (missingProperties.length > 0) {
             const missingString = missingProperties.join(', ');
-            logger.warning(`Cpu package file '${this.filePath.toString(true)} does not contain values: ${missingString}`);
+            logger.warning(`Cpu package file '${this.filePath.toString(true)} does not contain values: ${missingString}`); //TODO uri log #33
         }
     }
 }

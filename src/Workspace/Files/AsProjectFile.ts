@@ -1,10 +1,10 @@
+import { Element as XmlElement } from '@oozcitak/dom/lib/dom/interfaces';
 import { Uri } from 'vscode';
+import { stringToBoolOrUndefined } from '../../Tools/Helpers';
 import { logger } from '../../Tools/Logger';
+import { pathBasename } from '../../Tools/UriTools';
 import { getChildElements } from '../../Tools/XmlDom';
 import { AsXmlFile } from './AsXmlFile';
-import { Element as XmlElement } from '@oozcitak/dom/lib/dom/interfaces';
-import { stringToBoolOrUndefined } from '../../Tools/Helpers';
-import { pathBasename, pathDirname, pathJoin, pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
 
 /** Project global options for C-code */
 //TODO use in new architecture for some default defines
@@ -16,14 +16,14 @@ export interface AsProjectCCodeOptions {
 }
 
 /**
- * Automation Studio project file (*.apj)
+ * Automation Studio project file representation (*.apj)
  */
 export class AsProjectFile extends AsXmlFile {
 
     /**
-     * Creates an Automation Studio project file from a specified URI to the file
+     * Creates an Automation Studio project file representation from a specified URI to the file
      * @param filePath The project file path. e.g. `C:\Projects\Test\Test.apj`
-     * @returns The file which was parsed from the file URI
+     * @returns The Automation Studio project file representation which was parsed from the file
      */
     public static async createFromPath(filePath: Uri): Promise<AsProjectFile | undefined> {
         // Create and initialize object
@@ -33,9 +33,9 @@ export class AsProjectFile extends AsXmlFile {
             return xmlFile;
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to read project file from path '${filePath.fsPath}': ${error.message}`);
+                logger.error(`Failed to read project file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
             } else {
-                logger.error(`Failed to read project file from path '${filePath.fsPath}'`);
+                logger.error(`Failed to read project file from path '${filePath.fsPath}'`); //TODO uri log #33
             }
             logger.debug('Error details:', { error });
             return undefined;
@@ -43,7 +43,7 @@ export class AsProjectFile extends AsXmlFile {
     }
 
     /** Object is not ready to use after constructor due to async operations,
-     * #initialize() has to be called for the object to be ready to use! */
+     * _initialize() has to be called for the object to be ready to use! */
     protected constructor(filePath: Uri) {
         super(filePath);
         // other properties rely on async and will be initialized in #initialize()
@@ -59,7 +59,7 @@ export class AsProjectFile extends AsXmlFile {
         this.#workingVersion = this.header.asWorkingVersion ?? this.header.asVersion;
         this.#exactVersion = this.header.asVersion ?? this.header.asWorkingVersion;
         if (!this.#workingVersion || !this.#exactVersion) {
-            logger.warning(`Could not find Automation Studio version data in '${this.filePath.toString(true)}'`);
+            logger.warning(`Could not find Automation Studio version data in '${this.filePath.toString(true)}'`); //TODO uri log #33
         }
         // Other properties
         this.#projectName = pathBasename(this.filePath);
@@ -71,7 +71,7 @@ export class AsProjectFile extends AsXmlFile {
     #isInitialized = false;
 
     /** The name of the project */
-    public get projectName() : string {
+    public get projectName(): string {
         if (!this.#isInitialized || (this.#projectName === undefined)) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#projectName;
     }
@@ -85,14 +85,14 @@ export class AsProjectFile extends AsXmlFile {
     #projectDescription: string | undefined;
 
     /** The Automation Studio working version (can be less restrictive than `exactVersion`) */
-    public get workingVersion() : string | undefined {
+    public get workingVersion(): string | undefined {
         if (!this.#isInitialized) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#workingVersion;
     }
     #workingVersion: string | undefined;
 
     /** The exact Automation Studio version used to edit the project */
-    public get exactVersion() : string | undefined {
+    public get exactVersion(): string | undefined {
         if (!this.#isInitialized) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#exactVersion;
     }

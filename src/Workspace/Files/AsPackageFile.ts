@@ -1,10 +1,10 @@
+import { Element as XmlElement } from '@oozcitak/dom/lib/dom/interfaces';
 import { Uri } from 'vscode';
+import { stringToBoolOrUndefined } from '../../Tools/Helpers';
 import { logger } from '../../Tools/Logger';
+import { pathDirname, pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
 import { getChildElements } from '../../Tools/XmlDom';
 import { AsXmlFile } from './AsXmlFile';
-import { Element as XmlElement } from '@oozcitak/dom/lib/dom/interfaces';
-import { stringToBoolOrUndefined } from '../../Tools/Helpers';
-import { pathDirname, pathJoin, pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
 
 /** Data of an object within a package */
 export interface AsPackageObject {
@@ -30,14 +30,14 @@ export interface AsPackageObject {
 }
 
 /**
- * Generic Automation Studio package file. Can be used for all packages types without additional data.
+ * Generic Automation Studio package file representation. Can be used for all packages types without additional data.
  */
 export class AsPackageFile extends AsXmlFile {
 
     /**
-     * Creates an Automation Studio version from a specified root directory
-     * @param filePath The root directory containing a single Automation Studio installation. e.g. `C:\BrAutomation\AS410`
-     * @returns The version which was parsed from the root URI
+     * Automation Studio package file representation from a specified file pathe
+     * @param filePath The path to the package file. e.g. `C:\Projects\Test\Logical\MyFolder\Package.pkg` or `C:\Projects\Test\Logical\MyLib\ANSIC.lby`
+     * @returns The Automation Studio package file representation which was parsed from the file
      */
     public static async createFromPath(filePath: Uri): Promise<AsPackageFile | undefined> {
         // Create and initialize object
@@ -47,9 +47,9 @@ export class AsPackageFile extends AsXmlFile {
             return xmlFile;
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to read package file from path '${filePath.fsPath}': ${error.message}`);
+                logger.error(`Failed to read package file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
             } else {
-                logger.error(`Failed to read package file from path '${filePath.fsPath}'`);
+                logger.error(`Failed to read package file from path '${filePath.fsPath}'`); //TODO uri log #33
             }
             logger.debug('Error details:', { error });
             return undefined;
@@ -57,7 +57,7 @@ export class AsPackageFile extends AsXmlFile {
     }
 
     /** Object is not ready to use after constructor due to async operations,
-     * #initialize() has to be called for the object to be ready to use! */
+     * _initialize() has to be called for the object to be ready to use! */
     protected constructor(filePath: Uri) {
         super(filePath);
         // other properties rely on async and will be initialized in #initialize()
@@ -79,14 +79,14 @@ export class AsPackageFile extends AsXmlFile {
     #isInitialized = false;
 
     /** The path of the directory which contains this file */
-    public get dirPath() : Uri {
+    public get dirPath(): Uri {
         if (!this.#isInitialized || !this.#dirPath) { throw new Error(`Use of not initialized ${AsPackageFile.name} object`); }
         return this.#dirPath;
     }
     #dirPath: Uri | undefined;
 
     /** The type of the package */
-    public get type() : string {
+    public get type(): string {
         if (!this.#isInitialized || !this.#type) { throw new Error(`Use of not initialized ${AsPackageFile.name} object`); }
         return this.#type;
     }
@@ -106,15 +106,15 @@ export class AsPackageFile extends AsXmlFile {
     }
     #childObjects: AsPackageObject[] | undefined;
 
-    //TODO Dependencies element, but currently not used in any code
+    //TODO <Dependencies> element, but currently not used in any code
 
     /**
      * Returns all child objects of a specified type
-     * @param type Type which is used as filter
+     * @param type Type which is used as filter. The type is case insensitive, so e.g. `'Ansic'` will also match with `'ANSIC'`
      * @returns All child objects which are of the specified type
      */
     public getChildrenOfType(type: string): AsPackageObject[] {
-        return this.childObjects.filter((obj) => (obj.type === type));
+        return this.childObjects.filter((obj) => (obj.type?.toLowerCase() === type.toLowerCase()));
     }
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */

@@ -7,14 +7,14 @@ import { stringToBoolOrUndefined } from '../../Tools/Helpers';
 import { pathBasename, pathDirname, pathJoin, pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
 
 /**
- * XXXXX file (*.xxxx)
+ * XXXXX file representation (*.xxxx)
  */
 export class XxxxFile extends AsXmlFile {
 
     /**
-     * Creates an XXXX file from a specified URI to the file
+     * Creates an XXXX file representation from a specified URI to the file
      * @param filePath The XXXX file path. e.g. `C:\Projects\Test\XXXX.xxxx`
-     * @returns The file which was parsed from the file URI
+     * @returns The XXXX file representation which was parsed from the file
      */
     public static async createFromPath(filePath: Uri): Promise<XxxxFile | undefined> {
         // Create and initialize object
@@ -24,9 +24,9 @@ export class XxxxFile extends AsXmlFile {
             return xmlFile;
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to read XXXX file from path '${filePath.fsPath}': ${error.message}`);
+                logger.error(`Failed to read XXXX file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
             } else {
-                logger.error(`Failed to read XXXX file from path '${filePath.fsPath}'`);
+                logger.error(`Failed to read XXXX file from path '${filePath.fsPath}'`); //TODO uri log #33
             }
             logger.debug('Error details:', { error });
             return undefined;
@@ -34,7 +34,7 @@ export class XxxxFile extends AsXmlFile {
     }
 
     /** Object is not ready to use after constructor due to async operations,
-     * #initialize() has to be called for the object to be ready to use! */
+     * _initialize() has to be called for the object to be ready to use! */
     protected constructor(filePath: Uri) {
         super(filePath);
         // other properties rely on async and will be initialized in #initialize()

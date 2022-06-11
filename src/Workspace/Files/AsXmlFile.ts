@@ -1,12 +1,10 @@
-import * as vscode from 'vscode';
-import { logger } from '../../Tools/Logger';
-import * as xmlbuilder2 from 'xmlbuilder2';
 import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
+import * as vscode from 'vscode';
+import * as xmlbuilder2 from 'xmlbuilder2';
 import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 
-
 /**
- * The Automation Studio XML processing instruction containing file and project versions
+ * The Automation Studio XML processing instruction data containing file and project versions
  */
 export interface AsXmlHeader {
     /** Full Automation Studio version in XML header */
@@ -23,7 +21,7 @@ export interface AsXmlHeader {
 export abstract class AsXmlFile {
 
     /** Object is not ready to use after constructor due to async operations,
-     * #initialize() has to be called for the object to be ready to use! */
+     * _initialize() has to be called for the object to be ready to use! */
     protected constructor(filePath: vscode.Uri) {
         this.#filePath = filePath;
         // other properties rely on async and will be initialized in #initialize()
@@ -99,14 +97,14 @@ function getXmlHeader(xml: XMLBuilder): AsXmlHeader {
     })?.node;
     const asHeaderData = asHeaderNode?.nodeValue ? ` ${asHeaderNode.nodeValue}` : ''; // Add space at begin for easier RegEx
     // AS version full
-    const asVersionRegEx = /^.*[ \t]+[Vv]ersion=["']*([\d\.]+).*$/m.exec(asHeaderData);
-    const asVersion = asVersionRegEx ? asVersionRegEx[1] : undefined;
+    const asVersionMatch = /^.*[ \t]+[Vv]ersion=["']*([\d\.]+).*$/m.exec(asHeaderData);
+    const asVersion = asVersionMatch ? asVersionMatch[1] : undefined;
     // AS working version
-    const asWorkingVersionRegEx = /^.*[ \t]+WorkingVersion="([\d\.]+)".*$/m.exec(asHeaderData);
-    const asWorkingVersion = asWorkingVersionRegEx ? asWorkingVersionRegEx[1] : undefined;
+    const asWorkingVersionMatch = /^.*[ \t]+WorkingVersion="([\d\.]+)".*$/m.exec(asHeaderData);
+    const asWorkingVersion = asWorkingVersionMatch ? asWorkingVersionMatch[1] : undefined;
     // AS file version
-    const asFileVersionRegEx = /^.*[ \t]+FileVersion="([\d\.]+)".*$/m.exec(asHeaderData);
-    const asFileVersion = asFileVersionRegEx ? asFileVersionRegEx[1] : undefined;
+    const asFileVersionMatch = /^.*[ \t]+FileVersion="([\d\.]+)".*$/m.exec(asHeaderData);
+    const asFileVersion = asFileVersionMatch ? asFileVersionMatch[1] : undefined;
     // return value
     return {
         asVersion: asVersion,
