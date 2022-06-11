@@ -20,6 +20,10 @@ Add new but unreleased features, fixes... here during development
 - Reworked most of the underlying code architecture. The functionality should be same, but this will make us more flexible for new features and bug fixes. If you find some functionality which does not work anymore, please [create an issue](https://github.com/br-automation-com/vscode-brautomationtools/issues).
   [#5](https://github.com/br-automation-com/vscode-brautomationtools/issues/5)
 
+  ### Fixed
+  - The pattern to parse the build output for problems was broken due to the timestamp which was added in [#31](https://github.com/br-automation-com/vscode-brautomationtools/issues/31). The pattern was fixed to work with and without timestamps in different locales.
+    [#41](https://github.com/br-automation-com/vscode-brautomationtools/issues/41)
+
 
 ## [0.0.6] - 2022-01-17
 This release adds some small usability features.
