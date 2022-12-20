@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 import { logger } from './Tools/Logger';
 import { registerCommands } from './ExtensionCommands';
-import { registerCppToolsConfigurationProvider } from './ExternalApi/CppToolsApi';
+import { didChangeCppToolsConfig, registerCppToolsConfigurationProvider } from './ExternalApi/CppToolsApi';
 import { registerTaskProviders as registerBuildTaskProviders } from './TaskProviders/BrAsBuildTaskProvider';
 import { registerTaskProviders as registerTransferTaskProviders } from './TaskProviders/BrAsTransferTaskProvider';
 import { registerApiTests } from './Tools/ApiTests';
@@ -42,6 +42,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	// TODO do we need to await these? Will probably be remove after architectural changes #5
 	await registerCppToolsConfigurationProvider(context);
 	await registerProjectWorkspace(context);
+	// Register events
+	let disposable: vscode.Disposable;
+	disposable = WorkspaceProjects.onCppRelevantDataChanged(() => didChangeCppToolsConfig());
+	context.subscriptions.push(disposable);
 	// Show activation message and log entry when all is done
 	await Promise.all([
 		waitAsVersion,

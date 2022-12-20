@@ -135,7 +135,7 @@ async function parseAutomationStudioVersion(asRoot: vscode.Uri): Promise<semver.
     } catch (error) {
         // no reaction required
     }
-    if (version) {
+    if (version !== undefined) {
         return version;
     } else {
         logger.warning(`Failed to get AS Version from '${prodInfoPath.toString(true)}'. Will try to parse from directory name`);

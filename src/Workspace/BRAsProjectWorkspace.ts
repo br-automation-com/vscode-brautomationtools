@@ -5,7 +5,6 @@
 
 import * as vscode from 'vscode';
 import { isSubOf, isFile, pathParsedUri, pathsFromTo, isDirectory, listSubFiles } from '../Tools/UriTools';
-import * as CppToolsApi from '../ExternalApi/CppToolsApi'; // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
 import { AsProject } from './AsProject';
 import { statusBar } from '../UI/StatusBar';
 import { AsProjectCBuildInfo } from '../Environment/AsProjectCBuildData';
@@ -89,14 +88,17 @@ export class WorkspaceProjects {
             const project = await AsProject.createFromProjectFile(projectFileUri);
             if (project !== undefined) {
                 projects.push(project);
+                project.onActiveConfigurationChanged(() => this.#cppRelevantDataChangedEmitter.fire());
             }
         }
-        await CppToolsApi.didChangeCppToolsConfig(); // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
-        //TODO subscribe new event of AsProject object in C/C++ API adapter
+        this.#cppRelevantDataChangedEmitter.fire();
         return projects;
     }
 
     static #projects: Promise<AsProject[]> | undefined;
+
+    static #cppRelevantDataChangedEmitter = new vscode.EventEmitter<void>();
+    public static onCppRelevantDataChanged = this.#cppRelevantDataChangedEmitter.event;
 }
 
 //#region exported functions
@@ -109,7 +111,7 @@ export class WorkspaceProjects {
 export async function registerProjectWorkspace(context: vscode.ExtensionContext) {
     // register to update on change of workspace folders
     let disposable: vscode.Disposable;
-    disposable = vscode.workspace.onDidChangeWorkspaceFolders(() => WorkspaceProjects.updateProjects());
+    disposable = vscode.workspace.onDidChangeWorkspaceFolders(() => WorkspaceProjects.updateProjects()); // Should we register also outside of here in extension.ts?
     context.subscriptions.push(disposable);
     //TODO also push internal disposables (FileSystemWatcher...)? How? Figure out in #5 architectural changes.
 }
