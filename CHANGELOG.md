@@ -8,21 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 Add new but unreleased features, fixes... here during development
 
+Users can look forward to these changes for the next release 😀😉
+
 ### Added
 - Many new logger information, warning and error messages due to the new architecture.
   [#12](https://github.com/br-automation-com/vscode-brautomationtools/issues/12)
 - There is a new option `Detail` for the log level `vscode-brautomationtools.logging.logLevel` which shows more detailed information of executed processes, but without debugging information. The level can be set by users which are interested on what actions are done under the hood of the extension.
 - The PLC family type of the active configuration is now considered for selecting the correct gcc compiler for the CPU architecture and system generation. This leads to a proper highlighting of e.g. `#ifdef _SG4` or `#ifdef __i386__` in the source code.
   [#11](https://github.com/br-automation-com/vscode-brautomationtools/issues/11)
+  ![System generation and architecure defines example code](Doc/Screenshots/SystemGenerationDefines.png)
 - The logger output is now automatically shown for all log entries with level `Warning` or higher. With this change you get to know issues more actively. The behaviour can be changed with the new setting `vscode-brautomationtools.logging.showOutputOnImportantMessage`
 
 ### Changed
 - Reworked most of the underlying code architecture. The functionality should be same, but this will make us more flexible for new features and bug fixes. If you find some functionality which does not work anymore, please [create an issue](https://github.com/br-automation-com/vscode-brautomationtools/issues).
   [#5](https://github.com/br-automation-com/vscode-brautomationtools/issues/5)
 
-  ### Fixed
-  - The pattern to parse the build output for problems was broken due to the timestamp which was added in [#31](https://github.com/br-automation-com/vscode-brautomationtools/issues/31). The pattern was fixed to work with and without timestamps in different locales.
-    [#41](https://github.com/br-automation-com/vscode-brautomationtools/issues/41)
+### Fixed
+- The pattern to parse the build output for problems was broken due to the timestamp which was added in [#31](https://github.com/br-automation-com/vscode-brautomationtools/issues/31). The pattern was fixed to work with and without timestamps in different locales.
+  [#41](https://github.com/br-automation-com/vscode-brautomationtools/issues/41)
 
 
 ## [0.0.6] - 2022-01-17
