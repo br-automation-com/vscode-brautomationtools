@@ -16,6 +16,12 @@
 		"Programming Languages",
 		"Other"
 	],
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": false,
+			"description": "Not supported because some CLI's are called with arguments parsed from workspace files (Build CLI, gcc, ...)"
+		}
+	},
 	"activationEvents": [
 		"workspaceContains:/*.apj",
 		"onCommand:vscode-brautomationtools.forceActivate"
