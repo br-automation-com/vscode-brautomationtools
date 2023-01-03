@@ -122,23 +122,36 @@ export class AutomationStudioVersion {
  */
 async function parseAutomationStudioVersion(asRoot: vscode.Uri): Promise<semver.SemVer> {
     let version: semver.SemVer | undefined = undefined;
-    // Try to get version from ./BrSetup/VInfo/ProductInfo.ini
-    const prodInfoPath = uriTools.pathJoin(asRoot, 'BrSetup/VInfo/ProductInfo.ini');
-    try {
-        const prodInfoDoc = await vscode.workspace.openTextDocument(prodInfoPath);
-        const prodInfoText = prodInfoDoc.getText();
-        const versionRegex = /^Version=[\D]*([\d.]*)[\D]*$/m;
-        const versionMatch = versionRegex.exec(prodInfoText);
-        if (versionMatch) {
-            version = semver.coerce(versionMatch[0]) ?? undefined;
+    // Try to get version from ./BrSetup/VInfo/ProductInfo_bin-en.brv or ./BrSetup/VInfo/ProductInfo_bin-de.brv
+    // -> Depending on installed languages both or only one may exist
+    // -> In older AS versions bin was written in caps (Bin)
+    const prodInfoBasePath = uriTools.pathJoin(asRoot, 'BrSetup/VInfo');
+    const prodInfoPathEn = uriTools.pathJoin(prodInfoBasePath, 'ProductInfo_bin-en.brv');
+    const prodInfoPathEnOld = uriTools.pathJoin(prodInfoBasePath, 'ProductInfo_Bin-en.brv');
+    const prodInfoPathDe = uriTools.pathJoin(prodInfoBasePath, 'ProductInfo_bin-de.brv');
+    const prodInfoPathDeOld = uriTools.pathJoin(prodInfoBasePath, 'ProductInfo_Bin-de.brv');
+    const prodInfoPath = await uriTools.exists(prodInfoPathEn) ? prodInfoPathEn
+        : await uriTools.exists(prodInfoPathDe) ? prodInfoPathDe
+            : await uriTools.exists(prodInfoPathEnOld) ? prodInfoPathEnOld
+                : await uriTools.exists(prodInfoPathDeOld) ? prodInfoPathDeOld
+                    : undefined;
+    if (prodInfoPath !== undefined) {
+        try {
+            const prodInfoDoc = await vscode.workspace.openTextDocument(prodInfoPath);
+            const prodInfoText = prodInfoDoc.getText();
+            const versionRegex = /^\.\\pg\.exe\s*([\d.]+)/m;
+            const versionMatch = versionRegex.exec(prodInfoText);
+            if (versionMatch) {
+                version = semver.coerce(versionMatch[0]) ?? undefined;
+            }
+        } catch (error) {
+            // no reaction required
         }
-    } catch (error) {
-        // no reaction required
     }
     if (version !== undefined) {
         return version;
     } else {
-        logger.warning(`Failed to get AS Version from '${prodInfoPath.toString(true)}'. Will try to parse from directory name`);
+        logger.warning(`Failed to find AS Version information within '${prodInfoBasePath.toString(true)}'. Will try to parse version approximation from directory name`);
     }
     // Try parse version from root directory name if get from file failed
     const dirName = uriTools.pathBasename(asRoot);
