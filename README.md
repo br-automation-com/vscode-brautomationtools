@@ -374,10 +374,6 @@ The B&R Automation Tools extension requires the [_C/C++ extension_](https://mark
 
 ## Known Issues
 
-### Logging
-
-The logging functionality was newly introduced in the V0.0.3 release. Not all code writes proper log messages at the moment. This will be addressed in future code changes.
-
 ### Transfer task workflow
 
 The transfer task workflow is currently prompting multiple times for the configuration. Also there is no detection, if a build of the configuration to transfer was executed recently. It would be possible to improve this workflow. If you would like to see improvements on this, please write a comment on the [_GitHub Issue_](https://github.com/br-automation-com/vscode-brautomationtools/issues/19)

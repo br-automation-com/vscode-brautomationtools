@@ -10,6 +10,12 @@ Add new but unreleased features, fixes... here during development
 
 Users can look forward to these changes for the next release 😀😉
 
+## [0.0.7] - 2023-01-03
+
+🎉 Happy new year! 🎉
+
+The major rework in [#5](https://github.com/br-automation-com/vscode-brautomationtools/issues/5) was done and I finally found the time to release the next version.
+
 ### Added
 - Many new logger information, warning and error messages due to the new architecture.
   [#12](https://github.com/br-automation-com/vscode-brautomationtools/issues/12)
