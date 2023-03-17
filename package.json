@@ -266,7 +266,7 @@
 								"type": "string"
 							},
 							"destinationPort": {
-								"description": "Port of the transfer destination. Default ports: ANSL on real PLC = 11169; ANSL on ArSim = 11160 (/PT parameter)",
+								"description": "Port of the transfer destination. Default ANSL port is 11169 (/PT parameter)",
 								"type": "number",
 								"minimum": 1024,
 								"maximum": 32767
