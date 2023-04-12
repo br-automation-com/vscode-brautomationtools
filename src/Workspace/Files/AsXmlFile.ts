@@ -6,7 +6,7 @@ import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 /**
  * The Automation Studio XML processing instruction data containing file and project versions
  */
-export interface AsXmlHeader {
+export interface AsXmlVersionHeader {
     /** Full Automation Studio version in XML header */
     asVersion?: string;
     /** Automation Studio working version in XML header (X.Y e.g. 4.9) */
@@ -48,11 +48,11 @@ export abstract class AsXmlFile {
     #filePath: vscode.Uri;
 
     /** The Automation Studio XML header data */
-    public get header(): AsXmlHeader {
+    public get header(): AsXmlVersionHeader {
         if (!this.#isInitialized || !this.#header) { throw new Error(`Use of not initialized ${AsXmlFile.name} object`); }
         return this.#header;
     }
-    #header: AsXmlHeader | undefined;
+    #header: AsXmlVersionHeader | undefined;
 
     /** The root element node of the XML file */
     protected get rootElement(): xmlDom.Element {
@@ -87,7 +87,7 @@ async function createXmlBuilder(filePath: vscode.Uri): Promise<XMLBuilder> {
 /**
  * Get all existing version information from the AutomationStudio XML processing instruction header
  */
-function getXmlHeader(xml: XMLBuilder): AsXmlHeader {
+function getXmlHeader(xml: XMLBuilder): AsXmlVersionHeader {
     const asHeaderNode = xml.find((child) => {
         const node = child.node;
         if (node.nodeType === node.PROCESSING_INSTRUCTION_NODE) {

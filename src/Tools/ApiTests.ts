@@ -28,6 +28,7 @@ import { UserSettingsFile } from '../Workspace/Files/UserSettingsFile';
 import { AsProjectConfiguration } from '../Workspace/AsProjectConfiguration';
 import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
 import { getPlcProperties } from '../Environment/PlcLookup';
+import { AsXmlFileNew } from '../Workspace/Files/AsXmlFileNew';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -49,6 +50,9 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	logger.showOutput();
 	logHeader('Test command start');
 	// select tests to execute
+	if (await Dialogs.yesNoDialog('Run tests for workspace project files?(NEW)')) {
+		await testProjectFilesNew();
+	}
 	if (await Dialogs.yesNoDialog('Run tests for temporary stuff?')) {
 		await testTemp(context);
 	}
@@ -585,6 +589,26 @@ async function testProjectFiles(): Promise<void> {
 }
 
 
+async function testProjectFilesNew(): Promise<void> {
+	logHeader('Test project files start');
+	// select a file for further tests
+	const filePath = await selectFile();
+	if (filePath === undefined) {
+		return;
+	}
+	const fileContent = (await vscode.workspace.openTextDocument(filePath)).getText();
+	// test base XML file
+	const xmlFile = await AsXmlFileNew.createFromFile(filePath);
+	logger.info('AsXmlFileNew.createFromFile(uri)', {
+		uri: filePath.toString(true),
+		result: xmlFile,
+		resultEqualToSource: (xmlFile?.toXml() === fileContent)
+	});
+	//end
+	logHeader('Test project files end');
+}
+
+
 async function testVsCodeExtensionContext(context: vscode.ExtensionContext) : Promise<void> {
 	//TODO can be used for generated files, user query flags...
 	// see https://code.visualstudio.com/api/extension-capabilities/common-capabilities#data-storage
@@ -749,4 +773,15 @@ function logHeader(text: string): void {
 	logger.info(text);
 	logger.info(separator);
 	logger.info('');
+}
+
+async function selectFile(): Promise<vscode.Uri | undefined>{
+	const options: vscode.OpenDialogOptions = {
+		canSelectMany: false,
+		openLabel: 'Select',
+		canSelectFiles: true,
+		canSelectFolders: false
+	};
+	const selection = await vscode.window.showOpenDialog(options);
+	return selection?.[0];
 }
