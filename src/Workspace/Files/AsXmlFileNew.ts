@@ -52,8 +52,9 @@ export class AsXmlFileNew {
     public get versionHeader(): AsXmlVersionHeader {
         return this.#versionHeader;
     }
-    public set versionHeader(value: AsXmlVersionHeader){
-        throw new Error('NotImplemented'); // TODO Implement
+    public set versionHeader(value: AsXmlVersionHeader) {
+        this.#versionHeader = value;
+        setXmlVersionHeader(this.#xmlObj, value);
     }
     #versionHeader: AsXmlVersionHeader;
 
@@ -109,6 +110,27 @@ function getXmlVersionHeader(xmlObj: object): AsXmlVersionHeader {
         asWorkingVersion: typeof asWorkingVersion === 'string' ? asWorkingVersion : undefined,
         asFileVersion: typeof asFileVersion === 'string' ? asFileVersion : undefined,
     };
+}
+
+/**
+ * Change the XML version information header to new data
+ */
+function setXmlVersionHeader(xmlObj: object, versionHeader: AsXmlVersionHeader): void {
+    // prepare empty attributes object
+    // Only assign properties if the value is defined. Properties with assigned property and value undefined will lead to attr="undefined"
+    const attributesObj: Record<string, string> = {};
+    if (versionHeader.asVersion !== undefined) {
+        attributesObj.Version = versionHeader.asVersion;
+    }
+    if (versionHeader.asWorkingVersion !== undefined) {
+        attributesObj.WorkingVersion = versionHeader.asWorkingVersion;
+    }
+    if (versionHeader.asFileVersion !== undefined) {
+        attributesObj.FileVersion = versionHeader.asFileVersion;
+    }
+    // add attribute object to PI node
+    const xmlAny = xmlObj as any; //HACK to access by indexer. find out how to solve properly?
+    xmlAny['?AutomationStudio'] = { _att: attributesObj };
 }
 
 function getXmlRootData(xmlObj: object): { name: string, value: object } {
