@@ -544,7 +544,7 @@ async function testProjectFiles(): Promise<void> {
 	const asProject = asProjects[0];
 	// test *.apj info
 	const projectFilePath = asProject.paths.projectFile;
-	const projectFile = await AsProjectFile.createFromPath(projectFilePath);
+	const projectFile = await AsProjectFile.createFromFile(projectFilePath);
 	logger.info('AsProjectFile.createFromPath(uri)', { uri: projectFilePath.toString(true), result: projectFile });
 	// test Physical.pkg
 	const physicalPkgPath = uriTools.pathJoin(asProject.paths.physical, 'Physical.pkg');
@@ -603,6 +603,13 @@ async function testProjectFilesNew(): Promise<void> {
 		uri: filePath.toString(true),
 		result: xmlFile,
 		resultEqualToSource: (xmlFile?.toXml() === fileContent)
+	});
+	// Test project file
+	const prjFile = await AsProjectFile.createFromFile(filePath);
+	logger.info('AsProjectFile.createFromFile(uri)', {
+		uri: filePath.toString(true),
+		result: prjFile,
+		resultEqualToSource: (prjFile?.toXml() === fileContent)
 	});
 	//end
 	logHeader('Test project files end');

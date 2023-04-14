@@ -46,7 +46,7 @@ export class AsProject implements vscode.Disposable {
     /** Async operations to finalize object construction */
     async #initialize(): Promise<void> {
         // get project file
-        this.#projectFile = await AsProjectFile.createFromPath(this.#paths.projectFile);
+        this.#projectFile = await AsProjectFile.createFromFile(this.#paths.projectFile);
         if (!this.#projectFile) {
             throw new Error('Project file could not be parsed');
         }
