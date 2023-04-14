@@ -4,6 +4,7 @@ import { anyToBoolOrUndefined } from '../../Tools/Helpers';
 import { logger } from '../../Tools/Logger';
 import { pathBasename } from '../../Tools/UriTools';
 import { AsXmlFileNew } from './AsXmlFileNew';
+import { ParsedXmlObject } from './AsXmlParser';
 
 /** Project global options for C-code */
 //TODO use in new architecture for some default defines
@@ -106,7 +107,7 @@ export class AsProjectFile extends AsXmlFileNew {
  * Get the C-Code options from XML object
  * @param rootElement The root <Project> element object
  */
-function getCCodeOptions(rootElement: object): AsProjectCCodeOptions {
+function getCCodeOptions(rootElement: ParsedXmlObject): AsProjectCCodeOptions {
     const rootAny = rootElement as any;
     const cOptions = rootAny?.ANSIC?._att;
     return {
@@ -115,7 +116,7 @@ function getCCodeOptions(rootElement: object): AsProjectCCodeOptions {
     };
 }
 
-function getProjectDescription(rootElement: object): string {
+function getProjectDescription(rootElement: ParsedXmlObject): string {
     const rootAny = rootElement as any;
     const description = rootAny?._att?.Description as unknown;
     return typeof description === 'string' ? description : '';

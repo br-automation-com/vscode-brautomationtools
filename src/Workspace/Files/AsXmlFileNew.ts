@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { AsXmlVersionHeader } from './AsXmlFile';
-import { AsXmlParser, AsXmlBuilder } from './AsXmlParser';
-import { logger } from '../../Tools/Logger';
 import { Uri } from 'vscode';
+import { logger } from '../../Tools/Logger';
+import { AsXmlVersionHeader } from './AsXmlFile';
+import { AsXmlBuilder, AsXmlParser, ParsedXmlObject } from './AsXmlParser';
 
 /**
  * Representation of a simple Automation Studio XML file. Can be extended for specialized Automation Studio Files
@@ -59,10 +59,10 @@ export class AsXmlFileNew {
     #versionHeader: AsXmlVersionHeader;
 
     /** The javascript object representation of the XML */
-    protected get xmlObj(): object {
+    protected get xmlObj(): ParsedXmlObject {
         return this.#xmlObj;
     }
-    #xmlObj: object;
+    #xmlObj: ParsedXmlObject;
 
     /** The name of the XML root element */
     protected get xmlRootName(): string {
@@ -72,10 +72,10 @@ export class AsXmlFileNew {
 
 
     /** The javascript object representation of the XML root element */
-    protected get xmlRootObj(): object {
+    protected get xmlRootObj(): ParsedXmlObject {
         return this.#xmlRootObj;
     }
-    #xmlRootObj: object;
+    #xmlRootObj: ParsedXmlObject;
 
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
@@ -97,7 +97,7 @@ export class AsXmlFileNew {
 /**
  * Get all existing version information from the AutomationStudio XML processing instruction header
  */
-function getXmlVersionHeader(xmlObj: object): AsXmlVersionHeader {
+function getXmlVersionHeader(xmlObj: ParsedXmlObject): AsXmlVersionHeader {
     //TODO currently does not work with old PI of AS version (not in attribute syntax)
     const xmlAny = xmlObj as any; //HACK to access by indexer. find out how to solve properly?
     const versionObj = xmlAny?.['?AutomationStudio']?._att;
@@ -115,8 +115,7 @@ function getXmlVersionHeader(xmlObj: object): AsXmlVersionHeader {
 /**
  * Change the XML version information header to new data
  */
-function setXmlVersionHeader(xmlObj: object, versionHeader: AsXmlVersionHeader): void {
-    // prepare empty attributes object
+function setXmlVersionHeader(xmlObj: ParsedXmlObject, versionHeader: AsXmlVersionHeader): void {
     // Only assign properties if the value is defined. Properties with assigned property and value undefined will lead to attr="undefined"
     const attributesObj: Record<string, string> = {};
     if (versionHeader.asVersion !== undefined) {
@@ -133,7 +132,7 @@ function setXmlVersionHeader(xmlObj: object, versionHeader: AsXmlVersionHeader):
     xmlAny['?AutomationStudio'] = { _att: attributesObj };
 }
 
-function getXmlRootData(xmlObj: object): { name: string, value: object } {
+function getXmlRootData(xmlObj: ParsedXmlObject): { name: string, value: ParsedXmlObject } {
     const entries = Object.entries(xmlObj);
     // filter out entries of non-elements
     const withoutPI = entries.filter(([key, val]) => !key.startsWith('?'));

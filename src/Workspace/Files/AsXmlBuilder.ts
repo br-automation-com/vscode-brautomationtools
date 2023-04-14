@@ -1,5 +1,6 @@
 import { XMLBuilder } from 'fast-xml-parser';
 import { logger } from '../../Tools/Logger';
+import { ParsedXmlObject } from './AsXmlParser';
 
 export class AsXmlBuilder {
     constructor() { }
@@ -19,7 +20,7 @@ export class AsXmlBuilder {
         indentBy: '  ',
     });
 
-    public build(xmlObj: object): string {
+    public build(xmlObj: ParsedXmlObject): string {
         const buildResult = this.#builder.build(xmlObj);
         if (typeof buildResult !== 'string') {
             logger.error('AsXmlBuilder buildResult is not of type string!');

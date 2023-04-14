@@ -4,6 +4,11 @@ import { Buffer } from 'node:buffer';
 
 export { AsXmlBuilder };
 
+/**
+ * Type alias for a parsed javascript XML object
+ */
+export type ParsedXmlObject = object;
+
 export class AsXmlParser {
     public constructor() { }
 
@@ -28,7 +33,7 @@ export class AsXmlParser {
      * @returns The javascript object representation of the XML
      * @throws If the XML source is not valid XML
      */
-    public parse(xmlSource: string | Buffer): object {
+    public parse(xmlSource: string | Buffer): ParsedXmlObject {
         const validate = true;
         const xmlObj: unknown = this.#parser.parse(xmlSource, validate);
         if (typeof xmlObj !== 'object' || xmlObj === null) {
