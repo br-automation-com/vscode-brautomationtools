@@ -1,6 +1,6 @@
 import { Element as XmlElement } from '@oozcitak/dom/lib/dom/interfaces';
 import { Uri } from 'vscode';
-import { stringToBoolOrUndefined } from '../../Tools/Helpers';
+import { anyToBoolOrUndefined } from '../../Tools/Helpers';
 import { logger } from '../../Tools/Logger';
 import { pathDirname, pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
 import { getChildElements } from '../../Tools/XmlDom';
@@ -165,9 +165,9 @@ function xmlElementToPackageObject(element: XmlElement, packageDir: Uri): AsPack
     }
     // boolean attributes
     const isReferenceValue = element.getAttribute('Reference') ?? undefined;
-    const isReference = stringToBoolOrUndefined(isReferenceValue);
+    const isReference = anyToBoolOrUndefined(isReferenceValue);
     const isPrivateValue = element.getAttribute('Private') ?? undefined;
-    const isPrivate = stringToBoolOrUndefined(isPrivateValue);
+    const isPrivate = anyToBoolOrUndefined(isPrivateValue);
     // function to resolve path from project root
     const resolvePath = (projectRoot: Uri) => {
         if (!isReference) {

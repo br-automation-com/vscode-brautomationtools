@@ -3,7 +3,7 @@ import { logger } from '../../Tools/Logger';
 import { getChildElements } from '../../Tools/XmlDom';
 import { AsXmlFile } from './AsXmlFile';
 import { Element as XmlElement } from '@oozcitak/dom/lib/dom/interfaces';
-import { stringToBoolOrUndefined } from '../../Tools/Helpers';
+import { anyToBoolOrUndefined } from '../../Tools/Helpers';
 import { pathBasename, pathDirname, pathJoin, pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
 
 /**

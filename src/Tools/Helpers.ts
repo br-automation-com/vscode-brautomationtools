@@ -76,19 +76,17 @@ export function testStringFilter(value: string, filter: string | RegExp | undefi
 }
 
 /**
+ * Converts a value to a boolean or undefined.
  * Converts a string value to a boolean or undefined value. Value is not cases sensitive 'true' == 'TRUE' == 'True' == 'TrUe'
  * @param value Value which should be converted
- * @returns `true` for 'true' and '1', `false` for 'false' and '0', undefined for all other input
+ * @returns `true` for `'true'` `true` `'1'` and `1`, `false` for `'false'` `false` `'0'` and `0`, undefined for all other input
  */
-export function stringToBoolOrUndefined(value: string | undefined | null): boolean | undefined {
-    if (!value) {
-        return undefined;
-    }
-    const valueLower = value.toLowerCase();
-    if (valueLower === 'true') {
+export function anyToBoolOrUndefined(value: unknown): boolean | undefined {
+    const valueToLower = typeof value === 'string' ? value.toLowerCase() : undefined;
+    if (valueToLower === 'true' || value === true || value === '1' || value === 1) {
         return true;
-    } else if (valueLower === 'false') {
-        return false;
+    } else if (valueToLower === 'false' || value === false || value === '0' || value === 0) {
+        return true;
     } else {
         return undefined;
     }
@@ -97,10 +95,10 @@ export function stringToBoolOrUndefined(value: string | undefined | null): boole
 /**
  * Converts a string value to a boolean. Value is not cases sensitive 'true' == 'TRUE' == 'True' == 'TrUe'
  * @param value Value which should be converted
- * @returns `true` for 'true' and '1', undefined for all other input
+ * @returns `true` for 'true' and '1', false for all other input
  */
 export function stringToBool(value: string | undefined | null): boolean {
-    return stringToBoolOrUndefined(value) ?? false;
+    return anyToBoolOrUndefined(value) ?? false;
 }
 
 /**
