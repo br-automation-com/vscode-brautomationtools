@@ -22,9 +22,9 @@ export class AsXmlFileNew {
             return new AsXmlFileNew(filePath, fileContent);
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to read XML file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
+                logger.error(`Failed to read XML file from path "${filePath.fsPath}": ${error.message}`); //TODO uri log #33
             } else {
-                logger.error(`Failed to read XML file from path '${filePath.fsPath}'`); //TODO uri log #33
+                logger.error(`Failed to read XML file from path "${filePath.fsPath}"`); //TODO uri log #33 solved like this, but maybe whole URI to not limit ourselves? -> Method in logger logger.uriToLog(uri)
             }
             logger.debug('Error details:', { error });
             return undefined;
@@ -36,6 +36,9 @@ export class AsXmlFileNew {
         const parser = new AsXmlParser();
         this.#filePath = filePath;
         this.#xmlObj = parser.parse(fileContent);
+        const root = getXmlRootData(this.#xmlObj);
+        this.#xmlRootObj = root.value;
+        this.#xmlRootName = root.name;
         this.#versionHeader = getXmlVersionHeader(this.#xmlObj);
     }
 
@@ -59,6 +62,20 @@ export class AsXmlFileNew {
         return this.#xmlObj;
     }
     #xmlObj: object;
+
+    /** The name of the XML root element */
+    protected get xmlRootName(): string {
+        return this.#xmlRootName;
+    }
+    #xmlRootName: string;
+
+
+    /** The javascript object representation of the XML root element */
+    protected get xmlRootObj(): object {
+        return this.#xmlRootObj;
+    }
+    #xmlRootObj: object;
+
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
     public toJSON(): any {
@@ -92,4 +109,21 @@ function getXmlVersionHeader(xmlObj: object): AsXmlVersionHeader {
         asWorkingVersion: typeof asWorkingVersion === 'string' ? asWorkingVersion : undefined,
         asFileVersion: typeof asFileVersion === 'string' ? asFileVersion : undefined,
     };
+}
+
+function getXmlRootData(xmlObj: object): { name: string, value: object } {
+    const entries = Object.entries(xmlObj);
+    // filter out entries of non-elements
+    const withoutPI = entries.filter(([key, val]) => !key.startsWith('?'));
+    const withoutComments = withoutPI.filter(([key, val]) => key !== '_cmt'); //TODO do it in XmlParser? this option needs to be in sync with there
+    if (withoutComments.length !== 1) {
+        throw new Error('XML object contains multiple or no root elements');
+    }
+    // get and check root value
+    const [rootKey, rootValAny] = withoutComments[0];
+    const rootVal = rootValAny as unknown;
+    if (typeof rootVal !== 'object' || rootVal === null) {
+        throw new Error('XML root element is not an object');
+    }
+    return { name: rootKey, value: rootVal };
 }
