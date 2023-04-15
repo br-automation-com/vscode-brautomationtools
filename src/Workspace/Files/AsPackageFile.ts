@@ -1,10 +1,11 @@
-import { Element as XmlElement } from '@oozcitak/dom/lib/dom/interfaces';
+import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import { anyToBoolOrUndefined } from '../../Tools/Helpers';
 import { logger } from '../../Tools/Logger';
 import { pathDirname, pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
 import { getChildElements } from '../../Tools/XmlDom';
-import { AsXmlFile } from './AsXmlFile';
+import { AsXmlFileNew } from './AsXmlFileNew';
+import { ParsedXmlObject } from './AsXmlParser';
 
 /** Data of an object within a package */
 export interface AsPackageObject {
@@ -32,79 +33,62 @@ export interface AsPackageObject {
 /**
  * Generic Automation Studio package file representation. Can be used for all packages types without additional data.
  */
-export class AsPackageFile extends AsXmlFile {
+export class AsPackageFile extends AsXmlFileNew {
 
     /**
      * Automation Studio package file representation from a specified file pathe
      * @param filePath The path to the package file. e.g. `C:\Projects\Test\Logical\MyFolder\Package.pkg` or `C:\Projects\Test\Logical\MyLib\ANSIC.lby`
      * @returns The Automation Studio package file representation which was parsed from the file
      */
-    public static async createFromPath(filePath: Uri): Promise<AsPackageFile | undefined> {
+    public static async createFromFile(filePath: Uri): Promise<AsPackageFile | undefined> {
         // Create and initialize object
         try {
-            const xmlFile = new AsPackageFile(filePath);
-            await xmlFile._initialize();
-            return xmlFile;
+            const textDoc = await vscode.workspace.openTextDocument(filePath);
+            const fileContent = textDoc.getText();
+            return new AsPackageFile(filePath, fileContent);
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to read package file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
+                logger.error(`Failed to read package file from path "${filePath.fsPath}": ${error.message}`); //TODO uri log #33
             } else {
-                logger.error(`Failed to read package file from path '${filePath.fsPath}'`); //TODO uri log #33
+                logger.error(`Failed to read package file from path "${filePath.fsPath}"`); //TODO uri log #33
             }
             logger.debug('Error details:', { error });
             return undefined;
         }
     }
 
-    /** Object is not ready to use after constructor due to async operations,
-     * _initialize() has to be called for the object to be ready to use! */
-    protected constructor(filePath: Uri) {
-        super(filePath);
-        // other properties rely on async and will be initialized in #initialize()
-    }
-
-    /**
-     * Async operations to finalize object construction
-     * @throws If a required initialization process failed
-     */
-    protected async _initialize(): Promise<void> {
-        await super._initialize();
+    /** TODO doc */
+    protected constructor(filePath: Uri, fileContent: string) {
+        super(filePath, fileContent);
         this.#dirPath = pathDirname(this.filePath);
-        this.#type = this.rootElement.nodeName;
-        this.#subType = this.rootElement.getAttribute('SubType') ?? undefined;
-        this.#childObjects = getChildObjects(this.rootElement, this.#dirPath);
-        // init done
-        this.#isInitialized = true;
+        this.#type = this.xmlRootName;
+        this.#subType = getSubType(this.xmlRootObj);
+        this.#childObjects = getChildObjects(this.xmlRootObj, this.#dirPath);
     }
-    #isInitialized = false;
 
     /** The path of the directory which contains this file */
     public get dirPath(): Uri {
-        if (!this.#isInitialized || !this.#dirPath) { throw new Error(`Use of not initialized ${AsPackageFile.name} object`); }
         return this.#dirPath;
     }
-    #dirPath: Uri | undefined;
+    #dirPath: Uri;
 
     /** The type of the package */
     public get type(): string {
-        if (!this.#isInitialized || !this.#type) { throw new Error(`Use of not initialized ${AsPackageFile.name} object`); }
         return this.#type;
     }
-    #type: string | undefined;
+    #type: string;
 
     /** The sub type of the package */
     public get subType(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${AsPackageFile.name} object`); }
         return this.#subType;
     }
     #subType: string | undefined;
 
     /** Child objects of the package */
     public get childObjects(): AsPackageObject[] {
-        if (!this.#isInitialized || !this.#childObjects) { throw new Error(`Use of not initialized ${AsPackageFile.name} object`); }
         return this.#childObjects;
     }
-    #childObjects: AsPackageObject[] | undefined;
+    #childObjects: AsPackageObject[];
 
     //TODO <Dependencies> element, but currently not used in any code
 
@@ -128,46 +112,81 @@ export class AsPackageFile extends AsXmlFile {
     }
 }
 
+function getSubType(rootElement: ParsedXmlObject): string | undefined {
+    const rootAny = rootElement as any;
+    const subType = rootAny?._att?.SubType as unknown;
+    return typeof subType === 'string' ? subType : undefined;
+}
+
 /**
  * Get all child objects from the package XML
  * @throws If there are multiple child object root nodes (<Files> or <Objects>)
  */
-function getChildObjects(rootElement: XmlElement, packageDir: Uri): AsPackageObject[] {
-    // get root element of objects
-    const objectRootFilter = /^Files|Objects$/m;
-    const objectRoot = getChildElements(rootElement, objectRootFilter);
-    if (objectRoot.length !== 1) {
-        throw new Error(`Too many or too few <Objects> or <Files> elements (${objectRoot.length} elements)`);
+function getChildObjects(rootElement: ParsedXmlObject, packageDir: Uri): AsPackageObject[] {
+    const childrenObj = getChildArrayData(rootElement);
+    return childrenObj.children.map((child) => xmlElementToPackageObject(child, childrenObj.name, packageDir));
+    //TODO test here 14.04.
+}
+
+function getChildArrayData(rootElement: ParsedXmlObject): { name: string, children: unknown[] } {
+    /* TODO, should we really handle all package types in this main class?
+    Maybe we'd better make a helper to extract the objects element from XML...
+    It would be also easier to handle special cases such as the Files / Objects difference in libs and programs (not in normal pkg files?? old AS??)...
+    */
+    const rootAny = rootElement as any;
+    let children: unknown;
+    //
+    children = rootAny?.Objects?.Object;
+    if (children !== undefined) {
+        if (!Array.isArray(children)) { throw new Error(`XML object "ROOT.Objects.Object is no array!"`); }
+        return { name: 'Object', children: children };
     }
-    // get objects in package
-    const objectElementFilter = /^File|Object$/m;
-    const objectElements = getChildElements(objectRoot[0], objectElementFilter);
-    return objectElements.map((ele) => xmlElementToPackageObject(ele, packageDir));
+    //
+    children = rootAny?.Files?.File;
+    if (children !== undefined) {
+        if (!Array.isArray(children)) { throw new Error(`XML object "ROOT.Files.File is no array!"`); }
+        return { name: 'File', children: children };
+    }
+    //
+    children = rootAny?.Configurations?.Configuration;
+    if (children !== undefined) {
+        if (!Array.isArray(children)) { throw new Error(`XML object "ROOT.Configurations.Configuration is no array!"`); }
+        return { name: 'Configuration', children: children };
+    }
+    // no match --> error
+    throw new Error('Package child objects data not found');
 }
 
 /**
  * Map an XML element to a package object
  * @param element A single <File> or <Object> element of the package file
  */
-function xmlElementToPackageObject(element: XmlElement, packageDir: Uri): AsPackageObject {
+function xmlElementToPackageObject(child: unknown, childName: string, packageDir: Uri): AsPackageObject {
+    const childAny = child as any;
     // path is mandatory and therefore throws if not existing
-    const winPath = element.textContent;
-    if (!winPath) {
-        throw new Error(`<${element.nodeName}> element contains no path`);
+    let winPath: unknown = childAny?._txt;
+    if (winPath === undefined && childName === 'Configuration') { // special case AS V3.0.90 Config.pkg
+        winPath = childAny?._att?.Name;
+    }
+    if (typeof winPath !== 'string' || winPath.length === 0) {
+        throw new Error(`<${childName}> element contains no path`);
     }
     const posixPath = winPathToPosixPath(winPath);
     // type has special handling, as in some packages the element name is set to 'File' instead of the 'Type' attribute
     let type: string | undefined = undefined;
-    if (element.nodeName === 'File') {
+    if (childName === 'File') {
         type = 'File';
+    } else if (childName === 'Configuration') {
+        type = 'Configuration';
     } else {
-        type = element.getAttribute('Type') ?? undefined;
+        const typeAttr = childAny._att.Type as unknown;
+        type = typeof typeAttr === 'string' ? typeAttr : undefined;
     }
-    // boolean attributes
-    const isReferenceValue = element.getAttribute('Reference') ?? undefined;
-    const isReference = anyToBoolOrUndefined(isReferenceValue);
-    const isPrivateValue = element.getAttribute('Private') ?? undefined;
-    const isPrivate = anyToBoolOrUndefined(isPrivateValue);
+    // other attributes
+    const isReference = anyToBoolOrUndefined(childAny?._att?.Reference);
+    const isPrivate = anyToBoolOrUndefined(childAny?._att?.Private);
+    const description = childAny?._att?.Description as unknown;
+    const language = childAny?._att?.Language as unknown;
     // function to resolve path from project root
     const resolvePath = (projectRoot: Uri) => {
         if (!isReference) {
@@ -180,8 +199,8 @@ function xmlElementToPackageObject(element: XmlElement, packageDir: Uri): AsPack
     return {
         path: posixPath,
         type: type,
-        description: element.getAttribute('Description') ?? undefined,
-        language: element.getAttribute('Language') ?? undefined,
+        description: typeof description === 'string' ? description : undefined,
+        language: typeof language === 'string' ? language : undefined,
         isReference: isReference,
         isPrivate: isPrivate,
         resolvePath: resolvePath,

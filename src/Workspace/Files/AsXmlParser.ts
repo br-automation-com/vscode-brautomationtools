@@ -46,7 +46,14 @@ export class AsXmlParser {
 const arrayPaths: ReadonlyArray<string> = [
     'Package.Objects.Object',
     'Library.Files.File',
+    'Library.Objects.Object',
     'Library.Dependencies.Dependency',
+    'Program.Files.File',
+    'Program.Objects.Object',
+    'Program.Dependencies.Dependency',
+    'DataObject.Files.File',
+    'DataObject.Objects.Object',
+    'Cpu.Objects.Object',
     'Physical.Configurations.Configuration',
 ];
 function checkNodeIsArray(
@@ -62,8 +69,8 @@ function checkNodeIsArray(
 const nodePathIsObjectsRegEx = /^([A-Za-z]+)\.Objects\.Object$/;
 const nodePathIsFilesRegEx = /^([A-Za-z]+)\.Files\.File$/;
 const nodePathIsConfigurationsRegEx = /^([A-Za-z]+)\.Configurations\.Configuration$/;
-function checkNodeIsArrayOld(tagName: string, jPath: string, isLeafNode: boolean, isAttribute: boolean): boolean {
-    //TODO check which variant is better in terms of maintainability or performance
+function checkNodeIsArrayRegex(tagName: string, jPath: string, isLeafNode: boolean, isAttribute: boolean): boolean {
+    //TODO check which variant is better in terms of maintainability (or performance)
     return isAttribute ? false
         : nodePathIsObjectsRegEx.test(jPath) ? true
             : nodePathIsFilesRegEx.test(jPath) ? true

@@ -45,7 +45,7 @@ export class AsProjectLogical {
      * @throws If a required initialization process failed
      */
     protected async _initialize(): Promise<void> {
-        this.#logicalPkg = await AsPackageFile.createFromPath(this.#logicalPkgPath);
+        this.#logicalPkg = await AsPackageFile.createFromFile(this.#logicalPkgPath);
         if (this.#logicalPkg === undefined) {
             throw new Error('Failed to create package file');
         }

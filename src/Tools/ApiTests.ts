@@ -548,7 +548,7 @@ async function testProjectFiles(): Promise<void> {
 	logger.info('AsProjectFile.createFromPath(uri)', { uri: projectFilePath.toString(true), result: projectFile });
 	// test Physical.pkg
 	const physicalPkgPath = uriTools.pathJoin(asProject.paths.physical, 'Physical.pkg');
-	const physicalPkg = await AsPackageFile.createFromPath(physicalPkgPath);
+	const physicalPkg = await AsPackageFile.createFromFile(physicalPkgPath);
 	logger.info('AsPackageFile.createFromPath(uri)', { uri: physicalPkgPath.toString(true), result: physicalPkg });
 	logger.info('Resolve child object paths for package uri', {
 		filePath: physicalPkg?.filePath.toString(true),
@@ -557,7 +557,7 @@ async function testProjectFiles(): Promise<void> {
 	// test Config.pkg
 	const configPkgPaths = await vscode.workspace.findFiles({ base: asProject.paths.physical.fsPath, pattern: '*/Config.pkg' });
 	for (const configPkgPath of configPkgPaths) {
-		const configPkg = await ConfigPackageFile.createFromPath(configPkgPath);
+		const configPkg = await ConfigPackageFile.createFromFile(configPkgPath);
 		logger.info('ConfigPackageFile.createFromPath(uri)', { uri: configPkgPath.toString(true), result: configPkg });
 		logger.info('Resolve child object paths for package uri', {
 			filePath: configPkg?.filePath.toString(true),
@@ -567,7 +567,7 @@ async function testProjectFiles(): Promise<void> {
 	// test Cpu.pkg
 	const cpuPkgPaths = await vscode.workspace.findFiles({ base: asProject.paths.physical.fsPath, pattern: '*/*/Cpu.pkg' });
 	for (const cpuPkgPath of cpuPkgPaths) {
-		const cpuPkg = await CpuPackageFile.createFromPath(cpuPkgPath);
+		const cpuPkg = await CpuPackageFile.createFromFile(cpuPkgPath);
 		logger.info('CpuPackageFile.createFromPath(uri)', { uri: cpuPkgPath.toString(true), result: cpuPkg });
 		logger.info('Resolve child object paths for package uri', {
 			filePath: cpuPkg?.filePath.toString(true),

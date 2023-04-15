@@ -21,7 +21,7 @@ export class AsProjectConfiguration {
      */
     public static async createFromPhysicalPkg(physicalPkgPath: vscode.Uri, projectRoot: vscode.Uri): Promise<AsProjectConfiguration[]> {
         // get package file and return empty if failed
-        const physicalPkg = await AsPackageFile.createFromPath(physicalPkgPath);
+        const physicalPkg = await AsPackageFile.createFromFile(physicalPkgPath);
         if (physicalPkg === undefined) {
             return [];
         }
@@ -75,14 +75,14 @@ export class AsProjectConfiguration {
     async #initialize(): Promise<void> {
         // Get mandatory main configuration package
         const configPkgPath = uriTools.pathJoin(this.#rootPath, 'Config.pkg');
-        this.#configPkg = await ConfigPackageFile.createFromPath(configPkgPath);
+        this.#configPkg = await ConfigPackageFile.createFromFile(configPkgPath);
         if (!this.#configPkg) {
             throw new Error('Configuration package could not be parsed');
         }
         // Get optional cpu package
         const cpuRootPath = this.#configPkg.cpuChildObject.resolvePath(this.#projectRoot);
         const cpuPkgPath = uriTools.pathJoin(cpuRootPath, 'Cpu.pkg');
-        this.#cpuPkg = await CpuPackageFile.createFromPath(cpuPkgPath);
+        this.#cpuPkg = await CpuPackageFile.createFromFile(cpuPkgPath);
         // init done
         this.#isInitialized = true;
     }

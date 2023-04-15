@@ -101,9 +101,9 @@ function getXmlVersionHeader(xmlObj: ParsedXmlObject): AsXmlVersionHeader {
     //TODO currently does not work with old PI of AS version (not in attribute syntax)
     const xmlAny = xmlObj as any; //HACK to access by indexer. find out how to solve properly?
     const versionObj = xmlAny?.['?AutomationStudio']?._att;
-    const asVersion = versionObj.Version as unknown;
-    const asWorkingVersion = versionObj.WorkingVersion as unknown;
-    const asFileVersion = versionObj.FileVersion as unknown;
+    const asVersion = versionObj?.Version as unknown;
+    const asWorkingVersion = versionObj?.WorkingVersion as unknown;
+    const asFileVersion = versionObj?.FileVersion as unknown;
     // return value
     return {
         asVersion: typeof asVersion === 'string' ? asVersion : undefined,
