@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import { logger } from '../../Tools/Logger';
 import { AsXmlFileNew } from './AsXmlFileNew';
+import { ParsedXmlObject } from './AsXmlParser';
 
 /**
  * User specific project settings file representation (*.set in the project root)
@@ -46,6 +47,19 @@ export class UserSettingsFile extends AsXmlFileNew {
     public get activeConfiguration(): string | undefined {
         return this.#activeConfiguration;
     }
+    public set activeConfiguration(value: string | undefined) {
+        try {
+            setActiveConfiguration(this.xmlRootObj, value);
+            this.#activeConfiguration = value;
+        } catch (error) {
+            if (error instanceof Error) {
+                logger.error(`Failed to set active configuration in file "${this.filePath.fsPath}": ${error.message}`); //TODO uri log #33
+            } else {
+                logger.error(`Failed to set active configuration in file "${this.filePath.fsPath}"`); //TODO uri log #33
+            }
+            logger.debug('Error details:', { error });
+        }
+    }
     #activeConfiguration: string | undefined;
 
     /** Deployment target for newly added programs (e.g. active configuration) */
@@ -60,5 +74,18 @@ export class UserSettingsFile extends AsXmlFileNew {
         obj.activeConfiguration = this.activeConfiguration;
         obj.deploymentTarget = this.deploymentTarget;
         return obj;
+    }
+}
+
+function setActiveConfiguration(xmlRootObj: ParsedXmlObject, activeConfiguration: string | undefined): void {
+    //TODO delete property if undefined?
+    const rootAny = xmlRootObj as any;
+    const configManagerAtt = rootAny?.ConfigurationManager?._att ?? {};
+    if (typeof configManagerAtt !== 'object') { throw new Error('ROOT.ConfigurationManager._att is not an object'); } // TODO catch in setter and log failed message
+    configManagerAtt.ActiveConfigurationName = activeConfiguration;
+    if (rootAny?.ConfigurationManager === undefined) {
+        rootAny.ConfigurationManager = { _att: configManagerAtt };
+    } else {
+        rootAny.ConfigurationManager._att = configManagerAtt;
     }
 }
