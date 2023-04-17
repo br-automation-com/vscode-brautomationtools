@@ -233,7 +233,7 @@ A configured _tasks.json_ file could look like this:
 				"deviceInterface": "tcpip",
 				"sourceNode": 42,
 				"destinationAddress": "127.0.0.1",
-				"destinationPort": 11160,
+				"destinationPort": 11169,
 				"communicationTimeout": 1000,
 				"connectionEstablishedTimeout": 60
 			},

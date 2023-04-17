@@ -84,7 +84,7 @@ interface BrAsTransferTaskDefinition extends vscode.TaskDefinition {
         /** Address of the transfer destination. Can be an IP address or a host name (/IP parameter) */
         destinationAddress?: string;
         
-        /** Port of the transfer destination. Default ports: ANSL on real PLC = 11169; ANSL on ArSim = 11160 (/PT parameter) */
+        /** Port of the transfer destination. Default ANSL port is 11169 (/PT parameter) */
         destinationPort?: number;
         
         /** Communication timeout in ms (/COMT parameter) */
@@ -205,7 +205,7 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
                 deviceInterface:             'tcpip',
                 sourceNode:                   42,
                 destinationAddress:           '127.0.0.1',
-                destinationPort:              11160,
+                destinationPort:              11169,
                 communicationTimeout:         1000,
                 additionalDeviceParameters:   undefined,
                 additionalCPUparameters:      undefined,

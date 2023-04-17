@@ -20,6 +20,11 @@ Users can look forward to these changes for the next release 😀😉
 - Changed internal XML backend from `xmlbuilder2` to `fast-xml-parser`. This change will allow us to easier parse and also modify XML files for new features.
 - Improved AS V3.x configuration view package files support. We still (and maybe will never) not support all settings and files.
 
+### Fixed
+- The default connection port in the ArSim transfer task was adjusted.
+  [#39](https://github.com/br-automation-com/vscode-brautomationtools/issues/39)<br/>
+  Existing configurations defined in the tasks.json file are not affected by the template change and need to be adjusted manually.
+
 ## [0.0.7] - 2023-01-03
 
 🎉 Happy new year! 🎉
