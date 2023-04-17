@@ -18,7 +18,7 @@ B&R ressources such as executuable binaries etc. are not provided by this extens
 - [Features](#features)
   - [Auto completion / linting of C/C++ programs and libraries](#auto-completion-for-cc-programs-and-libraries)
   - [Detecting B&R Automation Studio projects in the workspace folders](#detecting-br-automation-studio-projects-in-the-workspace-folders)
-  - [Detecting the active configuration](#detecting-the-active-configuration)
+  - [Detecting the active configuration](#detecting-and-changing-the-active-configuration)
   - [Build B&R Automation Studio projects](#build-br-automation-studio-projects)
   - [Show errors and warnings of Automation Studio build in source code](#show-errors-and-warnings-of-automation-studio-build-in-source-code)
   - [Detecting installed B&R Automation Studio versions](#detecting-installed-br-automation-studio-versions)
@@ -80,14 +80,15 @@ All Automation Studio projects within all opened workspace folders are detected 
 
 When adding or removing a folder to the workspace, the information is automatically updated by the extension.
 
-### Detecting the active configuration
+### Detecting and changing the active configuration
 
-Some settings like e.g. additional includes are configuration specific. The active configuration is evaluated from the LastUser.set file in the root of your AS project.
+Some settings like e.g. additional includes are PLC configuration specific. The active configuration is evaluated from the LastUser.set file in the root of your AS project.
 If no LastUser.set file is found in your project root, the first configuration is selected as the active configuration.
 
-There is currently no direct option to set another configuration as active. But you can edit the LastUser.set manually and the change will be detected by the extension.
-
-![Change active configuration](Doc/Screenshots/ChangeActiveConfigInLastUserSet.png)
+The active configuration can be changed in two ways:
+- By calling the command from the command pallette `Ctrl + Shift + P`<br/>
+  ![Change active configuration by command](Doc/Screenshots/ChangeActiveConfigByCommand.png)
+- By modifying the LastUser.set file in the project root. Automation Studio modifes this file when changing the configuration in the Configuration View, so a a change within AS is automatically detected by the extension.<br/>
 
 ### Build B&R Automation Studio projects
 
@@ -352,7 +353,19 @@ At the moment this indicator is only shown during extension activation.
 
 ## Commands
 
-TODO command descriptions
+### The VS Code command prompt
+
+With the key combination `Ctrl + Shift + P`, VS Code shows all available commands. In the prompt you can the write text and VS Code will search for commands. Our commands from this extension are all prefixed with B&R Tools, so you can easily find all commands by just typing B&R in the command search input.
+
+![Search for B&R in the available commands prompt](Doc/Screenshots/CommandsSearchBr.png)
+
+The search is quite smart, so you don't have to know the start of the command name. Some text from within the name is sufficient.
+
+![Search for commands with partial command name text](Doc/Screenshots/CommandsSearchPartialText.png)
+
+### Commands provided by the extension
+
+TODO List of commands with descriptions.
 
 ## Settings
 

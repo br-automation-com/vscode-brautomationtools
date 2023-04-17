@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
-import { pathJoin, uriToSingleFilePattern, exists, isSubOf, pathsFromTo } from '../Tools/UriTools';
-import { logger } from '../Tools/Logger';
-import { AsProjectFile } from './Files/AsProjectFile';
-import { AsProjectConfiguration } from './AsProjectConfiguration';
-import { UserSettingsFile } from './Files/UserSettingsFile';
-import { AsProjectPaths } from './AsProjectPaths';
 import { AsProjectCBuildInfo, mergeAsProjectCBuildInfo } from '../Environment/AsProjectCBuildData';
-import { AsProjectLogical } from './AsProjectLogical';
 import { Environment } from '../Environment/Environment';
+import { logger } from '../Tools/Logger';
+import { exists, isSubOf, pathJoin, pathsFromTo, uriToSingleFilePattern } from '../Tools/UriTools';
+import { AsProjectConfiguration } from './AsProjectConfiguration';
+import { AsProjectLogical } from './AsProjectLogical';
+import { AsProjectPaths } from './AsProjectPaths';
+import { AsProjectFile } from './Files/AsProjectFile';
+import { UserSettingsFile } from './Files/UserSettingsFile';
 
 /**
  * Representation of an Automation Studio project
@@ -71,12 +71,15 @@ export class AsProject implements vscode.Disposable {
         const userSetWatcher = vscode.workspace.createFileSystemWatcher(uriToSingleFilePattern(this.#userSettingsPath));
         this.#disposables.push(userSetWatcher);
         userSetWatcher.onDidChange(async () => {
+            logger.detail(`User settings file "${this.#userSettingsPath?.fsPath}" was changed`); //TODO uri log #33
             this.activeConfiguration = await this.#getActiveConfiguration();
         });
         userSetWatcher.onDidCreate(async () => {
+            logger.detail(`User settings file "${this.#userSettingsPath?.fsPath}" was created`); //TODO uri log #33
             this.activeConfiguration = await this.#getActiveConfiguration();
         });
         userSetWatcher.onDidDelete(async () => {
+            logger.detail(`User settings file "${this.#userSettingsPath?.fsPath}" was deleted`); //TODO uri log #33
             this.activeConfiguration = await this.#getActiveConfiguration();
         });
         //
@@ -133,6 +136,7 @@ export class AsProject implements vscode.Disposable {
         return this.#activeConfiguration;
     }
     private set activeConfiguration(value: AsProjectConfiguration | undefined) {
+        if (value === this.#activeConfiguration) { return; }
         this.#activeConfiguration = value;
         if (this.#isInitialized) {
             logger.info(`Active configuration changed to '${this.activeConfiguration?.name}'`);
@@ -264,7 +268,7 @@ export class AsProject implements vscode.Disposable {
                 // add also globals from configuration view and return
                 return mergeAsProjectCBuildInfo(iecBuildInfo, this.activeConfiguration?.cBuildInfoGlobals);
             }
-        
+
             default:
                 // no special POU includes for other POU types
                 return undefined;
@@ -276,11 +280,52 @@ export class AsProject implements vscode.Disposable {
         if (!this.#userSettingsPath) {
             return defaultConfig;
         }
-        if (!exists(this.#userSettingsPath)) {
+        if (!await exists(this.#userSettingsPath)) {
             return defaultConfig;
         }
-        const userSetttings = await UserSettingsFile.createFromPath(this.#userSettingsPath);
-        const activeConfig = this.#configurations?.find((cfg) => cfg.name === userSetttings?.activeConfiguration);
+        const userSettingsFile = await UserSettingsFile.createFromPath(this.#userSettingsPath);
+        const activeConfig = this.#configurations?.find((cfg) => cfg.name === userSettingsFile?.activeConfiguration);
         return activeConfig ?? defaultConfig;
+    }
+
+    /**
+     * Change the active configuration of the project.
+     * @param newConfigName The name of the new active configuration
+     * @returns 
+     */
+    public async changeActiveConfiguration(newConfigName: string): Promise<void> {
+        // Check if the given configuration exists in the project
+        const newConfig = this.#configurations?.find((cfg) => cfg.name === newConfigName);
+        if (newConfig === undefined) {
+            logger.error(`Could not change active configuration because the configuration "${newConfigName}" does not exist in project "${this.name}"`);
+            return;
+        }
+        // set configuration and write to file
+        this.activeConfiguration = newConfig;
+        try {
+            await this.#changeActiveConfigurationInSettingFile(newConfigName);
+        } catch (error) {
+            const errorText = error instanceof Error ? ` (${error.message})` : '';
+            logger.warning(`Change of active configuration could not be saved to file. Change will be lost on next restart of VS code.${errorText}`);
+        }
+    }
+
+    /**
+     * @throws
+     */
+    async #changeActiveConfigurationInSettingFile(newConfigName: string): Promise<void> {
+        if (!this.#userSettingsPath || !await exists(this.#userSettingsPath)) {
+            throw new Error('File does not exist');
+        }
+        const userSettingsFile = await UserSettingsFile.createFromPath(this.#userSettingsPath);
+        if (userSettingsFile === undefined) {
+            throw new Error('File could not be parsed');
+        }
+        userSettingsFile.activeConfiguration = newConfigName;
+        const success = await userSettingsFile.writeToFile();
+        if (!success) {
+            throw new Error('File could not be written');
+        }
+
     }
 }

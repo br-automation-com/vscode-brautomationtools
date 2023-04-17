@@ -46,6 +46,11 @@
 				"command": "vscode-brautomationtools.updateAvailableAutomationStudioVersions",
 				"title": "Refresh installed AS version information",
 				"category": "B&R Tools"
+			},
+			{
+				"command": "vscode-brautomationtools.changeActiveConfiguration",
+				"title": "Change active project configuration",
+				"category": "B&R Tools"
 			}
 		],
 		"configuration": {
