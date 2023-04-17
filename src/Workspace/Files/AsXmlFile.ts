@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
+import { createFile, replaceAllTextInFile } from '../../Tools/FileTools';
 import { logger } from '../../Tools/Logger';
 import { AsXmlBuilder, AsXmlParser, ParsedXmlObject } from './AsXmlParser';
-import { createFile, replaceAllTextInFile } from '../../Tools/FileTools';
 
 /**
  * The Automation Studio XML processing instruction data containing file and project versions
@@ -89,7 +89,6 @@ export class AsXmlFile {
     }
     #xmlRootObj: ParsedXmlObject;
 
-
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
     public toJSON(): any {
         return {
@@ -111,9 +110,32 @@ export class AsXmlFile {
      * @returns A promise which resolves to true on success
      */
     public async writeToFile(filePath: Uri = this.filePath): Promise<boolean> {
+        if (!this.checkWriteToFilePossible()) { return false; }
         const xml = this.toXml();
         await createFile(filePath, { ignoreIfExists: true }); // keep existing so the encoding and newline settings are kept by VS code
         return await replaceAllTextInFile(filePath, xml);
+    }
+
+    /**
+     * Checks if writing the file is possible and allowed. If writing is not allowed the reason is logged.
+     * @returns `true` if writing the file is possible, false otherwise.
+     */
+    protected checkWriteToFilePossible(): boolean {
+        // Check for legacy PI version header
+        if (this.#hasLegacyVersionHeader()) {
+            logger.warning(`File "${this.filePath.fsPath}" has unsupported legacy file format and cannot be modified`); //TODO uri log #33
+            return false;
+        }
+        // all check passed -> writable
+        return true;
+    }
+
+    #hasLegacyVersionHeader(): boolean {
+        const headerIsEmpty = this.versionHeader.asVersion ? false
+            : this.versionHeader.asFileVersion ? false
+                : this.versionHeader.asWorkingVersion ? false
+                    : true;
+        return headerIsEmpty;
     }
 }
 
