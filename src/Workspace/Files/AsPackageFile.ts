@@ -4,7 +4,7 @@ import { anyToBoolOrUndefined } from '../../Tools/Helpers';
 import { logger } from '../../Tools/Logger';
 import { pathDirname, pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
 import { getChildElements } from '../../Tools/XmlDom';
-import { AsXmlFileNew } from './AsXmlFileNew';
+import { AsXmlFile } from './AsXmlFile';
 import { ParsedXmlObject } from './AsXmlParser';
 
 /** Data of an object within a package */
@@ -33,7 +33,7 @@ export interface AsPackageObject {
 /**
  * Generic Automation Studio package file representation. Can be used for all packages types without additional data.
  */
-export class AsPackageFile extends AsXmlFileNew {
+export class AsPackageFile extends AsXmlFile {
 
     /**
      * Automation Studio package file representation from a specified file pathe

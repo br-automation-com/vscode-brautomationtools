@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import { logger } from '../../Tools/Logger';
-import { AsXmlFileNew } from './AsXmlFileNew';
+import { AsXmlFile } from './AsXmlFile';
 import { ParsedXmlObject } from './AsXmlParser';
 
 /**
  * User specific project settings file representation (*.set in the project root)
  */
-export class UserSettingsFile extends AsXmlFileNew {
+export class UserSettingsFile extends AsXmlFile {
 
     /**
      * Creates a user settings file representation from a specified URI to the file

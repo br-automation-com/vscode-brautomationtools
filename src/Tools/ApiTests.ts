@@ -28,7 +28,7 @@ import { UserSettingsFile } from '../Workspace/Files/UserSettingsFile';
 import { AsProjectConfiguration } from '../Workspace/AsProjectConfiguration';
 import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
 import { getPlcProperties } from '../Environment/PlcLookup';
-import { AsXmlFileNew } from '../Workspace/Files/AsXmlFileNew';
+import { AsXmlFile } from '../Workspace/Files/AsXmlFile';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -50,9 +50,6 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	logger.showOutput();
 	logHeader('Test command start');
 	// select tests to execute
-	if (await Dialogs.yesNoDialog('Run tests for workspace project files?(NEW)')) {
-		await testProjectFilesNew();
-	}
 	if (await Dialogs.yesNoDialog('Run tests for temporary stuff?')) {
 		await testTemp(context);
 	}
@@ -83,7 +80,7 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	if (await Dialogs.yesNoDialog('Run tests for BRConfiguration?')) {
 		await testBRConfiguration();
 	}
-	if (await Dialogs.yesNoDialog('Run tests for workspace projects (NEW)?')) {
+	if (await Dialogs.yesNoDialog('Run tests for workspace projects?')) {
 		await testWorkspaceProjects();
 	}
 	if (await Dialogs.yesNoDialog('Run tests for BRAsProjectWorkspace?')) {
@@ -91,6 +88,9 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	}
 	if (await Dialogs.yesNoDialog('Run tests for workspace project files?')) {
 		await testProjectFiles();
+	}
+	if (await Dialogs.yesNoDialog('Run tests for workspace project files with manual selection?')) {
+		await testProjectFilesManualSel();
 	}
 	if (await Dialogs.yesNoDialog('Run tests for VS Code extension context?')) {
 		await testVsCodeExtensionContext(context);
@@ -589,7 +589,7 @@ async function testProjectFiles(): Promise<void> {
 }
 
 
-async function testProjectFilesNew(): Promise<void> {
+async function testProjectFilesManualSel(): Promise<void> {
 	logHeader('Test project files start');
 	// select a file for further tests
 	const filePath = await selectFile();
@@ -598,7 +598,7 @@ async function testProjectFilesNew(): Promise<void> {
 	}
 	const fileContent = (await vscode.workspace.openTextDocument(filePath)).getText();
 	// test base XML file
-	const xmlFile = await AsXmlFileNew.createFromFile(filePath);
+	const xmlFile = await AsXmlFile.createFromFile(filePath);
 	logger.info('AsXmlFileNew.createFromFile(uri)', {
 		uri: filePath.toString(true),
 		result: xmlFile,

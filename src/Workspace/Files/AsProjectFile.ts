@@ -3,7 +3,7 @@ import { Uri } from 'vscode';
 import { anyToBoolOrUndefined } from '../../Tools/Helpers';
 import { logger } from '../../Tools/Logger';
 import { pathBasename } from '../../Tools/UriTools';
-import { AsXmlFileNew } from './AsXmlFileNew';
+import { AsXmlFile } from './AsXmlFile';
 import { ParsedXmlObject } from './AsXmlParser';
 
 /** Project global options for C-code */
@@ -18,7 +18,7 @@ export interface AsProjectCCodeOptions {
 /**
  * Automation Studio project file representation (*.apj)
  */
-export class AsProjectFile extends AsXmlFileNew {
+export class AsProjectFile extends AsXmlFile {
 
     /**
      * Creates an Automation Studio project file representation from a specified URI to the file
