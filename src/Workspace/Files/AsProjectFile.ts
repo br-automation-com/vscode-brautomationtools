@@ -32,12 +32,7 @@ export class AsProjectFile extends AsXmlFile {
             const fileContent = textDoc.getText();
             return new AsProjectFile(filePath, fileContent);
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to read project file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
-            } else {
-                logger.error(`Failed to read project file from path '${filePath.fsPath}'`); //TODO uri log #33
-            }
-            logger.debug('Error details:', { error });
+            logger.error(`Failed to read project file from path ${logger.formatUri(filePath)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }
@@ -53,7 +48,7 @@ export class AsProjectFile extends AsXmlFile {
         this.#workingVersion = this.versionHeader.asWorkingVersion ?? this.versionHeader.asVersion;
         this.#exactVersion = this.versionHeader.asVersion ?? this.versionHeader.asWorkingVersion;
         if (!this.#workingVersion || !this.#exactVersion) {
-            logger.warning(`Could not find Automation Studio version data in '${this.filePath.toString(true)}'`); //TODO uri log #33
+            logger.warning(`Could not find Automation Studio version data in ${logger.formatUri(filePath)}`);
         }
         // Other properties
         this.#projectName = pathBasename(this.filePath);

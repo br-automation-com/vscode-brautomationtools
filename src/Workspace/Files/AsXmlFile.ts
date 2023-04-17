@@ -33,12 +33,7 @@ export class AsXmlFile {
             const fileContent = textDoc.getText();
             return new AsXmlFile(filePath, fileContent);
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to read XML file from path "${filePath.fsPath}": ${error.message}`); //TODO uri log #33
-            } else {
-                logger.error(`Failed to read XML file from path "${filePath.fsPath}"`); //TODO uri log #33 solved like this, but maybe whole URI to not limit ourselves? -> Method in logger logger.uriToLog(uri)
-            }
-            logger.debug('Error details:', { error });
+            logger.error(`Failed to read XML file from path ${logger.formatUri(filePath)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }
@@ -123,7 +118,7 @@ export class AsXmlFile {
     protected checkWriteToFilePossible(): boolean {
         // Check for legacy PI version header
         if (this.#hasLegacyVersionHeader()) {
-            logger.warning(`File "${this.filePath.fsPath}" has unsupported legacy file format and cannot be modified`); //TODO uri log #33
+            logger.warning(`File ${logger.formatUri(this.filePath)} has unsupported legacy file format and cannot be modified`);
             return false;
         }
         // all check passed -> writable

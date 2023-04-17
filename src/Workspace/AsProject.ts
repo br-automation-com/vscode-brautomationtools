@@ -24,14 +24,10 @@ export class AsProject implements vscode.Disposable {
         try {
             const project = new AsProject(projectFilePath);
             await project.#initialize();
-            logger.info(`Project '${project.name}' found in '${project.paths.projectRoot.toString(true)}'`);
+            logger.info(`Project "${project.name}" found in ${logger.formatUri(project.paths.projectRoot)}.`);
             return project;
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to parse project in path '${projectFilePath.toString(true)}': ${error.message}`);
-            } else {
-                logger.error(`Failed to parse project in path '${projectFilePath.toString(true)}'`);
-            }
+            logger.error(`Failed to parse project in path ${logger.formatUri(projectFilePath)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }
@@ -71,15 +67,15 @@ export class AsProject implements vscode.Disposable {
         const userSetWatcher = vscode.workspace.createFileSystemWatcher(uriToSingleFilePattern(this.#userSettingsPath));
         this.#disposables.push(userSetWatcher);
         userSetWatcher.onDidChange(async () => {
-            logger.detail(`User settings file "${this.#userSettingsPath?.fsPath}" was changed`); //TODO uri log #33
+            logger.detail(`User settings file ${logger.formatUri(this.#userSettingsPath)} was changed`);
             this.activeConfiguration = await this.#getActiveConfiguration();
         });
         userSetWatcher.onDidCreate(async () => {
-            logger.detail(`User settings file "${this.#userSettingsPath?.fsPath}" was created`); //TODO uri log #33
+            logger.detail(`User settings file ${logger.formatUri(this.#userSettingsPath)} was created`);
             this.activeConfiguration = await this.#getActiveConfiguration();
         });
         userSetWatcher.onDidDelete(async () => {
-            logger.detail(`User settings file "${this.#userSettingsPath?.fsPath}" was deleted`); //TODO uri log #33
+            logger.detail(`User settings file ${logger.formatUri(this.#userSettingsPath)} was deleted`);
             this.activeConfiguration = await this.#getActiveConfiguration();
         });
         //
@@ -305,8 +301,7 @@ export class AsProject implements vscode.Disposable {
         try {
             await this.#changeActiveConfigurationInSettingFile(newConfigName);
         } catch (error) {
-            const errorText = error instanceof Error ? ` (${error.message})` : '';
-            logger.warning(`Change of active configuration could not be saved to file. Change will be lost on next restart of VS code.${errorText}`);
+            logger.warning(`Change of active configuration could not be saved to file. Change will be lost on next restart of VS code. ${logger.formatError(error)}`);
         }
     }
 

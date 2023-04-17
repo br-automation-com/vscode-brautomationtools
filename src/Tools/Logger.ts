@@ -55,7 +55,7 @@ export interface LogConfiguration {
 
 
 export interface LogEntryAdditionalData {
-    [data: string] : any;
+    [data: string]: any;
 }
 
 
@@ -164,6 +164,20 @@ class Logger {
     }
     #debug: LogFunction = this.#logDummy;
 
+    /**
+     * Formats a URI for display in a log message. Already includes ""
+     */
+    public formatUri(uri: vscode.Uri | undefined): string {
+        return `"${uri?.fsPath}"`;
+    }
+
+    /**
+     * Formats an error for display in a log message. Use it in a catch block to log the catched object.
+     */
+    public formatError(error: unknown): string {
+        return error instanceof Error ? `(${error.message})` : `(No error details available!)`;
+    }
+
     /** Shows the logger in the UI */
     public showOutput() {
         Logger.#logChannel.show(true);
@@ -271,7 +285,7 @@ class Logger {
                 additionalData = `\n${JSON.stringify(logEntry.addData, undefReplacer, 2)}`;
             } else {
                 additionalData = ` ${JSON.stringify(logEntry.addData, undefReplacer)}`;
-            }   
+            }
         }
         // formatted message '[11:33:42.007 - Fatal] My message {data: {someProp:"hello"}}'
         return `${header} ${message}${additionalData}`;

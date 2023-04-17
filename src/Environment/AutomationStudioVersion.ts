@@ -41,14 +41,10 @@ export class AutomationStudioVersion {
         try {
             const asVersion = new AutomationStudioVersion(asRoot);
             await asVersion.#initialize();
-            logger.info(`Automation Studio Version V${asVersion.version.version} found in '${asVersion.rootPath.fsPath}'`);
+            logger.info(`Automation Studio Version V${asVersion.version.version} found in ${logger.formatUri(asVersion.rootPath)}.`);
             return asVersion;
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to get Automation Studio in path '${asRoot.fsPath}': ${error.message}`);
-            } else {
-                logger.error(`Failed to get Automation Studio in path '${asRoot.fsPath}'`);
-            }
+            logger.error(`Failed to get Automation Studio in path ${logger.formatUri(asRoot)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }
@@ -151,7 +147,7 @@ async function parseAutomationStudioVersion(asRoot: vscode.Uri): Promise<semver.
     if (version !== undefined) {
         return version;
     } else {
-        logger.warning(`Failed to find AS Version information within '${prodInfoBasePath.toString(true)}'. Will try to parse version approximation from directory name`);
+        logger.warning(`Failed to find AS Version information within ${logger.formatUri(prodInfoBasePath)}. Will try to parse version approximation from directory name`);
     }
     // Try parse version from root directory name if get from file failed
     const dirName = uriTools.pathBasename(asRoot);
@@ -163,7 +159,7 @@ async function parseAutomationStudioVersion(asRoot: vscode.Uri): Promise<semver.
     if (version) {
         return version;
     } else {
-        logger.warning(`Failed to parse AS Version from directory name '${asRoot.toString(true)}'. AS will be listed as V0.0.0`);
+        logger.warning(`Failed to parse AS Version from directory name ${logger.formatUri(asRoot)}. AS will be listed as V0.0.0`);
     }
     // set to V0.0.0 as backup, so AS is still available but with wrong version...
     return new semver.SemVer('0.0.0');

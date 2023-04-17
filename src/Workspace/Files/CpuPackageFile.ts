@@ -47,12 +47,7 @@ export class CpuPackageFile extends AsPackageFile {
             const fileContent = textDoc.getText();
             return new CpuPackageFile(filePath, fileContent);
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to read Cpu package file from path "${filePath.fsPath}": ${error.message}`); //TODO uri log #33
-            } else {
-                logger.error(`Failed to read Cpu package file from path "${filePath.fsPath}"`); //TODO uri log #33
-            }
-            logger.debug('Error details:', { error });
+            logger.error(`Failed to read Cpu package file from path ${logger.formatUri(filePath)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }
@@ -98,7 +93,7 @@ export class CpuPackageFile extends AsPackageFile {
         // warn if there are missing properties
         if (missingProperties.length > 0) {
             const missingString = missingProperties.join(', ');
-            logger.warning(`Cpu package file "${this.filePath.toString(true)}" does not contain values: ${missingString}`); //TODO uri log #33
+            logger.warning(`Cpu package file ${logger.formatUri(this.filePath)} does not contain the values: ${missingString}`);
         }
     }
 }

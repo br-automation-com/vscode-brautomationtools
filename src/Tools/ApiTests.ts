@@ -239,9 +239,9 @@ async function testFileTools() {
 	}
 	const wsUri = vscode.workspace.workspaceFolders[0].uri;
 	const fileUri = uriTools.pathJoin(wsUri, 'MyTempFile.txt');
-	logger.info(`Creating file ${fileUri.fsPath}`);
+	logger.info(`Creating file ${logger.formatUri(fileUri)}`);
 	await fileTools.createFile(fileUri, { overwrite: true });
-	logger.info(`Insert text into file ${fileUri.fsPath}`);
+	logger.info(`Insert text into file ${logger.formatUri(fileUri)}`);
 	await fileTools.insertTextInFile(fileUri, new vscode.Position(0, 0), 'asdf');
 	// end
 	logHeader('Test FileTools end');
@@ -581,7 +581,7 @@ async function testProjectFilesManualSel(): Promise<void> {
 		const xmlDir = uriTools.pathDirname(filePath);
 		const newFilePath = uriTools.pathJoin(xmlDir, newFileName);
 		const success = await xmlFile.writeToFile(newFilePath);
-		logger.info(`Tried to write file "${newFilePath.fsPath}"`, { success: success });
+		logger.info(`Tried to write file ${logger.formatUri(newFilePath)}`, { success: success });
 	}
 	// Test project file
 	const prjFile = await AsProjectFile.createFromFile(filePath);
