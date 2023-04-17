@@ -46,12 +46,7 @@ export class AsProjectPou {
             await pou._initialize();
             return pou;
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to parse POU from path '${pouPkgPath.fsPath}': ${error.message}`);
-            } else {
-                logger.error(`Failed to parse POU from path '${pouPkgPath.fsPath}'`);
-            }
-            logger.debug('Error details:', { error });
+            logger.error(`Failed to parse POU from path ${logger.formatUri(pouPkgPath)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }

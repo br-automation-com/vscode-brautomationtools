@@ -57,7 +57,7 @@ export class GccInstallation {
             // find bin directory
             const binDir = await uriTools.findDirectory(root, 2, 'bin');
             if (binDir === undefined) {
-                logger.warning(`Could not find directory 'bin' of gcc in '${root.toString(true)}'`);
+                logger.warning(`Could not find directory "bin" of gcc in ${logger.formatUri(root)}.`);
                 continue;
             }
             // find *gcc.exe in bin directory

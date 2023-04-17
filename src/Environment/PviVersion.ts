@@ -40,14 +40,10 @@ export class PviVersion {
         try {
             const pvi = new PviVersion(pviRoot);
             await pvi.#initialize();
-            logger.info(`PVI Version V${pvi.version.version} found in '${pvi.rootPath.fsPath}'`);
+            logger.info(`PVI Version V${pvi.version.version} found in ${logger.formatUri(pvi.rootPath)}.`);
             return pvi;
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to get PVI in path '${pviRoot.fsPath}': ${error.message}`);
-            } else {
-                logger.error(`Failed to get PVI in path '${pviRoot.fsPath}'`);
-            }
+            logger.error(`Failed to get PVI in path ${logger.formatUri(pviRoot)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }
@@ -116,7 +112,7 @@ async function parsePviVersion(pviRoot: vscode.Uri): Promise<semver.SemVer> {
     if (version) {
         return version;
     } else {
-        logger.warning(`Failed to parse PVI Version from directory name '${pviRoot.toString(true)}'. PVI will be listed as V0.0.0`);
+        logger.warning(`Failed to parse PVI Version from directory name ${logger.formatUri(pviRoot)}. PVI will be listed as V0.0.0`);
     }
     // set to V0.0.0 as backup, so PVI is still available but with wrong version...
     return new semver.SemVer('0.0.0');

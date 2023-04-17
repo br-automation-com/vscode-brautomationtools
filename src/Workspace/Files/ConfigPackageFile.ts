@@ -21,12 +21,7 @@ export class ConfigPackageFile extends AsPackageFile {
             const fileContent = textDoc.getText();
             return new ConfigPackageFile(filePath, fileContent);
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to read Config package file from path "${filePath.fsPath}": ${error.message}`); //TODO uri log #33
-            } else {
-                logger.error(`Failed to read Config package file from path "${filePath.fsPath}"`); //TODO uri log #33
-            }
-            logger.debug('Error details:', { error });
+            logger.error(`Failed to read Config package file from path ${logger.formatUri(filePath)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }

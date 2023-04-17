@@ -55,7 +55,7 @@ export class GccExecutable {
             usedVersion = queryGccVersion(exePath);
         }
         if (!usedVersion) {
-            logger.warning(`gcc version for '${exePath.toString(true)}' could not be evaluated. Gcc will be listed as V0.0.0`);
+            logger.warning(`gcc version for ${logger.formatUri(exePath)} could not be evaluated. Gcc will be listed as V0.0.0`);
             usedVersion = new semver.SemVer('0.0.0');
         }
         this.#version = usedVersion;
@@ -70,7 +70,7 @@ export class GccExecutable {
         // use target machine to set system generation, architecture and include dir
         [this.#systemGeneration, this.#architecture] = targetSystemLookup(this.#targetMachine);
         if ((this.#systemGeneration === 'UNKNOWN') || (this.#architecture === 'UNKNOWN')) {
-            logger.warning(`B&R system generation and architecture could not be evaluated for gcc in ${exePath.fsPath}`);
+            logger.warning(`B&R system generation and architecture could not be evaluated for gcc in ${logger.formatUri(exePath)}.`);
         }
         const sysInclude = vscode.Uri.joinPath(exePath, '../../', this.#targetMachine, './include');
         this.#systemIncludes = [sysInclude];

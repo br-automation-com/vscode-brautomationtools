@@ -49,14 +49,10 @@ export class AsProjectConfiguration {
         try {
             const config = new AsProjectConfiguration(configRoot, projectRoot, description);
             await config.#initialize();
-            logger.detail(`Project configuration found in "${config.rootPath.toString(true)}"`);//TODO uri log #33
+            logger.detail(`Project configuration found in ${logger.formatUri(config.rootPath)}`);
             return config;
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to parse project configuration in path '${configRoot.toString(true)}': ${error.message}`);//TODO uri log #33
-            } else {
-                logger.error(`Failed to parse project configuration in path '${configRoot.toString(true)}'`);//TODO uri log #33
-            }
+            logger.error(`Failed to parse project configuration in path ${logger.formatUri(configRoot)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }

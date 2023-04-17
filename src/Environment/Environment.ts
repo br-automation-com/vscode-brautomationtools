@@ -62,7 +62,7 @@ export class Environment {
             const foundVersions: PviVersion[] = [];
             const configuredDirs = extensionConfiguration.environment.pviInstallPaths;
             for (const configDir of configuredDirs) {
-                logger.info(`Searching for PVI versions in '${configDir.fsPath}'`);
+                logger.info(`Searching for PVI versions in ${logger.formatUri(configDir)}.`);
                 const versionsInDir = await PviVersion.searchVersionsInDir(configDir);
                 foundVersions.push(...versionsInDir);
             }
@@ -121,7 +121,7 @@ export class Environment {
             const foundVersions: AutomationStudioVersion[] = [];
             const configuredDirs = extensionConfiguration.environment.automationStudioInstallPaths;
             for (const configDir of configuredDirs) {
-                logger.info(`Searching for Automation Studio versions in '${configDir.fsPath}'`);
+                logger.info(`Searching for Automation Studio versions in ${logger.formatUri(configDir)}.`);
                 const versionsInDir = await AutomationStudioVersion.searchVersionsInDir(configDir);
                 foundVersions.push(...versionsInDir);
             }

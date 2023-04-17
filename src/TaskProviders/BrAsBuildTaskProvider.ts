@@ -298,7 +298,7 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
             return;
         }
         if (asProject.workingVersion === undefined) {
-            this.writeLine(`ERROR: No AS version defined in "${asProject.paths.projectFile.toString(true)}"`);
+            this.writeLine(`ERROR: No AS version defined in "${asProject.paths.projectFile.fsPath}"`);
             this.done(44);
             return;
         }

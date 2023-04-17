@@ -21,12 +21,7 @@ export class AsProjectLogical {
             await pou._initialize();
             return pou;
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to parse Logical View from path '${logicalPkgPath.fsPath}': ${error.message}`);
-            } else {
-                logger.error(`Failed to parse Logical View from path '${logicalPkgPath.fsPath}'`);
-            }
-            logger.debug('Error details:', { error });
+            logger.error(`Failed to parse Logical View from path ${logger.formatUri(logicalPkgPath)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }

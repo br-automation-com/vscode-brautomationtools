@@ -20,12 +20,7 @@ export class XxxxFile extends AsXmlFile {
             const fileContent = textDoc.getText();
             return new XxxxFile(filePath, fileContent);
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to read XXXX file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
-            } else {
-                logger.error(`Failed to read XXXX file from path '${filePath.fsPath}'`); //TODO uri log #33
-            }
-            logger.debug('Error details:', { error });
+            logger.error(`Failed to read XXXX file from path ${logger.formatUri(filePath)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }

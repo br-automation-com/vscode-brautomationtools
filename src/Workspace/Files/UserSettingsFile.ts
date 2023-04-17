@@ -21,12 +21,7 @@ export class UserSettingsFile extends AsXmlFile {
             const fileContent = textDoc.getText();
             return new UserSettingsFile(filePath, fileContent);
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to read user settings file from path "${filePath.fsPath}": ${error.message}`); //TODO uri log #33
-            } else {
-                logger.error(`Failed to read user settings file from path "${filePath.fsPath}"`); //TODO uri log #33
-            }
-            logger.debug('Error details:', { error });
+            logger.error(`Failed to read user settings file from path ${logger.formatUri(filePath)}. ${logger.formatError(error)}`);
             return undefined;
         }
     }
@@ -52,12 +47,7 @@ export class UserSettingsFile extends AsXmlFile {
             setActiveConfiguration(this.xmlRootObj, value);
             this.#activeConfiguration = value;
         } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Failed to set active configuration in file "${this.filePath.fsPath}": ${error.message}`); //TODO uri log #33
-            } else {
-                logger.error(`Failed to set active configuration in file "${this.filePath.fsPath}"`); //TODO uri log #33
-            }
-            logger.debug('Error details:', { error });
+            logger.error(`Failed to set active configuration in file ${logger.formatUri(this.filePath)}. ${logger.formatError(error)}`);
         }
     }
     #activeConfiguration: string | undefined;
@@ -81,7 +71,7 @@ function setActiveConfiguration(xmlRootObj: ParsedXmlObject, activeConfiguration
     //TODO delete property if undefined?
     const rootAny = xmlRootObj as any;
     const configManagerAtt = rootAny?.ConfigurationManager?._att ?? {};
-    if (typeof configManagerAtt !== 'object') { throw new Error('ROOT.ConfigurationManager._att is not an object'); } // TODO catch in setter and log failed message
+    if (typeof configManagerAtt !== 'object') { throw new Error('ROOT.ConfigurationManager._att is not an object'); }
     configManagerAtt.ActiveConfigurationName = activeConfiguration;
     if (rootAny?.ConfigurationManager === undefined) {
         rootAny.ConfigurationManager = { _att: configManagerAtt };
