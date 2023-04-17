@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import { logger } from '../../Tools/Logger';
 import { AsXmlBuilder, AsXmlParser, ParsedXmlObject } from './AsXmlParser';
+import { createFile, replaceAllTextInFile } from '../../Tools/FileTools';
 
 /**
  * The Automation Studio XML processing instruction data containing file and project versions
@@ -102,6 +103,17 @@ export class AsXmlFile {
     public toXml(): string {
         const builder = new AsXmlBuilder();
         return builder.build(this.#xmlObj);
+    }
+
+    /**
+     * Write an XML file from the object contents
+     * @param filePath The path to the file which should be written. If omitted, `this.filePath` is used.
+     * @returns A promise which resolves to true on success
+     */
+    public async writeToFile(filePath: Uri = this.filePath): Promise<boolean> {
+        const xml = this.toXml();
+        await createFile(filePath, { ignoreIfExists: true }); // keep existing so the encoding and newline settings are kept by VS code
+        return await replaceAllTextInFile(filePath, xml);
     }
 }
 
