@@ -55,6 +55,7 @@ const arrayPaths: ReadonlyArray<string> = [
     'DataObject.Objects.Object',
     'Cpu.Objects.Object',
     'Physical.Configurations.Configuration',
+    'Physical.Objects.Object',
 ];
 function checkNodeIsArray(
     tagName: string,
