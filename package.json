@@ -391,7 +391,6 @@
 		"fast-xml-parser": "^4.2.0",
 		"semver": "^7.3.5",
 		"vscode-cpptools": "^5.0.0",
-		"vscode-jsonrpc": "^6.0.0",
-		"xmlbuilder2": "^3.0.2"
+		"vscode-jsonrpc": "^6.0.0"
 	}
 }

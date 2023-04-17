@@ -4,8 +4,6 @@
  */
 
 import * as vscode from 'vscode';
-import * as xmlbuilder from 'xmlbuilder2';
-import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
 import * as Helpers from './Helpers';
 import * as uriTools from './UriTools';
 import * as fileTools from './FileTools';
@@ -117,33 +115,6 @@ async function testVarious(arg1: any, arg2: any) {
 	logHeader('Test various start');
 	// check command arguments
 	logger.info('arg1 and arg2:', {arg1: arg1, arg2: arg2});
-	// xmlbuilder tests
-	const xmlTextNormal =          `<?xml version="1.0" encoding="utf-8"?>
-									<?AutomationStudio Version=4.6.5.78 SP?>
-									<Physical xmlns="http://br-automation.co.at/AS/Physical">
-									<Objects>
-										<Object Type="Configuration" Description="No errors and no warnings">NoErrNoWrn</Object>
-										<Object Type="Configuration">Warnings</Object>
-										<Object Type="Configuration">Errors</Object>
-									</Objects>
-									</Physical>`;
-	const xmlTextNoRootCont =    `<?xml version="1.0" encoding="utf-8"?>
-								  <?AutomationStudio Version=4.6.5.78 SP?>
-								  </root>`;
-	const xmlTextNoRoot =        `<?xml version="1.0" encoding="utf-8"?>
-					        	  <?AutomationStudio Version=4.6.5.78 SP?>`;
-	const xmlTextMultiRoot =     `<?xml version="1.0" encoding="utf-8"?>
-								  <?AutomationStudio Version=4.6.5.78 SP?>
-								  <root1>Hello1</root1>
-								  <root2>Hello2</root2>`;
-	try {
-		const builder = xmlbuilder.create(xmlTextNormal); // throws on invalid XML (xmlTextNoRootCont, xmlTextMultiRoot)
-		const rootBld = builder.root(); // throws when no root is available (xmlTextNoRoot)
-		const rootNode = rootBld.node as xmlDom.Element;
-		logger.info('xmlbuilder tests', {rootNode: rootNode});
-	} catch (error) {
-		logger.info('xmlbuilder test error', {error: error});
-	}
 	// end
 	logHeader('Test various end');
 }

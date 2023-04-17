@@ -3,7 +3,6 @@ import { Uri } from 'vscode';
 import { anyToBoolOrUndefined } from '../../Tools/Helpers';
 import { logger } from '../../Tools/Logger';
 import { pathDirname, pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
-import { getChildElements } from '../../Tools/XmlDom';
 import { AsXmlFile } from './AsXmlFile';
 import { ParsedXmlObject } from './AsXmlParser';
 
