@@ -10,8 +10,13 @@ Add new but unreleased features, fixes... here during development
 
 Users can look forward to these changes for the next release 😀😉
 
-### Changed
+### Added
+- Added a command to change the active PLC configuration. Until now this was only possible by manually adjusting the LastUser.set file in the project root. [#1](https://github.com/br-automation-com/vscode-brautomationtools/issues/1)<br>
+  More information can be found in the [readme file](./README.md#detecting-and-changing-the-active-configuration)<br/>
+  This finally closes the very first official issue in the repository 😎.
+- Added contents to the readme section for commands
 
+### Changed
 - Changed internal XML backend from `xmlbuilder2` to `fast-xml-parser`. This change will allow us to easier parse and also modify XML files for new features.
 - Improved AS V3.x configuration view package files support. We still (and maybe will never) not support all settings and files.
 
