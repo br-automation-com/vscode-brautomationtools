@@ -1,10 +1,10 @@
-import { Element as XmlElement } from '@oozcitak/dom/lib/dom/interfaces';
+import * as vscode from 'vscode';
 import { Uri } from 'vscode';
-import { stringToBoolOrUndefined } from '../../Tools/Helpers';
+import { anyToBoolOrUndefined } from '../../Tools/Helpers';
 import { logger } from '../../Tools/Logger';
 import { pathBasename } from '../../Tools/UriTools';
-import { getChildElements } from '../../Tools/XmlDom';
 import { AsXmlFile } from './AsXmlFile';
+import { ParsedXmlObject } from './AsXmlParser';
 
 /** Project global options for C-code */
 //TODO use in new architecture for some default defines
@@ -25,12 +25,12 @@ export class AsProjectFile extends AsXmlFile {
      * @param filePath The project file path. e.g. `C:\Projects\Test\Test.apj`
      * @returns The Automation Studio project file representation which was parsed from the file
      */
-    public static async createFromPath(filePath: Uri): Promise<AsProjectFile | undefined> {
+    public static async createFromFile(filePath: Uri): Promise<AsProjectFile | undefined> {
         // Create and initialize object
         try {
-            const xmlFile = new AsProjectFile(filePath);
-            await xmlFile._initialize();
-            return xmlFile;
+            const textDoc = await vscode.workspace.openTextDocument(filePath);
+            const fileContent = textDoc.getText();
+            return new AsProjectFile(filePath, fileContent);
         } catch (error) {
             if (error instanceof Error) {
                 logger.error(`Failed to read project file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
@@ -42,68 +42,54 @@ export class AsProjectFile extends AsXmlFile {
         }
     }
 
-    /** Object is not ready to use after constructor due to async operations,
-     * _initialize() has to be called for the object to be ready to use! */
-    protected constructor(filePath: Uri) {
-        super(filePath);
-        // other properties rely on async and will be initialized in #initialize()
-    }
-
-    /**
-     * Async operations to finalize object construction
-     * @throws If a required initialization process failed
-     */
-    protected async _initialize(): Promise<void> {
-        await super._initialize();
+    /** TODO doc */
+    protected constructor(filePath: Uri, fileContent: string) {
+        super(filePath, fileContent);
+        // Check root object name
+        if (this.xmlRootName !== 'Project') {
+            throw new Error('Root element name is not <Project>');
+        }
         // assign and check versions
-        this.#workingVersion = this.header.asWorkingVersion ?? this.header.asVersion;
-        this.#exactVersion = this.header.asVersion ?? this.header.asWorkingVersion;
+        this.#workingVersion = this.versionHeader.asWorkingVersion ?? this.versionHeader.asVersion;
+        this.#exactVersion = this.versionHeader.asVersion ?? this.versionHeader.asWorkingVersion;
         if (!this.#workingVersion || !this.#exactVersion) {
             logger.warning(`Could not find Automation Studio version data in '${this.filePath.toString(true)}'`); //TODO uri log #33
         }
         // Other properties
         this.#projectName = pathBasename(this.filePath);
-        this.#projectDescription = this.rootElement.getAttribute('Description') ?? '';
-        this.#cCodeOptions = getCCodeOptions(this.rootElement);
-        // init done
-        this.#isInitialized = true;
+        this.#projectDescription = getProjectDescription(this.xmlRootObj);
+        this.#cCodeOptions = getCCodeOptions(this.xmlRootObj);
     }
-    #isInitialized = false;
 
     /** The name of the project */
     public get projectName(): string {
-        if (!this.#isInitialized || (this.#projectName === undefined)) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#projectName;
     }
-    #projectName: string | undefined;
+    #projectName: string;
 
     /** The description text of the project */
     public get projectDescription(): string {
-        if (!this.#isInitialized || (this.#projectDescription === undefined)) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#projectDescription;
     }
-    #projectDescription: string | undefined;
+    #projectDescription: string;
 
     /** The Automation Studio working version (can be less restrictive than `exactVersion`) */
     public get workingVersion(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#workingVersion;
     }
     #workingVersion: string | undefined;
 
     /** The exact Automation Studio version used to edit the project */
     public get exactVersion(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#exactVersion;
     }
     #exactVersion: string | undefined;
 
     /** Project global options for C-code */
     public get cCodeOptions(): AsProjectCCodeOptions {
-        if (!this.#isInitialized || !this.#cCodeOptions) { throw new Error(`Use of not initialized ${AsProjectFile.name} object`); }
         return this.#cCodeOptions;
     }
-    #cCodeOptions: AsProjectCCodeOptions | undefined;
+    #cCodeOptions: AsProjectCCodeOptions;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
     public toJSON(): any {
@@ -118,20 +104,20 @@ export class AsProjectFile extends AsXmlFile {
 }
 
 /**
- * Get the C-Code options from XML
- * @param rootElement The root <Project> element
+ * Get the C-Code options from XML object
+ * @param rootElement The root <Project> element object
  */
-function getCCodeOptions(rootElement: XmlElement): AsProjectCCodeOptions {
-    // Get element containing C-code options
-    const cOptionsElement = getChildElements(rootElement, /ANSIC/i).pop();
-    // Get boolean attributes
-    const enableDeclareValue = cOptionsElement?.getAttribute('Declarations');
-    const enableDeclare = stringToBoolOrUndefined(enableDeclareValue);
-    const enableDefaultIncludesValue = cOptionsElement?.getAttribute('DefaultIncludes');
-    const enableDefaultIncludes = stringToBoolOrUndefined(enableDefaultIncludesValue);
-    // return result
+function getCCodeOptions(rootElement: ParsedXmlObject): AsProjectCCodeOptions {
+    const rootAny = rootElement as any;
+    const cOptions = rootAny?.ANSIC?._att;
     return {
-        enablePlcVarDeclarations: enableDeclare,
-        enableDefaultIncludes: enableDefaultIncludes,
+        enablePlcVarDeclarations: anyToBoolOrUndefined(cOptions?.Declarations),
+        enableDefaultIncludes: anyToBoolOrUndefined(cOptions?.DefaultIncludes),
     };
+}
+
+function getProjectDescription(rootElement: ParsedXmlObject): string {
+    const rootAny = rootElement as any;
+    const description = rootAny?._att?.Description as unknown;
+    return typeof description === 'string' ? description : '';
 }

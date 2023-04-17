@@ -1,7 +1,8 @@
+import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import { logger } from '../../Tools/Logger';
-import { getChildElements } from '../../Tools/XmlDom';
 import { AsXmlFile } from './AsXmlFile';
+import { ParsedXmlObject } from './AsXmlParser';
 
 /**
  * User specific project settings file representation (*.set in the project root)
@@ -16,54 +17,53 @@ export class UserSettingsFile extends AsXmlFile {
     public static async createFromPath(filePath: Uri): Promise<UserSettingsFile | undefined> {
         // Create and initialize object
         try {
-            const xmlFile = new UserSettingsFile(filePath);
-            await xmlFile._initialize();
-            return xmlFile;
+            const textDoc = await vscode.workspace.openTextDocument(filePath);
+            const fileContent = textDoc.getText();
+            return new UserSettingsFile(filePath, fileContent);
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to read user settings file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
+                logger.error(`Failed to read user settings file from path "${filePath.fsPath}": ${error.message}`); //TODO uri log #33
             } else {
-                logger.error(`Failed to read user settings file from path '${filePath.fsPath}'`); //TODO uri log #33
+                logger.error(`Failed to read user settings file from path "${filePath.fsPath}"`); //TODO uri log #33
             }
             logger.debug('Error details:', { error });
             return undefined;
         }
     }
 
-    /** Object is not ready to use after constructor due to async operations,
-     * _initialize() has to be called for the object to be ready to use! */
-    protected constructor(filePath: Uri) {
-        super(filePath);
-        // other properties rely on async and will be initialized in #initialize()
-    }
-
-    /**
-     * Async operations to finalize object construction
-     * @throws If a required initialization process failed
-     */
-    protected async _initialize(): Promise<void> {
-        await super._initialize();
+    /** TODO doc */
+    protected constructor(filePath: Uri, fileContent: string) {
+        super(filePath, fileContent);
+        const rootAny = this.xmlRootObj as any;
         // get active configuration
-        const configMngElement = getChildElements(this.rootElement, 'ConfigurationManager').pop();
-        this.#activeConfiguration = configMngElement?.getAttribute('ActiveConfigurationName') ?? undefined;
+        const activeConfiguration = rootAny?.ConfigurationManager?._att?.ActiveConfigurationName as unknown;
+        this.#activeConfiguration = typeof activeConfiguration === 'string' ? activeConfiguration : undefined;
         // get deployment target
-        const deploymentElement = getChildElements(this.rootElement, 'Deployment').pop();
-        this.#deploymentTarget = deploymentElement?.getAttribute('Value') ?? undefined;
-        // init done
-        this.#isInitialized = true;
+        const deploymentTarget = rootAny?.Deployment?._att?.Value as unknown;
+        this.#deploymentTarget = typeof deploymentTarget === 'string' ? deploymentTarget : undefined;
     }
-    #isInitialized = false;
 
     /** The name of the active configuration */
     public get activeConfiguration(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${UserSettingsFile.name} object`); }
         return this.#activeConfiguration;
+    }
+    public set activeConfiguration(value: string | undefined) {
+        try {
+            setActiveConfiguration(this.xmlRootObj, value);
+            this.#activeConfiguration = value;
+        } catch (error) {
+            if (error instanceof Error) {
+                logger.error(`Failed to set active configuration in file "${this.filePath.fsPath}": ${error.message}`); //TODO uri log #33
+            } else {
+                logger.error(`Failed to set active configuration in file "${this.filePath.fsPath}"`); //TODO uri log #33
+            }
+            logger.debug('Error details:', { error });
+        }
     }
     #activeConfiguration: string | undefined;
 
     /** Deployment target for newly added programs (e.g. active configuration) */
     public get deploymentTarget(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${UserSettingsFile.name} object`); }
         return this.#deploymentTarget;
     }
     #deploymentTarget: string | undefined;
@@ -74,5 +74,18 @@ export class UserSettingsFile extends AsXmlFile {
         obj.activeConfiguration = this.activeConfiguration;
         obj.deploymentTarget = this.deploymentTarget;
         return obj;
+    }
+}
+
+function setActiveConfiguration(xmlRootObj: ParsedXmlObject, activeConfiguration: string | undefined): void {
+    //TODO delete property if undefined?
+    const rootAny = xmlRootObj as any;
+    const configManagerAtt = rootAny?.ConfigurationManager?._att ?? {};
+    if (typeof configManagerAtt !== 'object') { throw new Error('ROOT.ConfigurationManager._att is not an object'); } // TODO catch in setter and log failed message
+    configManagerAtt.ActiveConfigurationName = activeConfiguration;
+    if (rootAny?.ConfigurationManager === undefined) {
+        rootAny.ConfigurationManager = { _att: configManagerAtt };
+    } else {
+        rootAny.ConfigurationManager._att = configManagerAtt;
     }
 }

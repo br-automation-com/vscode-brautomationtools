@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { Uri } from 'vscode';
 import { logger } from '../../Tools/Logger';
 import { AsPackageFile, AsPackageObject } from './AsPackageFile';
@@ -13,58 +14,49 @@ export class ConfigPackageFile extends AsPackageFile {
      * @param filePath The Configuration package file path. e.g. `C:\Projects\Test\Physical\TestCOnfig\Config.pkg`
      * @returns The Configuration package file representation which was parsed from the file
      */
-    public static async createFromPath(filePath: Uri): Promise<ConfigPackageFile | undefined> {
+    public static async createFromFile(filePath: Uri): Promise<ConfigPackageFile | undefined> {
         // Create and initialize object
         try {
-            const xmlFile = new ConfigPackageFile(filePath);
-            await xmlFile._initialize();
-            return xmlFile;
+            const textDoc = await vscode.workspace.openTextDocument(filePath);
+            const fileContent = textDoc.getText();
+            return new ConfigPackageFile(filePath, fileContent);
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to read Config package file from path '${filePath.fsPath}': ${error.message}`); //TODO uri log #33
+                logger.error(`Failed to read Config package file from path "${filePath.fsPath}": ${error.message}`); //TODO uri log #33
             } else {
-                logger.error(`Failed to read Config package file from path '${filePath.fsPath}'`); //TODO uri log #33
+                logger.error(`Failed to read Config package file from path "${filePath.fsPath}"`); //TODO uri log #33
             }
             logger.debug('Error details:', { error });
             return undefined;
         }
     }
 
-    /** Object is not ready to use after constructor due to async operations,
-     * #initialize() has to be called for the object to be ready to use! */
-    protected constructor(filePath: Uri) {
-        super(filePath);
+    /** TODO doc */
+    protected constructor(filePath: Uri, fileContent: string) {
+        super(filePath, fileContent);
         // other properties rely on async and will be initialized in #initialize()
-    }
-
-    /**
-     * Async operations to finalize object construction
-     * @throws If a required initialization process failed
-     */
-    protected async _initialize(): Promise<void> {
-        await super._initialize();
         if (this.type !== 'Configuration') {
             throw new Error('Root element name is not <Configuration>');
         }
-        const cpuObjects = this.getChildrenOfType('Cpu');
-        if (cpuObjects.length < 1) {
-            throw new Error('No Cpu object found');
+        let cpuObjects = this.getChildrenOfType('Cpu');
+        if (cpuObjects.length === 0) {
+            cpuObjects = this.getChildrenOfType('PLC'); // Legacy AS V3.x Config.pkg
+            //TODO in this case we also need to use Plc.pkg in the folder level below... -> Currently error when opening
         }
         if (cpuObjects.length > 1) {
             throw new Error('Too many Cpu objects found');
         }
+        if (cpuObjects.length < 1) {
+            throw new Error('No Cpu object found');
+        }
         this.#cpuChildObject = cpuObjects[0];
-        // init done
-        this.#isInitialized = true;
     }
-    #isInitialized = false;
 
     /** CPU and build configuration data */
-    public get cpuChildObject() : AsPackageObject {
-        if (!this.#isInitialized || !this.#cpuChildObject) { throw new Error(`Use of not initialized ${ConfigPackageFile.name} object`); }
+    public get cpuChildObject(): AsPackageObject {
         return this.#cpuChildObject;
     }
-    #cpuChildObject: AsPackageObject | undefined;
+    #cpuChildObject: AsPackageObject;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
     public toJSON(): any {

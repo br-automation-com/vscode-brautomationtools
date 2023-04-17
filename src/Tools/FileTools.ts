@@ -26,7 +26,6 @@ export async function createFile(uri: vscode.Uri, options?: { overwrite?: boolea
  * @param newText The text which will be inserted
  */
 export async function insertTextInFile(uri: vscode.Uri, position: vscode.Position, newText: string): Promise<boolean> {
-    
 	const doc = await vscode.workspace.openTextDocument(uri);
 	const wsedit = new vscode.WorkspaceEdit();
 	wsedit.insert(uri, position, newText);
@@ -42,4 +41,17 @@ export async function insertTextInFile(uri: vscode.Uri, position: vscode.Positio
  */
 export async function insertTextAtBeginOfFile(uri: vscode.Uri, newText: string): Promise<boolean> {
     return insertTextInFile(uri, new vscode.Position(0, 0), newText);
+}
+
+export async function replaceAllTextInFile(uri: vscode.Uri, newText: string): Promise<boolean> {
+	const doc = await vscode.workspace.openTextDocument(uri);
+	// get range to replace whole document
+	var firstLine = doc.lineAt(0);
+	var lastLine = doc.lineAt(doc.lineCount - 1);
+	var fullRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
+	// replace text
+	const wsedit = new vscode.WorkspaceEdit();
+	wsedit.replace(uri, fullRange, newText);
+	await vscode.workspace.applyEdit(wsedit);
+	return await doc.save();
 }

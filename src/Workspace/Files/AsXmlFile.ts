@@ -1,12 +1,13 @@
-import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
 import * as vscode from 'vscode';
-import * as xmlbuilder2 from 'xmlbuilder2';
-import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
+import { Uri } from 'vscode';
+import { createFile, replaceAllTextInFile } from '../../Tools/FileTools';
+import { logger } from '../../Tools/Logger';
+import { AsXmlBuilder, AsXmlParser, ParsedXmlObject } from './AsXmlParser';
 
 /**
  * The Automation Studio XML processing instruction data containing file and project versions
  */
-export interface AsXmlHeader {
+export interface AsXmlVersionHeader {
     /** Full Automation Studio version in XML header */
     asVersion?: string;
     /** Automation Studio working version in XML header (X.Y e.g. 4.9) */
@@ -18,114 +19,177 @@ export interface AsXmlHeader {
 /**
  * Representation of a simple Automation Studio XML file. Can be extended for specialized Automation Studio Files
  */
-export abstract class AsXmlFile {
-
-    /** Object is not ready to use after constructor due to async operations,
-     * _initialize() has to be called for the object to be ready to use! */
-    protected constructor(filePath: vscode.Uri) {
-        this.#filePath = filePath;
-        // other properties rely on async and will be initialized in #initialize()
-    }
+export class AsXmlFile {
 
     /**
-     * Async operations to finalize object construction
-     * @throws If a required initialization process failed
+     * Automation Studio XML file representation from a specified file path
+     * @param filePath The path to the XML file. e.g. `C:\Projects\Test\Logical\MyFolder\Package.pkg` or `C:\Projects\Test\Logical\MyLib\ANSIC.lby`
+     * @returns The Automation Studio XML file representation which was parsed from the file
      */
-    protected async _initialize(): Promise<void> {
-        const builder = await createXmlBuilder(this.#filePath);
-        this.#header = getXmlHeader(builder);
-        this.#rootElement = getRootElement(builder);
-        // init done
-        this.#isInitialized = true;
+    public static async createFromFile(filePath: Uri): Promise<AsXmlFile | undefined> {
+        // Create and initialize object
+        try {
+            const textDoc = await vscode.workspace.openTextDocument(filePath);
+            const fileContent = textDoc.getText();
+            return new AsXmlFile(filePath, fileContent);
+        } catch (error) {
+            if (error instanceof Error) {
+                logger.error(`Failed to read XML file from path "${filePath.fsPath}": ${error.message}`); //TODO uri log #33
+            } else {
+                logger.error(`Failed to read XML file from path "${filePath.fsPath}"`); //TODO uri log #33 solved like this, but maybe whole URI to not limit ourselves? -> Method in logger logger.uriToLog(uri)
+            }
+            logger.debug('Error details:', { error });
+            return undefined;
+        }
     }
-    #isInitialized = false;
+
+    /** TODO doc */
+    protected constructor(filePath: vscode.Uri, fileContent: string) {
+        const parser = new AsXmlParser();
+        this.#filePath = filePath;
+        this.#xmlObj = parser.parse(fileContent);
+        const root = getXmlRootData(this.#xmlObj);
+        this.#xmlRootObj = root.value;
+        this.#xmlRootName = root.name;
+        this.#versionHeader = getXmlVersionHeader(this.#xmlObj);
+    }
 
     /** Path to the source file */
     public get filePath(): vscode.Uri {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${AsXmlFile.name} object`); }
         return this.#filePath;
     }
     #filePath: vscode.Uri;
 
     /** The Automation Studio XML header data */
-    public get header(): AsXmlHeader {
-        if (!this.#isInitialized || !this.#header) { throw new Error(`Use of not initialized ${AsXmlFile.name} object`); }
-        return this.#header;
+    public get versionHeader(): AsXmlVersionHeader {
+        return this.#versionHeader;
     }
-    #header: AsXmlHeader | undefined;
+    public set versionHeader(value: AsXmlVersionHeader) {
+        this.#versionHeader = value;
+        setXmlVersionHeader(this.#xmlObj, value);
+    }
+    #versionHeader: AsXmlVersionHeader;
 
-    /** The root element node of the XML file */
-    protected get rootElement(): xmlDom.Element {
-        if (!this.#isInitialized || !this.#rootElement) { throw new Error(`Use of not initialized ${AsXmlFile.name} object`); }
-        return this.#rootElement;
+    /** The javascript object representation of the XML */
+    protected get xmlObj(): ParsedXmlObject {
+        return this.#xmlObj;
     }
-    #rootElement: xmlDom.Element | undefined;
+    #xmlObj: ParsedXmlObject;
+
+    /** The name of the XML root element */
+    protected get xmlRootName(): string {
+        return this.#xmlRootName;
+    }
+    #xmlRootName: string;
+
+
+    /** The javascript object representation of the XML root element */
+    protected get xmlRootObj(): ParsedXmlObject {
+        return this.#xmlRootObj;
+    }
+    #xmlRootObj: ParsedXmlObject;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
     public toJSON(): any {
         return {
             filePath: this.filePath.toString(true),
-            header: this.header,
+            versionHeader: this.versionHeader,
+            xmlObj: this.xmlObj,
         };
     }
-}
 
-/**
- * Creates an XMLBuilder from a file path.
- * @throws If reading of file or creating of XMLBuilder failed
- */
-async function createXmlBuilder(filePath: vscode.Uri): Promise<XMLBuilder> {
-    try {
-        const projectDocument = await vscode.workspace.openTextDocument(filePath);
-        const contentText = projectDocument.getText();
-        return xmlbuilder2.create(contentText);
-    } catch (error) {
-        throw new Error('File does not exist or is no XML file');
+    /** Get the XML representation of the file */
+    public toXml(): string {
+        const builder = new AsXmlBuilder();
+        return builder.build(this.#xmlObj);
+    }
+
+    /**
+     * Write an XML file from the object contents
+     * @param filePath The path to the file which should be written. If omitted, `this.filePath` is used.
+     * @returns A promise which resolves to true on success
+     */
+    public async writeToFile(filePath: Uri = this.filePath): Promise<boolean> {
+        if (!this.checkWriteToFilePossible()) { return false; }
+        const xml = this.toXml();
+        await createFile(filePath, { ignoreIfExists: true }); // keep existing so the encoding and newline settings are kept by VS code
+        return await replaceAllTextInFile(filePath, xml);
+    }
+
+    /**
+     * Checks if writing the file is possible and allowed. If writing is not allowed the reason is logged.
+     * @returns `true` if writing the file is possible, false otherwise.
+     */
+    protected checkWriteToFilePossible(): boolean {
+        // Check for legacy PI version header
+        if (this.#hasLegacyVersionHeader()) {
+            logger.warning(`File "${this.filePath.fsPath}" has unsupported legacy file format and cannot be modified`); //TODO uri log #33
+            return false;
+        }
+        // all check passed -> writable
+        return true;
+    }
+
+    #hasLegacyVersionHeader(): boolean {
+        const headerIsEmpty = this.versionHeader.asVersion ? false
+            : this.versionHeader.asFileVersion ? false
+                : this.versionHeader.asWorkingVersion ? false
+                    : true;
+        return headerIsEmpty;
     }
 }
 
 /**
  * Get all existing version information from the AutomationStudio XML processing instruction header
  */
-function getXmlHeader(xml: XMLBuilder): AsXmlHeader {
-    const asHeaderNode = xml.find((child) => {
-        const node = child.node;
-        if (node.nodeType === node.PROCESSING_INSTRUCTION_NODE) {
-            return (node.nodeName === 'AutomationStudio');
-        }
-        return false;
-    })?.node;
-    const asHeaderData = asHeaderNode?.nodeValue ? ` ${asHeaderNode.nodeValue}` : ''; // Add space at begin for easier RegEx
-    // AS version full
-    const asVersionMatch = /^.*[ \t]+[Vv]ersion=["']*([\d\.]+).*$/m.exec(asHeaderData);
-    const asVersion = asVersionMatch ? asVersionMatch[1] : undefined;
-    // AS working version
-    const asWorkingVersionMatch = /^.*[ \t]+WorkingVersion="([\d\.]+)".*$/m.exec(asHeaderData);
-    const asWorkingVersion = asWorkingVersionMatch ? asWorkingVersionMatch[1] : undefined;
-    // AS file version
-    const asFileVersionMatch = /^.*[ \t]+FileVersion="([\d\.]+)".*$/m.exec(asHeaderData);
-    const asFileVersion = asFileVersionMatch ? asFileVersionMatch[1] : undefined;
+function getXmlVersionHeader(xmlObj: ParsedXmlObject): AsXmlVersionHeader {
+    //TODO currently does not work with old PI of AS version (not in attribute syntax)
+    const xmlAny = xmlObj as any; //HACK to access by indexer. find out how to solve properly?
+    const versionObj = xmlAny?.['?AutomationStudio']?._att;
+    const asVersion = versionObj?.Version as unknown;
+    const asWorkingVersion = versionObj?.WorkingVersion as unknown;
+    const asFileVersion = versionObj?.FileVersion as unknown;
     // return value
     return {
-        asVersion: asVersion,
-        asWorkingVersion: asWorkingVersion,
-        asFileVersion: asFileVersion,
+        asVersion: typeof asVersion === 'string' ? asVersion : undefined,
+        asWorkingVersion: typeof asWorkingVersion === 'string' ? asWorkingVersion : undefined,
+        asFileVersion: typeof asFileVersion === 'string' ? asFileVersion : undefined,
     };
 }
 
 /**
- * Gets the XML root element
- * @throws If no root node was found or if root node is not of type element
+ * Change the XML version information header to new data
  */
-function getRootElement(xml: XMLBuilder): xmlDom.Element {
-    try {
-        const rootNode = xml.root().node;
-        if (rootNode.nodeType === xmlDom.NodeType.Element) {
-            return rootNode as xmlDom.Element;
-        } else {
-            throw new Error('Root node type is not Element');
-        }
-    } catch (error) {
-        throw new Error('Failed to get root node');
+function setXmlVersionHeader(xmlObj: ParsedXmlObject, versionHeader: AsXmlVersionHeader): void {
+    // Only assign properties if the value is defined. Properties with assigned property and value undefined will lead to attr="undefined"
+    const attributesObj: Record<string, string> = {};
+    if (versionHeader.asVersion !== undefined) {
+        attributesObj.Version = versionHeader.asVersion;
     }
+    if (versionHeader.asWorkingVersion !== undefined) {
+        attributesObj.WorkingVersion = versionHeader.asWorkingVersion;
+    }
+    if (versionHeader.asFileVersion !== undefined) {
+        attributesObj.FileVersion = versionHeader.asFileVersion;
+    }
+    // add attribute object to PI node
+    const xmlAny = xmlObj as any; //HACK to access by indexer. find out how to solve properly?
+    xmlAny['?AutomationStudio'] = { _att: attributesObj };
+}
+
+function getXmlRootData(xmlObj: ParsedXmlObject): { name: string, value: ParsedXmlObject } {
+    const entries = Object.entries(xmlObj);
+    // filter out entries of non-elements
+    const withoutPI = entries.filter(([key, val]) => !key.startsWith('?'));
+    const withoutComments = withoutPI.filter(([key, val]) => key !== '_cmt'); //TODO do it in XmlParser? this option needs to be in sync with there
+    if (withoutComments.length !== 1) {
+        throw new Error('XML object contains multiple or no root elements');
+    }
+    // get and check root value
+    const [rootKey, rootValAny] = withoutComments[0];
+    const rootVal = rootValAny as unknown;
+    if (typeof rootVal !== 'object' || rootVal === null) {
+        throw new Error('XML root element is not an object');
+    }
+    return { name: rootKey, value: rootVal };
 }

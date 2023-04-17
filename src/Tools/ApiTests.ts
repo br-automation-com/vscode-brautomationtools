@@ -3,31 +3,30 @@
  * @packageDocumentation
  */
 
-import * as vscode from 'vscode';
-import * as xmlbuilder from 'xmlbuilder2';
-import * as xmlDom from '@oozcitak/dom/lib/dom/interfaces';
-import * as Helpers from './Helpers';
-import * as uriTools from './UriTools';
-import * as fileTools from './FileTools';
-import * as Dialogs from '../UI/Dialogs';
+import { spawnSync } from 'child_process';
 import * as semver from 'semver';
-import { logger } from './Logger';
-import { extensionConfiguration } from '../ExtensionConfiguration';
-import { statusBar } from '../UI/StatusBar';
+import * as vscode from 'vscode';
+import { AutomationStudioVersion } from '../Environment/AutomationStudioVersion';
+import { SystemGeneration, TargetArchitecture } from '../Environment/CommonTypes';
 import { Environment } from '../Environment/Environment';
 import { GccInstallation } from '../Environment/GccInstallation';
-import { SystemGeneration, TargetArchitecture } from '../Environment/CommonTypes';
-import { AutomationStudioVersion } from '../Environment/AutomationStudioVersion';
-import { spawnSync } from 'child_process';
-import { spawnAsync } from './ChildProcess';
-import { AsPackageFile } from '../Workspace/Files/AsPackageFile';
-import { CpuPackageFile } from '../Workspace/Files/CpuPackageFile';
-import { ConfigPackageFile } from '../Workspace/Files/ConfigPackageFile';
-import { AsProjectFile } from '../Workspace/Files/AsProjectFile';
-import { UserSettingsFile } from '../Workspace/Files/UserSettingsFile';
+import { getPlcProperties } from '../Environment/PlcLookup';
+import { extensionConfiguration } from '../ExtensionConfiguration';
+import * as Dialogs from '../UI/Dialogs';
+import { statusBar } from '../UI/StatusBar';
 import { AsProjectConfiguration } from '../Workspace/AsProjectConfiguration';
 import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
-import { getPlcProperties } from '../Environment/PlcLookup';
+import { AsPackageFile } from '../Workspace/Files/AsPackageFile';
+import { AsProjectFile } from '../Workspace/Files/AsProjectFile';
+import { AsXmlFile } from '../Workspace/Files/AsXmlFile';
+import { ConfigPackageFile } from '../Workspace/Files/ConfigPackageFile';
+import { CpuPackageFile } from '../Workspace/Files/CpuPackageFile';
+import { UserSettingsFile } from '../Workspace/Files/UserSettingsFile';
+import { spawnAsync } from './ChildProcess';
+import * as fileTools from './FileTools';
+import * as Helpers from './Helpers';
+import { logger } from './Logger';
+import * as uriTools from './UriTools';
 //import * as NAME from '../BRxxxxxx';
 
 
@@ -37,11 +36,11 @@ import { getPlcProperties } from '../Environment/PlcLookup';
  */
 export function registerApiTests(context: vscode.ExtensionContext) {
 	let disposable: vscode.Disposable | undefined;
-	
+
 	// Command: Test
 	disposable = vscode.commands.registerCommand('vscode-brautomationtools.test',
 		(arg1, arg2) => testCommand(arg1, arg2, context));
-    context.subscriptions.push(disposable);
+	context.subscriptions.push(disposable);
 }
 
 
@@ -79,7 +78,7 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	if (await Dialogs.yesNoDialog('Run tests for BRConfiguration?')) {
 		await testBRConfiguration();
 	}
-	if (await Dialogs.yesNoDialog('Run tests for workspace projects (NEW)?')) {
+	if (await Dialogs.yesNoDialog('Run tests for workspace projects?')) {
 		await testWorkspaceProjects();
 	}
 	if (await Dialogs.yesNoDialog('Run tests for BRAsProjectWorkspace?')) {
@@ -87,6 +86,9 @@ async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContex
 	}
 	if (await Dialogs.yesNoDialog('Run tests for workspace project files?')) {
 		await testProjectFiles();
+	}
+	if (await Dialogs.yesNoDialog('Run tests for workspace project files with manual selection?')) {
+		await testProjectFilesManualSel();
 	}
 	if (await Dialogs.yesNoDialog('Run tests for VS Code extension context?')) {
 		await testVsCodeExtensionContext(context);
@@ -112,34 +114,7 @@ async function testTemp(context: vscode.ExtensionContext): Promise<void> {
 async function testVarious(arg1: any, arg2: any) {
 	logHeader('Test various start');
 	// check command arguments
-	logger.info('arg1 and arg2:', {arg1: arg1, arg2: arg2});
-	// xmlbuilder tests
-	const xmlTextNormal =          `<?xml version="1.0" encoding="utf-8"?>
-									<?AutomationStudio Version=4.6.5.78 SP?>
-									<Physical xmlns="http://br-automation.co.at/AS/Physical">
-									<Objects>
-										<Object Type="Configuration" Description="No errors and no warnings">NoErrNoWrn</Object>
-										<Object Type="Configuration">Warnings</Object>
-										<Object Type="Configuration">Errors</Object>
-									</Objects>
-									</Physical>`;
-	const xmlTextNoRootCont =    `<?xml version="1.0" encoding="utf-8"?>
-								  <?AutomationStudio Version=4.6.5.78 SP?>
-								  </root>`;
-	const xmlTextNoRoot =        `<?xml version="1.0" encoding="utf-8"?>
-					        	  <?AutomationStudio Version=4.6.5.78 SP?>`;
-	const xmlTextMultiRoot =     `<?xml version="1.0" encoding="utf-8"?>
-								  <?AutomationStudio Version=4.6.5.78 SP?>
-								  <root1>Hello1</root1>
-								  <root2>Hello2</root2>`;
-	try {
-		const builder = xmlbuilder.create(xmlTextNormal); // throws on invalid XML (xmlTextNoRootCont, xmlTextMultiRoot)
-		const rootBld = builder.root(); // throws when no root is available (xmlTextNoRoot)
-		const rootNode = rootBld.node as xmlDom.Element;
-		logger.info('xmlbuilder tests', {rootNode: rootNode});
-	} catch (error) {
-		logger.info('xmlbuilder test error', {error: error});
-	}
+	logger.info('arg1 and arg2:', { arg1: arg1, arg2: arg2 });
 	// end
 	logHeader('Test various end');
 }
@@ -158,7 +133,7 @@ async function testFileSystemEvents() {
 	 * - e.g. change of active configuration
 	 */
 	const pattern = '**';
-	logger.info('createFileSystemWatcher:', {pattern: pattern});
+	logger.info('createFileSystemWatcher:', { pattern: pattern });
 	const watcher = vscode.workspace.createFileSystemWatcher(pattern);
 	watcher.onDidChange((uri) => {
 		logger.info('File changed:', { uri: uri.toString(true) });
@@ -182,7 +157,7 @@ async function testFileSystemEvents() {
 	 */
 	vscode.workspace.onDidRenameFiles((event) => {
 		const fromTo = event.files.map((f) => `${f.oldUri.toString(true)} -> ${f.newUri.toString(true)}`);
-		logger.info('Files renamed from -> to:', {fromTo: fromTo});
+		logger.info('Files renamed from -> to:', { fromTo: fromTo });
 	});
 	logHeader('Test file system events end');
 }
@@ -265,7 +240,7 @@ async function testFileTools() {
 	const wsUri = vscode.workspace.workspaceFolders[0].uri;
 	const fileUri = uriTools.pathJoin(wsUri, 'MyTempFile.txt');
 	logger.info(`Creating file ${fileUri.fsPath}`);
-	await fileTools.createFile(fileUri, {overwrite: true});
+	await fileTools.createFile(fileUri, { overwrite: true });
 	logger.info(`Insert text into file ${fileUri.fsPath}`);
 	await fileTools.insertTextInFile(fileUri, new vscode.Position(0, 0), 'asdf');
 	// end
@@ -323,7 +298,7 @@ async function testGcc(context: vscode.ExtensionContext): Promise<void> {
 	});
 	// Get targets
 	do {
-		const gccVersionStr = await vscode.window.showInputBox({title: 'Enter gcc version'});
+		const gccVersionStr = await vscode.window.showInputBox({ title: 'Enter gcc version' });
 		const gccVersion = semver.coerce(gccVersionStr) ?? undefined;
 		const sysGen = await Dialogs.getQuickPickSingleValue<SystemGeneration>([
 			{ value: 'SGC', label: 'SGC' },
@@ -452,7 +427,7 @@ async function testBRAsProjectWorkspace() {
 	const projectsData = await WorkspaceProjects.getProjects();
 	logger.info('WorkspaceProjects.getProjects()', { result: projectsData });
 	// find project for path
-	const pathToGetProject = await vscode.window.showInputBox({prompt: 'Enter path to get corresponding project'});
+	const pathToGetProject = await vscode.window.showInputBox({ prompt: 'Enter path to get corresponding project' });
 	if (pathToGetProject) {
 		const uri = vscode.Uri.file(pathToGetProject);
 		const projectForPath = await WorkspaceProjects.getProjectForUri(uri);
@@ -540,11 +515,11 @@ async function testProjectFiles(): Promise<void> {
 	const asProject = asProjects[0];
 	// test *.apj info
 	const projectFilePath = asProject.paths.projectFile;
-	const projectFile = await AsProjectFile.createFromPath(projectFilePath);
+	const projectFile = await AsProjectFile.createFromFile(projectFilePath);
 	logger.info('AsProjectFile.createFromPath(uri)', { uri: projectFilePath.toString(true), result: projectFile });
 	// test Physical.pkg
 	const physicalPkgPath = uriTools.pathJoin(asProject.paths.physical, 'Physical.pkg');
-	const physicalPkg = await AsPackageFile.createFromPath(physicalPkgPath);
+	const physicalPkg = await AsPackageFile.createFromFile(physicalPkgPath);
 	logger.info('AsPackageFile.createFromPath(uri)', { uri: physicalPkgPath.toString(true), result: physicalPkg });
 	logger.info('Resolve child object paths for package uri', {
 		filePath: physicalPkg?.filePath.toString(true),
@@ -553,7 +528,7 @@ async function testProjectFiles(): Promise<void> {
 	// test Config.pkg
 	const configPkgPaths = await vscode.workspace.findFiles({ base: asProject.paths.physical.fsPath, pattern: '*/Config.pkg' });
 	for (const configPkgPath of configPkgPaths) {
-		const configPkg = await ConfigPackageFile.createFromPath(configPkgPath);
+		const configPkg = await ConfigPackageFile.createFromFile(configPkgPath);
 		logger.info('ConfigPackageFile.createFromPath(uri)', { uri: configPkgPath.toString(true), result: configPkg });
 		logger.info('Resolve child object paths for package uri', {
 			filePath: configPkg?.filePath.toString(true),
@@ -563,7 +538,7 @@ async function testProjectFiles(): Promise<void> {
 	// test Cpu.pkg
 	const cpuPkgPaths = await vscode.workspace.findFiles({ base: asProject.paths.physical.fsPath, pattern: '*/*/Cpu.pkg' });
 	for (const cpuPkgPath of cpuPkgPaths) {
-		const cpuPkg = await CpuPackageFile.createFromPath(cpuPkgPath);
+		const cpuPkg = await CpuPackageFile.createFromFile(cpuPkgPath);
 		logger.info('CpuPackageFile.createFromPath(uri)', { uri: cpuPkgPath.toString(true), result: cpuPkg });
 		logger.info('Resolve child object paths for package uri', {
 			filePath: cpuPkg?.filePath.toString(true),
@@ -585,7 +560,42 @@ async function testProjectFiles(): Promise<void> {
 }
 
 
-async function testVsCodeExtensionContext(context: vscode.ExtensionContext) : Promise<void> {
+async function testProjectFilesManualSel(): Promise<void> {
+	logHeader('Test project files start');
+	// select a file for further tests
+	const filePath = await selectFile();
+	if (filePath === undefined) {
+		return;
+	}
+	const fileContent = (await vscode.workspace.openTextDocument(filePath)).getText();
+	// test base XML file
+	const xmlFile = await AsXmlFile.createFromFile(filePath);
+	logger.info('AsXmlFileNew.createFromFile(uri)', {
+		uri: filePath.toString(true),
+		result: xmlFile,
+		resultEqualToSource: (xmlFile?.toXml() === fileContent)
+	});
+	// Write XML file to disk
+	const newFileName = await vscode.window.showInputBox({ prompt: 'Enter new file name to save XML, empty or ESC to abort' });
+	if (newFileName && xmlFile) {
+		const xmlDir = uriTools.pathDirname(filePath);
+		const newFilePath = uriTools.pathJoin(xmlDir, newFileName);
+		const success = await xmlFile.writeToFile(newFilePath);
+		logger.info(`Tried to write file "${newFilePath.fsPath}"`, { success: success });
+	}
+	// Test project file
+	const prjFile = await AsProjectFile.createFromFile(filePath);
+	logger.info('AsProjectFile.createFromFile(uri)', {
+		uri: filePath.toString(true),
+		result: prjFile,
+		resultEqualToSource: (prjFile?.toXml() === fileContent)
+	});
+	//end
+	logHeader('Test project files end');
+}
+
+
+async function testVsCodeExtensionContext(context: vscode.ExtensionContext): Promise<void> {
 	//TODO can be used for generated files, user query flags...
 	// see https://code.visualstudio.com/api/extension-capabilities/common-capabilities#data-storage
 	logHeader('Test VsCodeExtensionContext start');
@@ -749,4 +759,15 @@ function logHeader(text: string): void {
 	logger.info(text);
 	logger.info(separator);
 	logger.info('');
+}
+
+async function selectFile(): Promise<vscode.Uri | undefined> {
+	const options: vscode.OpenDialogOptions = {
+		canSelectMany: false,
+		openLabel: 'Select',
+		canSelectFiles: true,
+		canSelectFolders: false
+	};
+	const selection = await vscode.window.showOpenDialog(options);
+	return selection?.[0];
 }

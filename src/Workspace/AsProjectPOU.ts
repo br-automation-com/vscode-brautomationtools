@@ -70,7 +70,7 @@ export class AsProjectPou {
      * @throws If a required initialization process failed
      */
     protected async _initialize(): Promise<void> {
-        this.#pouPkg = await AsPackageFile.createFromPath(this.#pouPkgPath);
+        this.#pouPkg = await AsPackageFile.createFromFile(this.#pouPkgPath);
         if (this.#pouPkg === undefined) {
             throw new Error('Failed to create package file');
         }

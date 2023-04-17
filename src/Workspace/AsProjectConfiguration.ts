@@ -21,7 +21,7 @@ export class AsProjectConfiguration {
      */
     public static async createFromPhysicalPkg(physicalPkgPath: vscode.Uri, projectRoot: vscode.Uri): Promise<AsProjectConfiguration[]> {
         // get package file and return empty if failed
-        const physicalPkg = await AsPackageFile.createFromPath(physicalPkgPath);
+        const physicalPkg = await AsPackageFile.createFromFile(physicalPkgPath);
         if (physicalPkg === undefined) {
             return [];
         }
@@ -49,13 +49,13 @@ export class AsProjectConfiguration {
         try {
             const config = new AsProjectConfiguration(configRoot, projectRoot, description);
             await config.#initialize();
-            logger.detail(`Project configuration found in '${config.rootPath.toString(true)}'`);
+            logger.detail(`Project configuration found in "${config.rootPath.toString(true)}"`);//TODO uri log #33
             return config;
         } catch (error) {
             if (error instanceof Error) {
-                logger.error(`Failed to parse project configuration in path '${configRoot.toString(true)}': ${error.message}`);
+                logger.error(`Failed to parse project configuration in path '${configRoot.toString(true)}': ${error.message}`);//TODO uri log #33
             } else {
-                logger.error(`Failed to parse project configuration in path '${configRoot.toString(true)}'`);
+                logger.error(`Failed to parse project configuration in path '${configRoot.toString(true)}'`);//TODO uri log #33
             }
             return undefined;
         }
@@ -75,14 +75,14 @@ export class AsProjectConfiguration {
     async #initialize(): Promise<void> {
         // Get mandatory main configuration package
         const configPkgPath = uriTools.pathJoin(this.#rootPath, 'Config.pkg');
-        this.#configPkg = await ConfigPackageFile.createFromPath(configPkgPath);
+        this.#configPkg = await ConfigPackageFile.createFromFile(configPkgPath);
         if (!this.#configPkg) {
             throw new Error('Configuration package could not be parsed');
         }
         // Get optional cpu package
         const cpuRootPath = this.#configPkg.cpuChildObject.resolvePath(this.#projectRoot);
         const cpuPkgPath = uriTools.pathJoin(cpuRootPath, 'Cpu.pkg');
-        this.#cpuPkg = await CpuPackageFile.createFromPath(cpuPkgPath);
+        this.#cpuPkg = await CpuPackageFile.createFromFile(cpuPkgPath);
         // init done
         this.#isInitialized = true;
     }

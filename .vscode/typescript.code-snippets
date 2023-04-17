@@ -20,7 +20,7 @@
 		"body": [
 			"/** ${3:TODO Description} */",
 			"public get ${1:name}(): ${2:string} {",
-			"    if (!this.#isInitialized || !this.#$1) { throw new Error(`Use of not initialized object`); }",
+			"    if (!this.#isInitialized || (this.#$1 === undefined)) { throw new Error(`Use of not initialized object`); }",
 			"    return this.#$1;$0",
 			"}",
 			"#$1: $2 | undefined;",
