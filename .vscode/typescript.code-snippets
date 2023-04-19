@@ -27,4 +27,18 @@
 		],
 		"description": "Log output to console"
 	},
+	"ESLint XML disable": {
+		"prefix": "eslint xml disable",
+		"body": [
+			"/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */",
+		],
+		"description": "Disable ESLint errors of XML object access"
+	},
+	"ESLint XML enable": {
+		"prefix": "eslint xml enable",
+		"body": [
+			"/* eslint-enable */",
+		],
+		"description": "Disable ESLint errors of XML object access"
+	},
 }

@@ -24,7 +24,7 @@ let extensionContext: vscode.ExtensionContext | undefined;
  * Initialize this module
  * @param context The context of this extension
  */
-async function initialize(context: vscode.ExtensionContext) {
+function initialize(context: vscode.ExtensionContext): void {
     extensionContext = context;
 }
 
@@ -41,7 +41,11 @@ async function activationMessage(): Promise<void> {
     }
     // Show pop-up message if activated
     const hideNotification = extensionConfiguration.notifications.hideActivationMessage;
-    const extensionName = extensionContext.extension.packageJSON.displayName;
+    const extensionName = getJsonStringProperty("displayName");
+    if (typeof extensionName !== 'string') {
+        logger.error('Failed to get extension display name from package.json');
+        return;
+    }
     if (!hideNotification) {
         const message = `Extension ${extensionName} is now active`;
         const hideButton = "Don't show on activation";
@@ -66,8 +70,8 @@ async function newVersionMessage(): Promise<void> {
     // Get saved state and actual extension version
     const shownVersionVal = extensionState.notifications.lastShownVersion;
     const hideNotification = extensionConfiguration.notifications.hideNewVersionMessage;
-    const extensionVersion = extensionContext.extension.packageJSON.version;
-    const extensionName = extensionContext.extension.packageJSON.displayName;
+    const extensionVersion = getJsonStringProperty("version");
+    const extensionName = getJsonStringProperty("displayName");
     // Show information message on update
     if (shownVersionVal !== extensionVersion) {
         // Update global state
@@ -97,13 +101,29 @@ async function configChangedMessage(): Promise<void> {
         return;
     }
     // Show pop-up message if activated
-    const extensionName = extensionContext.extension.packageJSON.displayName;
+    const extensionName = getJsonStringProperty("displayName");
     const message = `${extensionName} configuration was changed. Please reload window for changes to take effect.`;
     const reloadButton = 'Reload';
     const result = await vscode.window.showInformationMessage(message, reloadButton);
     if (result === reloadButton) {
         await vscode.commands.executeCommand('workbench.action.reloadWindow');
     }
+}
+
+function getJsonProperty(propertyName: string): unknown {
+    if (extensionContext === undefined) {
+        return undefined;
+    }
+    const json = extensionContext.extension.packageJSON as unknown;
+    if (typeof json !== 'object' || json === null) {
+        return undefined;
+    }
+    return Object.entries(json).find(([key, val]) => key === propertyName)?.[1];
+}
+
+function getJsonStringProperty(propertyName: string): string | undefined {
+    const property = getJsonProperty(propertyName);
+    return typeof property === 'string' ? property : undefined;
 }
 
 

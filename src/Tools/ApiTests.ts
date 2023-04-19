@@ -1,12 +1,11 @@
+/* eslint-disable @typescript-eslint/require-await */
 /**
  * Tests for APIs by invoking a test command
  * @packageDocumentation
  */
 
-import { spawnSync } from 'child_process';
 import * as semver from 'semver';
 import * as vscode from 'vscode';
-import { AutomationStudioVersion } from '../Environment/AutomationStudioVersion';
 import { SystemGeneration, TargetArchitecture } from '../Environment/CommonTypes';
 import { Environment } from '../Environment/Environment';
 import { GccInstallation } from '../Environment/GccInstallation';
@@ -22,7 +21,6 @@ import { AsXmlFile } from '../Workspace/Files/AsXmlFile';
 import { ConfigPackageFile } from '../Workspace/Files/ConfigPackageFile';
 import { CpuPackageFile } from '../Workspace/Files/CpuPackageFile';
 import { UserSettingsFile } from '../Workspace/Files/UserSettingsFile';
-import { spawnAsync } from './ChildProcess';
 import * as fileTools from './FileTools';
 import * as Helpers from './Helpers';
 import { logger } from './Logger';
@@ -34,17 +32,15 @@ import * as uriTools from './UriTools';
  * Register test functionality
  * @param context The extension context
  */
-export function registerApiTests(context: vscode.ExtensionContext) {
-	let disposable: vscode.Disposable | undefined;
-
+export function registerApiTests(context: vscode.ExtensionContext): void {
 	// Command: Test
-	disposable = vscode.commands.registerCommand('vscode-brautomationtools.test',
+	const disposable = vscode.commands.registerCommand('vscode-brautomationtools.test',
 		(arg1, arg2) => testCommand(arg1, arg2, context));
 	context.subscriptions.push(disposable);
 }
 
 
-async function testCommand(arg1: any, arg2: any, context: vscode.ExtensionContext) {
+async function testCommand(arg1: unknown, arg2: unknown, context: vscode.ExtensionContext): Promise<void> {
 	logger.showOutput();
 	logHeader('Test command start');
 	// select tests to execute
@@ -111,7 +107,7 @@ async function testTemp(context: vscode.ExtensionContext): Promise<void> {
 	logHeader('Test temporary stuff end');
 }
 
-async function testVarious(arg1: any, arg2: any) {
+async function testVarious(arg1: unknown, arg2: unknown): Promise<void> {
 	logHeader('Test various start');
 	// check command arguments
 	logger.info('arg1 and arg2:', { arg1: arg1, arg2: arg2 });
@@ -119,7 +115,7 @@ async function testVarious(arg1: any, arg2: any) {
 	logHeader('Test various end');
 }
 
-async function testFileSystemEvents() {
+async function testFileSystemEvents(): Promise<void> {
 	logHeader('Test file system events start');
 	/** 
 	 * #### Test FileSystemWatcher:
@@ -163,7 +159,7 @@ async function testFileSystemEvents() {
 }
 
 
-async function testUriTools() {
+async function testUriTools(): Promise<void> {
 	logHeader('Test UriTools start');
 	const uriFrom = vscode.Uri.file('C:\\Temp\\');
 	const uriToIsSub = vscode.Uri.file('c:\\Temp\\Test1\\test.txt');
@@ -231,7 +227,7 @@ async function testUriTools() {
 }
 
 
-async function testFileTools() {
+async function testFileTools(): Promise<void> {
 	logHeader('Test FileTools start');
 	if (!vscode.workspace.workspaceFolders) {
 		logger.info('No workspace folder defined');
@@ -248,7 +244,7 @@ async function testFileTools() {
 }
 
 
-async function testHelpers() {
+async function testHelpers(): Promise<void> {
 	logHeader('Test Helpers start');
 	// test pushDefined
 	const mixedValues = [true, false, undefined, null];
@@ -347,7 +343,7 @@ async function testPvi(context: vscode.ExtensionContext): Promise<void> {
 }
 
 
-async function testBRConfiguration() {
+async function testBRConfiguration(): Promise<void> {
 	logHeader('Test BRConfiguration start');
 	logger.info('Get configuration values', {
 		build: {
@@ -371,7 +367,7 @@ async function testBRConfiguration() {
 }
 
 
-async function testWorkspaceProjects() {
+async function testWorkspaceProjects(): Promise<void> {
 	logHeader('Test workspace projects start');
 	// Get project for directories...
 	const projects = await WorkspaceProjects.getProjects();
@@ -414,7 +410,7 @@ async function testWorkspaceProjects() {
 }
 
 
-async function testBRAsProjectWorkspace() {
+async function testBRAsProjectWorkspace(): Promise<void> {
 	//TODO, old, remove
 	logHeader('Test WorkspaceProjects start');
 	// Update AS projects
@@ -552,7 +548,7 @@ async function testProjectFiles(): Promise<void> {
 	// test *.set info
 	const settingFiles = await vscode.workspace.findFiles({ base: asProject.paths.projectRoot.fsPath, pattern: '*.set' });
 	for (const file of settingFiles) {
-		const result = await UserSettingsFile.createFromPath(file);
+		const result = await UserSettingsFile.createFromFile(file);
 		logger.info('UserSettingsFile.createFromPath(uri)', { uri: file.toString(true), result: result });
 	}
 	//end
@@ -650,9 +646,9 @@ async function testStatusBar(context: vscode.ExtensionContext): Promise<void> {
 	statusBar.addBusyItem(rejectIn20, 'Reject in 20 seconds');
 	// manual remove busy item
 	const manualRemove = statusBar.addBusyItem(resolveIn15, 'Resolve in 15 seconds, but remove after 10');
-	resolveIn10.then(() => statusBar.removeBusyItem(manualRemove));
+	void resolveIn10.then(() => statusBar.removeBusyItem(manualRemove));
 	// empty busy item coming later
-	resolveIn25.then(() => statusBar.addBusyItem(resolveIn30));
+	void resolveIn25.then(() => statusBar.addBusyItem(resolveIn30));
 	// Show look and feel test dummys
 	statusBar.showConfigAndDeployedDummy(resolveIn30);
 	logHeader('Test StatusBar end');

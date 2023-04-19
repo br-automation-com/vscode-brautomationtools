@@ -14,7 +14,7 @@ export class ConfigPackageFile extends AsPackageFile {
      * @param filePath The Configuration package file path. e.g. `C:\Projects\Test\Physical\TestCOnfig\Config.pkg`
      * @returns The Configuration package file representation which was parsed from the file
      */
-    public static async createFromFile(filePath: Uri): Promise<ConfigPackageFile | undefined> {
+    public static override async createFromFile(filePath: Uri): Promise<ConfigPackageFile | undefined> {
         // Create and initialize object
         try {
             const textDoc = await vscode.workspace.openTextDocument(filePath);
@@ -54,7 +54,7 @@ export class ConfigPackageFile extends AsPackageFile {
     #cpuChildObject: AsPackageObject;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public override toJSON(): Record<string, unknown> {
         const obj = super.toJSON();
         obj.cpuChildObject = this.cpuChildObject;
         return obj;

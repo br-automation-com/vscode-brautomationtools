@@ -14,7 +14,7 @@ export class UserSettingsFile extends AsXmlFile {
      * @param filePath The user settings file path. e.g. `C:\Projects\Test\LastUser.set`
      * @returns The user settings file representation which was parsed from the file
      */
-    public static async createFromPath(filePath: Uri): Promise<UserSettingsFile | undefined> {
+    public static override async createFromFile(filePath: Uri): Promise<UserSettingsFile | undefined> {
         // Create and initialize object
         try {
             const textDoc = await vscode.workspace.openTextDocument(filePath);
@@ -29,12 +29,12 @@ export class UserSettingsFile extends AsXmlFile {
     /** TODO doc */
     protected constructor(filePath: Uri, fileContent: string) {
         super(filePath, fileContent);
+        /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
         const rootAny = this.xmlRootObj as any;
-        // get active configuration
         const activeConfiguration = rootAny?.ConfigurationManager?._att?.ActiveConfigurationName as unknown;
-        this.#activeConfiguration = typeof activeConfiguration === 'string' ? activeConfiguration : undefined;
-        // get deployment target
         const deploymentTarget = rootAny?.Deployment?._att?.Value as unknown;
+        /* eslint-enable */
+        this.#activeConfiguration = typeof activeConfiguration === 'string' ? activeConfiguration : undefined;
         this.#deploymentTarget = typeof deploymentTarget === 'string' ? deploymentTarget : undefined;
     }
 
@@ -59,7 +59,7 @@ export class UserSettingsFile extends AsXmlFile {
     #deploymentTarget: string | undefined;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public override toJSON(): Record<string, unknown> {
         const obj = super.toJSON();
         obj.activeConfiguration = this.activeConfiguration;
         obj.deploymentTarget = this.deploymentTarget;
@@ -69,6 +69,7 @@ export class UserSettingsFile extends AsXmlFile {
 
 function setActiveConfiguration(xmlRootObj: ParsedXmlObject, activeConfiguration: string | undefined): void {
     //TODO delete property if undefined?
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const rootAny = xmlRootObj as any;
     const configManagerAtt = rootAny?.ConfigurationManager?._att ?? {};
     if (typeof configManagerAtt !== 'object') { throw new Error('ROOT.ConfigurationManager._att is not an object'); }
@@ -78,4 +79,5 @@ function setActiveConfiguration(xmlRootObj: ParsedXmlObject, activeConfiguration
     } else {
         rootAny.ConfigurationManager._att = configManagerAtt;
     }
+    /* eslint-enable */
 }

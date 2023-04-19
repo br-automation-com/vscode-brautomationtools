@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 
 
 export interface BusyItem {
-    whenDone: Promise<any>,
+    whenDone: Promise<unknown>,
     text: string | undefined
 }
 
@@ -42,7 +42,7 @@ class StatusBar {
      * @param text An optional text which is shown as a line in the tooltip of the busy indicator
      * @returns The item which was created. It can be used to remove the item from the indicator before the promis was resolved.
      */
-    addBusyItem(hideWhenDone: Promise<any>, text?: string | undefined): BusyItem {
+    addBusyItem(hideWhenDone: Promise<unknown>, text?: string | undefined): BusyItem {
         const item = {
             whenDone: hideWhenDone,
             text: text
@@ -58,14 +58,14 @@ class StatusBar {
      * Removes an item from the busy indicator in the status bar.
      * @param item The item to remove from the busy indicator
      */
-    removeBusyItem(item: BusyItem) {
+    removeBusyItem(item: BusyItem): void {
         this.#busyItems.delete(item);
         this.#updateBusyStatus();
     }
 
 
     /** Updates the status of the busy indicator. */
-    #updateBusyStatus() {
+    #updateBusyStatus(): void {
         if (this.#busyItems.size === 0) {
             this.#busyStatus.hide();
             return;
@@ -83,7 +83,7 @@ class StatusBar {
 
 
     /**     */
-    showConfigAndDeployedDummy(hideWhenDone: Promise<any>) {
+    showConfigAndDeployedDummy(hideWhenDone: Promise<unknown>): void {
         //TODO this is only for testing the look and feel of the status bar items. It has to be done in the proper place
         //     in the extension, so an update works in both ways...
         // select configuration
@@ -101,13 +101,13 @@ class StatusBar {
         selectDeployed.command = 'vscode-brautomationtools.dialogSelectBuildMode';
         selectDeployed.show();
         // hide when resolved
-        hideWhenDone.then(() => {
+        void hideWhenDone.then(() => {
             selectConfig.dispose();
             selectDeployed.dispose();
         });
     }
 
-    dispose() {
+    dispose(): void {
         this.#busyStatus.dispose();
     }
 }

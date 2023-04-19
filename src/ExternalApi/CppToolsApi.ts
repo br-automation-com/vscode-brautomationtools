@@ -22,7 +22,7 @@ export async function registerCppToolsConfigurationProvider(context: vscode.Exte
 
 // HACK to try out change of provider config quick and dirty. Figure out in #5 architectural changes.
 // Works well -> implement properly
-export async function didChangeCppToolsConfig() {
+export function didChangeCppToolsConfig(): void {
     CppConfigurationProvider.getInstance().didChangeCppToolsConfig();
 }
 
@@ -48,13 +48,13 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
         }
         this.#cppApi.registerCustomConfigurationProvider(this);
         // Ready only parsing of workspace and environment (required for proper includes)
-        Environment.automationStudio.getVersions().then(() => this.didChangeCppToolsConfig());
-        WorkspaceProjects.getProjects().then(() => this.didChangeCppToolsConfig());
+        void Environment.automationStudio.getVersions().then(() => this.didChangeCppToolsConfig()); // TODO clarify async in #55
+        void WorkspaceProjects.getProjects().then(() => this.didChangeCppToolsConfig()); // TODO clarify async in #55
         this.#cppApi.notifyReady(this);
         return true;
     }
 
-    didChangeCppToolsConfig() {
+    didChangeCppToolsConfig(): void {
         this.#cppApi?.didChangeCustomConfiguration(this);
     }
 
@@ -99,10 +99,10 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
     // According to https://code.visualstudio.com/docs/cpp/c-cpp-properties-schema-reference 'includePath' is used for most features.
     // Currently 'browse.path' used is still by the C/C++ extension when no compiler is present, but in future versions 'includePath'
     // will be also used in this situation.
-    async canProvideBrowseConfiguration(): Promise<boolean> { return false; }
-    async provideBrowseConfiguration(): Promise<cppTools.WorkspaceBrowseConfiguration> { return { browsePath: [] }; }
-    async canProvideBrowseConfigurationsPerFolder(): Promise<boolean> { return false; }
-    async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cppTools.WorkspaceBrowseConfiguration> { return { browsePath: [] }; }
+    async canProvideBrowseConfiguration(): Promise<boolean> { return Promise.resolve(false); }
+    async provideBrowseConfiguration(): Promise<cppTools.WorkspaceBrowseConfiguration> { return Promise.resolve({ browsePath: [] }); }
+    async canProvideBrowseConfigurationsPerFolder(): Promise<boolean> { return Promise.resolve(false); }
+    async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cppTools.WorkspaceBrowseConfiguration> { return Promise.resolve({ browsePath: [] }); }
 
     //#endregion cppTools.CustomConfigurationProvider interface implementation
 
@@ -134,7 +134,7 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
     }
 
     /** Dispose all disposable resources */
-    dispose() {
+    dispose(): void {
         this.#cppApi?.dispose();
     }
 

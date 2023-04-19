@@ -6,12 +6,12 @@ export interface ExecuteResult {
     exitCode: number;
     stdout: {
         string: string,
-        chunks: any[],
+        chunks: unknown[],
         stringChunks: string[],
     },
     stderr: {
         string: string,
-        chunks: any[],
+        chunks: unknown[],
         stringChunks: string[],
     }
 }

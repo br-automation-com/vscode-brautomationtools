@@ -3,7 +3,6 @@ import { logger } from '../../Tools/Logger';
 import { ParsedXmlObject } from './AsXmlParser';
 
 export class AsXmlBuilder {
-    constructor() { }
 
     #builder = new XMLBuilder({
         // shared options, keep in sync with AsXmlParser
@@ -21,7 +20,7 @@ export class AsXmlBuilder {
     });
 
     public build(xmlObj: ParsedXmlObject): string {
-        const buildResult = this.#builder.build(xmlObj);
+        const buildResult = this.#builder.build(xmlObj) as unknown;
         if (typeof buildResult !== 'string') {
             logger.error('AsXmlBuilder buildResult is not of type string!');
             return '';

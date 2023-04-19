@@ -180,14 +180,14 @@ export class AsProject implements vscode.Disposable {
     ];
 
     /** Dispose all allocated resources */
-    public dispose() {
+    public dispose(): void {
         for (const disposable of this.#disposables) {
             disposable.dispose();
         }
     }
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public toJSON(): unknown {
         return {
             name: this.name,
             description: this.description,
@@ -279,7 +279,7 @@ export class AsProject implements vscode.Disposable {
         if (!await exists(this.#userSettingsPath)) {
             return defaultConfig;
         }
-        const userSettingsFile = await UserSettingsFile.createFromPath(this.#userSettingsPath);
+        const userSettingsFile = await UserSettingsFile.createFromFile(this.#userSettingsPath);
         const activeConfig = this.#configurations?.find((cfg) => cfg.name === userSettingsFile?.activeConfiguration);
         return activeConfig ?? defaultConfig;
     }
@@ -312,7 +312,7 @@ export class AsProject implements vscode.Disposable {
         if (!this.#userSettingsPath || !await exists(this.#userSettingsPath)) {
             throw new Error('File does not exist');
         }
-        const userSettingsFile = await UserSettingsFile.createFromPath(this.#userSettingsPath);
+        const userSettingsFile = await UserSettingsFile.createFromFile(this.#userSettingsPath);
         if (userSettingsFile === undefined) {
             throw new Error('File could not be parsed');
         }

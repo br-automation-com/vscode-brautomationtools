@@ -10,7 +10,7 @@
  * @param value Value to be checked
  * @returns true if value is a `string[]`, false otherwise
  */
-export function isStringArray(value: any): value is string[] {
+export function isStringArray(value: unknown): value is string[] {
     if (!Array.isArray(value) ) {
         return false;
     }
@@ -29,7 +29,7 @@ export function isStringArray(value: any): value is string[] {
  * @param value Value to be checked
  * @returns true if value is a primitive `string`, false otherwise
  */
-export function isString(value: any): value is string {
+export function isString(value: unknown): value is string {
     if (typeof value === 'string') {
         return true;
     } else {

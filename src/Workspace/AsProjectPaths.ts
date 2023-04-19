@@ -63,7 +63,7 @@ export class AsProjectPaths {
     #binaries: vscode.Uri;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public toJSON(): Record<string, unknown> {
         return {
             projectRoot: this.projectRoot.toString(true),
             projectFile: this.projectFile.toString(true),

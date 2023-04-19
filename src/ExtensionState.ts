@@ -49,7 +49,7 @@ class ExtensionState {
             return isString(value) ? value : undefined;
         }
         public set lastShownVersion(value: string | undefined) {
-            this.parent.#context?.globalState.update(this.#lastShownVersionKey, value);
+            void this.parent.#context?.globalState.update(this.#lastShownVersionKey, value);
         }
     } (this) ;
 }

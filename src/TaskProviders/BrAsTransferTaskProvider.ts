@@ -25,9 +25,8 @@ import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
  * Registers all task providers
  * @param context Extension context to push disposables
  */
-export function registerTaskProviders(context: vscode.ExtensionContext) {
-    let disposable: vscode.Disposable | undefined;
-    disposable = vscode.tasks.registerTaskProvider(transferTaskTypeName, new BrAsTransferTaskProvider());
+export function registerTaskProviders(context: vscode.ExtensionContext): void {
+    const disposable = vscode.tasks.registerTaskProvider(transferTaskTypeName, new BrAsTransferTaskProvider());
     context.subscriptions.push(disposable);
 }
 
@@ -55,6 +54,7 @@ const transferTaskProblemMatchers = ['$BrAsBuild'];
  */
 //SYNC Needs to be in sync with package.json/contributes/taskDefinitions/[n]/ description and enums
 //TODO package.json
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 enum BrAsTransferLiterals{
     useSettings            = '$useSettings',
     lastBuiltConfiguration = '$lastBuiltConfig' //TODO implement
@@ -140,10 +140,10 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
      * Used to provide standard tasks available in the workspace.
      * Tasks will be executed after selection without calling resolveTask().
      */
-    public async provideTasks(): Promise<vscode.Task[] | undefined> {
+    public provideTasks(): vscode.Task[] | undefined {
         const result: vscode.Task[] = [];
         // Ethernet with dialogs for IP address and install settings
-        const taskEthernetDialogAll = await BrAsTransferTaskProvider.definitionToTask({
+        const taskEthernetDialogAll = BrAsTransferTaskProvider.definitionToTask({
             type:            transferTaskTypeName,
             asProjectFile:   undefined,
             asConfiguration: undefined,
@@ -169,7 +169,7 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
         taskEthernetDialogAll.name = 'Ethernet with dialogs for IP address and install settings';
         result.push(taskEthernetDialogAll);
         // Ethernet with dialog for IP address and default install settings
-        const taskEthernetDialogAddr = await BrAsTransferTaskProvider.definitionToTask({
+        const taskEthernetDialogAddr = BrAsTransferTaskProvider.definitionToTask({
             type:                 transferTaskTypeName,
 
             asProjectFile:   undefined,
@@ -196,7 +196,7 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
         taskEthernetDialogAddr.name = 'Ethernet with dialog for IP address and default install settings';
         result.push(taskEthernetDialogAddr);
         // ArSim with default install settings
-        const taskArSimDefaultInstall = await BrAsTransferTaskProvider.definitionToTask({
+        const taskArSimDefaultInstall = BrAsTransferTaskProvider.definitionToTask({
             type:                 transferTaskTypeName,
 
             asProjectFile:   undefined,
@@ -232,12 +232,12 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
      * This is not called when the task is executed in the selection dialog after provideTasks()
      * @param task The task from the tasks.json or the recently used selection.
      */
-    public async resolveTask(task: vscode.Task): Promise<vscode.Task | undefined> {
+    public resolveTask(task: vscode.Task): vscode.Task | undefined {
         const transferDefinition = BrAsTransferTaskProvider.taskToDefinition(task);
         if (!transferDefinition) {
             return undefined;
         }
-        const transferTask = await BrAsTransferTaskProvider.definitionToTask(transferDefinition);
+        const transferTask = BrAsTransferTaskProvider.definitionToTask(transferDefinition);
         transferTask.definition = task.definition; // resolveTask requires that the original definition object is used. Otherwise a new call to provideTasks is done.
         return transferTask;
     }
@@ -261,10 +261,10 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
      * Creates a task for RUC transfer by using the task definition values.
      * @param definition The defined values of the task
      */
-    private static async definitionToTask(definition: BrAsTransferTaskDefinition): Promise<vscode.Task> {
+    private static definitionToTask(definition: BrAsTransferTaskDefinition): vscode.Task {
         // create execution and task
-        let name = this.definitionToTaskName(definition);
-        const customExec = new vscode.CustomExecution(async () => new BrPviTransferTerminal(definition));
+        const name = this.definitionToTaskName(definition);
+        const customExec = new vscode.CustomExecution(async () => Promise.resolve(new BrPviTransferTerminal(definition)));
         const task = new vscode.Task(
             definition,                     // taskDefinition
             vscode.TaskScope.Workspace,     // scope
@@ -331,8 +331,9 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
 
 
     // The task should wait to do further execution until [Pseudoterminal.open](#Pseudoterminal.open) is called.
-    async open(initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
-        this.executePVITransfer();
+    open(initialDimensions: vscode.TerminalDimensions | undefined): void {
+        void this.executePVITransfer(); //TODO it seems like the handling here for the promise... is not done well
+         // TODO clarify async in #55
     }
 
 
@@ -397,7 +398,7 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
         }
         const rucPackageBaseUri = uriTools.pathJoin(asProject.paths.binaries, asConfigurationData.outPathOffset, 'RUCPackage');
         const rucPackageUri = uriTools.pathJoin(rucPackageBaseUri, 'RUCPackage.zip');
-        if (!uriTools.exists(rucPackageUri)) {
+        if (!await uriTools.exists(rucPackageUri)) {
             this.writeLine(`ERROR: No RUC package found for configuration ${usedDefinition.asConfiguration}. Please build RUC package first.`);
             this.done(50);
             return;
@@ -435,7 +436,7 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
      * Writes to the terminal
      * @param text Text to write
      */
-    private write(text?: string) {
+    private write(text?: string): void {
         this.writeEmitter.fire(text ?? '');
     }
 
@@ -443,7 +444,7 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
      * Writes to the terminal and appends a new line
      * @param text Text to write
      */
-    private writeLine(text?: string) {
+    private writeLine(text?: string): void {
         this.write(text);
         this.write('\r\n');
     }
@@ -453,7 +454,7 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
      * Signals that the terminals execution is done.
      * @param exitCode The exit code of the terminal
      */
-    private done(exitCode?: number | void) {
+    private done(exitCode?: number | void): void {
         this.pviTransferProcess = undefined;
         this.doneEmitter.fire(exitCode);
     }

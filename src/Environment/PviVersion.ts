@@ -16,7 +16,7 @@ export class PviVersion {
      */
     public static async searchVersionsInDir(installRoot: vscode.Uri): Promise<PviVersion[]> {
         // Get matching subdirectories
-        const pviDirRegExp = /^V[\d]+\.[\d\.]+$/;
+        const pviDirRegExp = /^V[\d]+\.[\d.]+$/;
         const subDirs = await uriTools.listSubDirectories(installRoot, pviDirRegExp);
         // create PviVersion from from matching subdirectories
         const versions: PviVersion[] = [];
@@ -56,7 +56,7 @@ export class PviVersion {
     }
 
     /** Async operations to finalize object construction */
-    async #initialize() {
+    async #initialize(): Promise<void> {
         this.#version = await parsePviVersion(this.#rootPath);
         // Find PVITransfer.exe
         this.#pviTransfer = await searchPviTransferExe(this.#rootPath);
@@ -90,7 +90,7 @@ export class PviVersion {
     #pviTransfer: PviTransferExe | undefined;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public toJSON(): Record<string, unknown> {
         return {
             rootPath: this.rootPath.toString(true),
             version: this.version.version,
@@ -110,12 +110,12 @@ async function parsePviVersion(pviRoot: vscode.Uri): Promise<semver.SemVer> {
     const dirName = uriTools.pathBasename(pviRoot);
     version = semver.coerce(dirName) ?? undefined;
     if (version) {
-        return version;
+        return Promise.resolve(version);
     } else {
         logger.warning(`Failed to parse PVI Version from directory name ${logger.formatUri(pviRoot)}. PVI will be listed as V0.0.0`);
     }
     // set to V0.0.0 as backup, so PVI is still available but with wrong version...
-    return new semver.SemVer('0.0.0');
+    return Promise.resolve(new semver.SemVer('0.0.0'));
 }
 
 /**

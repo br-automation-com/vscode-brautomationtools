@@ -55,7 +55,7 @@ export interface LogConfiguration {
 
 
 export interface LogEntryAdditionalData {
-    [data: string]: any;
+    [data: string]: unknown;
 }
 
 
@@ -90,7 +90,7 @@ class Logger {
 
 
     /** The configuration of the logger */
-    public get configuration() {
+    public get configuration(): LogConfiguration {
         return this.#configuration;
     }
     /** The configuration of the logger */
@@ -106,63 +106,63 @@ class Logger {
 
 
     /** Write log with level fatal */
-    public get fatal() {
+    public get fatal(): LogFunction {
         return this.#fatal;
     }
     private set fatal(logFunction: LogFunction) {
         this.#fatal = logFunction;
     }
-    #fatal: LogFunction = this.#logDummy;
+    #fatal: LogFunction = noOp;
 
 
     /** Write log with level error */
-    public get error() {
+    public get error(): LogFunction {
         return this.#error;
     }
     private set error(logFunction: LogFunction) {
         this.#error = logFunction;
     }
-    #error: LogFunction = this.#logDummy;
+    #error: LogFunction = noOp;
 
 
     /** Write log with level warning */
-    public get warning() {
+    public get warning(): LogFunction {
         return this.#warning;
     }
     private set warning(logFunction: LogFunction) {
         this.#warning = logFunction;
     }
-    #warning: LogFunction = this.#logDummy;
+    #warning: LogFunction = noOp;
 
 
     /** Write log with level info */
-    public get info() {
+    public get info(): LogFunction {
         return this.#info;
     }
     private set info(logFunction: LogFunction) {
         this.#info = logFunction;
     }
-    #info: LogFunction = this.#logDummy;
+    #info: LogFunction = noOp;
 
 
     /** Write log with level verbose */
-    public get detail() {
+    public get detail(): LogFunction {
         return this.#detail;
     }
     private set detail(logFunction: LogFunction) {
         this.#detail = logFunction;
     }
-    #detail: LogFunction = this.#logDummy;
+    #detail: LogFunction = noOp;
 
 
     /** Write log with level debug */
-    public get debug() {
+    public get debug(): LogFunction {
         return this.#debug;
     }
     private set debug(logFunction: LogFunction) {
         this.#debug = logFunction;
     }
-    #debug: LogFunction = this.#logDummy;
+    #debug: LogFunction = noOp;
 
     /**
      * Formats a URI for display in a log message. Already includes ""
@@ -179,7 +179,7 @@ class Logger {
     }
 
     /** Shows the logger in the UI */
-    public showOutput() {
+    public showOutput(): void {
         Logger.#logChannel.show(true);
     }
 
@@ -195,69 +195,69 @@ class Logger {
 
 
     /** Set the log function properties depending on the configuration */
-    #setLogFunctions() {
+    #setLogFunctions(): void {
         switch (this.configuration.level) {
             case LogLevel.fatal:
-                this.fatal = this.#logFatal;
-                this.error = this.#logDummy;
-                this.warning = this.#logDummy;
-                this.info = this.#logDummy;
-                this.detail = this.#logDummy;
-                this.debug = this.#logDummy;
+                this.fatal = (msg, addData) => this.#logFatal(msg, addData);
+                this.error = noOp;
+                this.warning = noOp;
+                this.info = noOp;
+                this.detail = noOp;
+                this.debug = noOp;
                 break;
 
             case LogLevel.error:
-                this.fatal = this.#logFatal;
-                this.error = this.#logError;
-                this.warning = this.#logDummy;
-                this.info = this.#logDummy;
-                this.detail = this.#logDummy;
-                this.debug = this.#logDummy;
+                this.fatal = (msg, addData) => this.#logFatal(msg, addData);
+                this.error = (msg, addData) => this.#logError(msg, addData);
+                this.warning = noOp;
+                this.info = noOp;
+                this.detail = noOp;
+                this.debug = noOp;
                 break;
 
             case LogLevel.warning:
-                this.fatal = this.#logFatal;
-                this.error = this.#logError;
-                this.warning = this.#logWarning;
-                this.info = this.#logDummy;
-                this.detail = this.#logDummy;
-                this.debug = this.#logDummy;
+                this.fatal = (msg, addData) => this.#logFatal(msg, addData);
+                this.error = (msg, addData) => this.#logError(msg, addData);
+                this.warning = (msg, addData) => this.#logWarning(msg, addData);
+                this.info = noOp;
+                this.detail = noOp;
+                this.debug = noOp;
                 break;
 
             case LogLevel.info:
-                this.fatal = this.#logFatal;
-                this.error = this.#logError;
-                this.warning = this.#logWarning;
-                this.info = this.#logInfo;
-                this.detail = this.#logDummy;
-                this.debug = this.#logDummy;
+                this.fatal = (msg, addData) => this.#logFatal(msg, addData);
+                this.error = (msg, addData) => this.#logError(msg, addData);
+                this.warning = (msg, addData) => this.#logWarning(msg, addData);
+                this.info = (msg, addData) => this.#logInfo(msg, addData);
+                this.detail = noOp;
+                this.debug = noOp;
                 break;
 
             case LogLevel.detail:
-                this.fatal = this.#logFatal;
-                this.error = this.#logError;
-                this.warning = this.#logWarning;
-                this.info = this.#logInfo;
-                this.detail = this.#logDetail;
-                this.debug = this.#logDummy;
+                this.fatal = (msg, addData) => this.#logFatal(msg, addData);
+                this.error = (msg, addData) => this.#logError(msg, addData);
+                this.warning = (msg, addData) => this.#logWarning(msg, addData);
+                this.info = (msg, addData) => this.#logInfo(msg, addData);
+                this.detail = (msg, addData) => this.#logDetail(msg, addData);
+                this.debug = noOp;
                 break;
 
             case LogLevel.debug:
-                this.fatal = this.#logFatal;
-                this.error = this.#logError;
-                this.warning = this.#logWarning;
-                this.info = this.#logInfo;
-                this.detail = this.#logDetail;
-                this.debug = this.#logDebug;
+                this.fatal = (msg, addData) => this.#logFatal(msg, addData);
+                this.error = (msg, addData) => this.#logError(msg, addData);
+                this.warning = (msg, addData) => this.#logWarning(msg, addData);
+                this.info = (msg, addData) => this.#logInfo(msg, addData);
+                this.detail = (msg, addData) => this.#logDetail(msg, addData);
+                this.debug = (msg, addData) => this.#logDebug(msg, addData);
                 break;
 
             default:
-                this.fatal = this.#logFatal;
-                this.error = this.#logError;
-                this.warning = this.#logWarning;
-                this.info = this.#logInfo;
-                this.detail = this.#logDetail;
-                this.debug = this.#logDebug;
+                this.fatal = (msg, addData) => this.#logFatal(msg, addData);
+                this.error = (msg, addData) => this.#logError(msg, addData);
+                this.warning = (msg, addData) => this.#logWarning(msg, addData);
+                this.info = (msg, addData) => this.#logInfo(msg, addData);
+                this.detail = (msg, addData) => this.#logDetail(msg, addData);
+                this.debug = (msg, addData) => this.#logDebug(msg, addData);
                 break;
         }
     }
@@ -278,9 +278,9 @@ class Logger {
         const header = `[${time}.${millis} - ${level}]`;
         // message and if existing additional data
         const message = logEntry.message;
-        let additionalData: string = '';
+        let additionalData = '';
         if (logEntry.addData) {
-            const undefReplacer = (key: string, val: any) => (val === undefined ? null : val);
+            const undefReplacer = (key: string, val: unknown): unknown => (val === undefined ? null : val);
             if (this.configuration.prettyPrintAdditionalData) {
                 additionalData = `\n${JSON.stringify(logEntry.addData, undefReplacer, 2)}`;
             } else {
@@ -293,60 +293,51 @@ class Logger {
 
 
     /** Base log function which generates the output */
-    #logBase(logEntry: LogEntry) {
+    #logBase(logEntry: LogEntry): void {
         Logger.#logChannel.appendLine(this.#formatLogEntry(logEntry));
     }
 
-
-    /** Dummy function which does not create any output.
-     * This function can be assigned to function properties which should not generate output
-     * for the configured level.
-     */
-    #logDummy(message: string, additionalData?: LogEntryAdditionalData) {
-        // do nothing
-    }
-
     /** Default implementation for a 'fatal' log entry */
-    #logFatal(message: string, additionalData?: LogEntryAdditionalData) {
+    #logFatal(message: string, additionalData?: LogEntryAdditionalData): void {
         const entry = new LogEntry(LogLevel.fatal, message, additionalData);
         this.#logBase(entry);
         this.#showOutputOnImportantMessage();
     }
 
     /** Default implementation for a 'error' log entry */
-    #logError(message: string, additionalData?: LogEntryAdditionalData) {
+    #logError(message: string, additionalData?: LogEntryAdditionalData): void {
         const entry = new LogEntry(LogLevel.error, message, additionalData);
         this.#logBase(entry);
         this.#showOutputOnImportantMessage();
     }
 
     /** Default implementation for a 'warning' log entry */
-    #logWarning(message: string, additionalData?: LogEntryAdditionalData) {
+    #logWarning(message: string, additionalData?: LogEntryAdditionalData): void {
         const entry = new LogEntry(LogLevel.warning, message, additionalData);
         this.#logBase(entry);
         this.#showOutputOnImportantMessage();
     }
 
     /** Default implementation for a 'info' log entry */
-    #logInfo(message: string, additionalData?: LogEntryAdditionalData) {
+    #logInfo(message: string, additionalData?: LogEntryAdditionalData): void {
         const entry = new LogEntry(LogLevel.info, message, additionalData);
         this.#logBase(entry);
     }
 
     /** Default implementation for a 'detail' log entry */
-    #logDetail(message: string, additionalData?: LogEntryAdditionalData) {
+    #logDetail(message: string, additionalData?: LogEntryAdditionalData): void {
         const entry = new LogEntry(LogLevel.detail, message, additionalData);
         this.#logBase(entry);
     }
 
     /** Default implementation for a 'debug' log entry */
-    #logDebug(message: string, additionalData?: LogEntryAdditionalData) {
+    #logDebug(message: string, additionalData?: LogEntryAdditionalData): void {
         const entry = new LogEntry(LogLevel.debug, message, additionalData);
         this.#logBase(entry);
     }
 
     /** Show the output channel on an important message, depending on the configuration */
-    #showOutputOnImportantMessage() {
+    #showOutputOnImportantMessage(): void {
         switch (this.#configuration.showOutputOnImportantMessage) {
             case LogAutoShowMode.always:
                 this.showOutput();
@@ -367,6 +358,14 @@ class Logger {
     }
     /** Flag for LogAutoShowMode.onFirst */
     #importantMessageShown = false;
+}
+
+/** Dummy function which does not create any output.
+ * This function can be assigned to function properties which should not generate output
+ * for the configured level.
+ */
+function noOp(): void {
+    return;
 }
 
 

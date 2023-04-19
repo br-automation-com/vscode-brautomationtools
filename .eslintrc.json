@@ -2,6 +2,7 @@
     "root": true,
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
+        "project": true,
         "ecmaVersion": 6,
         "sourceType": "module"
     },
@@ -12,42 +13,61 @@
         "node": true,
         "mocha": true
     },
-    "extends": "eslint:recommended", //TODO check for duplicates of recommended in defined rules
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended-requiring-type-checking",
+        "prettier"
+    ],
     "rules": {
-        // naming
-        "@typescript-eslint/naming-convention": "error",
-        // general
-        "@typescript-eslint/semi": "error",
-        "semi": "error",
-        "no-extra-semi": "error",
-        "brace-style": [
-            "error",
-            "1tbs",
-            {
-                "allowSingleLine": true
-            }
-        ],
-        "curly": "error",
         "eqeqeq": "error",
         "no-throw-literal": "error",
-        "quotes": [
-            "error",
-            "single",
-            {
-                "allowTemplateLiterals": true,
-                "avoidEscape": true
-            }
-        ],
-        // lambdas (arrow)
         "arrow-parens": "error",
         "no-confusing-arrow": "error",
-        "implicit-arrow-linebreak": "error",
-        "arrow-spacing": "error",
-        //TODO rules which should probably be enabled in future (set to error in eslint:recommended)
-        "no-unused-vars": "off",
-        "no-useless-escape": "off"
-        //TODO set spacing rules as I like it ;)
-        //"space-before-function-paren": ["warn", "never"],
+        "@typescript-eslint/naming-convention": "error",
+        "@typescript-eslint/explicit-function-return-type": [
+            "error",
+            {
+                "allowExpressions": true
+            }
+        ],
+        "@typescript-eslint/restrict-template-expressions": [
+            "error",
+            {
+                // relax restrictions of "@typescript-eslint/recommended-requiring-type-checking"
+                // -> allow lines such as logger.info(`Value changed to '${this.something?.name}'`);
+                "allowNullish": true
+            }
+        ],
+        "@typescript-eslint/no-empty-function": [
+            "error",
+            {
+                // relax restrictions of "@typescript-eslint/recommended"
+                "allow": [
+                    "private-constructors",
+                    "protected-constructors"
+                ]
+            }
+        ],
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            {
+                // relax restrictions of "@typescript-eslint/recommended"
+                // -> Otherwise leads to errors on functions which are used as callbacks in defined external library interfaces (e.g. fast-xml-parser isArray option)
+                "args": "none"
+            }
+        ],
+        ////// Formatting
+        // According to https://typescript-eslint.io/linting/troubleshooting/formatting/ it is bad practice to use a linter for formatting.
+        // Therefore we removed the formatting rules and will use prettier for formatting
+        // We still enforce semicolons and curlys
+        "semi": "error",
+        "@typescript-eslint/semi": "error",
+        "curly": [
+            "error",
+            "multi-line",
+            "consistent"
+        ]
     },
     "ignorePatterns": [
         "out",

@@ -249,7 +249,7 @@ export async function listSubDirectoryNames(baseUri: vscode.Uri, filter?: string
  * @param baseUri The base for the list.
  * @param filter An optional filter for the directory name.
  */
-export async function listSubDirectories(baseUri: vscode.Uri, filter?: string | RegExp) {
+export async function listSubDirectories(baseUri: vscode.Uri, filter?: string | RegExp): Promise<vscode.Uri[]> {
     const dirNames = await listSubDirectoryNames(baseUri, filter);
     return dirNames.map((name) => pathJoin(baseUri, name));
 }

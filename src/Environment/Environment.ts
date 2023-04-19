@@ -3,7 +3,6 @@
  * @packageDocumentation
 */
 
-import * as vscode from 'vscode';
 import { logger } from '../Tools/Logger';
 import * as semver from 'semver';
 import { extensionConfiguration } from '../ExtensionConfiguration';
