@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 /**
  * Representation of PVITransfer.exe
@@ -13,9 +13,9 @@ export class PviTransferExe {
     public constructor(exePath: vscode.Uri) {
         this.#exePath = exePath;
     }
-    
+
     /** The path to the PVITransfer.exe file */
-    public get exePath() : vscode.Uri {
+    public get exePath(): vscode.Uri {
         return this.#exePath;
     }
     #exePath: vscode.Uri;

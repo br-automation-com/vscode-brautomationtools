@@ -1,9 +1,8 @@
-import { Uri } from 'vscode';
-import { logger } from '../Tools/Logger';
-import { isSubOf, pathDirname } from '../Tools/UriTools';
-import { AsProjectPou } from './AsProjectPOU';
-import { AsPackageFile } from './Files/AsPackageFile';
-
+import { Uri } from "vscode";
+import { logger } from "../Tools/Logger";
+import { isSubOf, pathDirname } from "../Tools/UriTools";
+import { AsProjectPou } from "./AsProjectPOU";
+import { AsPackageFile } from "./Files/AsPackageFile";
 
 /**
  * Representation of the Automation Studio project Logical View contents
@@ -42,7 +41,7 @@ export class AsProjectLogical {
     protected async _initialize(): Promise<void> {
         this.#logicalPkg = await AsPackageFile.createFromFile(this.#logicalPkgPath);
         if (this.#logicalPkg === undefined) {
-            throw new Error('Failed to create package file');
+            throw new Error("Failed to create package file");
         }
         this.#pous = await AsProjectPou.searchPousInDir(this.#rootPath, this.#projectRoot);
         // init done
@@ -58,7 +57,7 @@ export class AsProjectLogical {
 
     /** Type of POU */
     public get pous(): AsProjectPou[] {
-        if (!this.#isInitialized || !this.#pous) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized || !this.#pous) throw new Error(`Use of not initialized object`);
         return this.#pous;
     }
     #pous: AsProjectPou[] | undefined;
@@ -86,7 +85,7 @@ export class AsProjectLogical {
         } else {
             // multiple matches -> longest matching path is closest to the result
             // this should actually not happen, as POU within POU is not allowed in AS
-            logger.debug('POU within POU detected', {queryUri: uri.toString(true), matches: matches});
+            logger.debug("POU within POU detected", { queryUri: uri.toString(true), matches: matches });
             let bestMatch = matches[0];
             for (const match of matches) {
                 if (match.rootPath.path.length > bestMatch.rootPath.path.length) {

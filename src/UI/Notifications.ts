@@ -4,21 +4,17 @@
  */
 //TODO class as e.g. in ExtensionState
 
-import * as vscode from 'vscode';
-import { extensionConfiguration } from '../ExtensionConfiguration';
-import { extensionState } from '../ExtensionState';
-import { logger } from '../Tools/Logger';
-
+import * as vscode from "vscode";
+import { extensionConfiguration } from "../ExtensionConfiguration";
+import { extensionState } from "../ExtensionState";
+import { logger } from "../Tools/Logger";
 
 //#region local types
 //#endregion local types
 
-
 //#region local functions
 
-
 let extensionContext: vscode.ExtensionContext | undefined;
-
 
 /**
  * Initialize this module
@@ -27,7 +23,6 @@ let extensionContext: vscode.ExtensionContext | undefined;
 function initialize(context: vscode.ExtensionContext): void {
     extensionContext = context;
 }
-
 
 /**
  * Shows a notification after activation of the extension
@@ -42,8 +37,8 @@ async function activationMessage(): Promise<void> {
     // Show pop-up message if activated
     const hideNotification = extensionConfiguration.notifications.hideActivationMessage;
     const extensionName = getJsonStringProperty("displayName");
-    if (typeof extensionName !== 'string') {
-        logger.error('Failed to get extension display name from package.json');
+    if (typeof extensionName !== "string") {
+        logger.error("Failed to get extension display name from package.json");
         return;
     }
     if (!hideNotification) {
@@ -55,7 +50,6 @@ async function activationMessage(): Promise<void> {
         }
     }
 }
-
 
 /**
  * Shows a notification when a new version was installed
@@ -81,18 +75,17 @@ async function newVersionMessage(): Promise<void> {
         if (!hideNotification) {
             const message = `Welcome to the new version of ${extensionName}, ${extensionVersion}`;
             const hideButton = "Don't show again after update";
-            const showInfoButton = 'Show changes';
+            const showInfoButton = "Show changes";
             const result = await vscode.window.showInformationMessage(message, showInfoButton, hideButton);
             if (result === hideButton) {
-                    extensionConfiguration.notifications.hideNewVersionMessage = true;
-                }
+                extensionConfiguration.notifications.hideNewVersionMessage = true;
+            }
             if (result === showInfoButton) {
-                await vscode.env.openExternal(vscode.Uri.parse('https://github.com/br-automation-com/vscode-brautomationtools/blob/master/CHANGELOG.md'));
+                await vscode.env.openExternal(vscode.Uri.parse("https://github.com/br-automation-com/vscode-brautomationtools/blob/master/CHANGELOG.md"));
             }
         }
     }
 }
-
 
 async function configChangedMessage(): Promise<void> {
     // Check context
@@ -103,10 +96,10 @@ async function configChangedMessage(): Promise<void> {
     // Show pop-up message if activated
     const extensionName = getJsonStringProperty("displayName");
     const message = `${extensionName} configuration was changed. Please reload window for changes to take effect.`;
-    const reloadButton = 'Reload';
+    const reloadButton = "Reload";
     const result = await vscode.window.showInformationMessage(message, reloadButton);
     if (result === reloadButton) {
-        await vscode.commands.executeCommand('workbench.action.reloadWindow');
+        await vscode.commands.executeCommand("workbench.action.reloadWindow");
     }
 }
 
@@ -115,7 +108,7 @@ function getJsonProperty(propertyName: string): unknown {
         return undefined;
     }
     const json = extensionContext.extension.packageJSON as unknown;
-    if (typeof json !== 'object' || json === null) {
+    if (typeof json !== "object" || json === null) {
         return undefined;
     }
     return Object.entries(json).find(([key, val]) => key === propertyName)?.[1];
@@ -123,9 +116,8 @@ function getJsonProperty(propertyName: string): unknown {
 
 function getJsonStringProperty(propertyName: string): string | undefined {
     const property = getJsonProperty(propertyName);
-    return typeof property === 'string' ? property : undefined;
+    return typeof property === "string" ? property : undefined;
 }
-
 
 export const notifications = {
     initialize: initialize,
@@ -133,6 +125,5 @@ export const notifications = {
     newVersionMessage: newVersionMessage,
     configChangedMessage: configChangedMessage,
 };
-
 
 //#endregion local functions

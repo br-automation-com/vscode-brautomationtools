@@ -1,13 +1,12 @@
-import * as vscode from 'vscode';
-import { Uri } from 'vscode';
-import { logger } from '../../Tools/Logger';
-import { AsXmlFile } from './AsXmlFile';
+import * as vscode from "vscode";
+import { Uri } from "vscode";
+import { logger } from "../../Tools/Logger";
+import { AsXmlFile } from "./AsXmlFile";
 
 /**
  * XXXXX file representation (*.xxxx)
  */
 export class XxxxFile extends AsXmlFile {
-
     /**
      * Creates an XXXX file representation from a specified URI to the file
      * @param filePath The XXXX file path. e.g. `C:\Projects\Test\XXXX.xxxx`
@@ -29,7 +28,7 @@ export class XxxxFile extends AsXmlFile {
     protected constructor(filePath: Uri, fileContent: string) {
         super(filePath, fileContent);
         // initialize other properties here!
-        this.#xxxxx = '42';
+        this.#xxxxx = "42";
     }
 
     /** XXXXXX */

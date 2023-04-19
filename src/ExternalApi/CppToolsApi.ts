@@ -3,13 +3,13 @@
  * @packageDocumentation
  */
 
-import * as vscode from 'vscode';
-import * as cppTools from 'vscode-cpptools';
-import { logger } from '../Tools/Logger';
-import * as Helpers from '../Tools/Helpers';
-import * as uriTools from '../Tools/UriTools';
-import { Environment } from '../Environment/Environment';
-import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
+import * as vscode from "vscode";
+import * as cppTools from "vscode-cpptools";
+import { logger } from "../Tools/Logger";
+import * as Helpers from "../Tools/Helpers";
+import * as uriTools from "../Tools/UriTools";
+import { Environment } from "../Environment/Environment";
+import { WorkspaceProjects } from "../Workspace/BRAsProjectWorkspace";
 
 /**
  * Register the custom configuration provider on the C/C++ Tools extension
@@ -37,13 +37,12 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
         return this.#instance;
     }
 
-    private constructor() {
-    }
+    private constructor() {}
 
     async initialize(): Promise<boolean> {
         this.#cppApi = await cppTools.getCppToolsApi(cppTools.Version.v5);
         if (!this.#cppApi) {
-            logger.error('Failed to connect to C/C++ extension (API V5). C/C++ extension is not installed or version is not supported.');
+            logger.error("Failed to connect to C/C++ extension (API V5). C/C++ extension is not installed or version is not supported.");
             return false;
         }
         this.#cppApi.registerCustomConfigurationProvider(this);
@@ -64,8 +63,8 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
 
     // Our name and extension ID visible to cpptools
     //SYNC needs to be in sync with package.json/name and package.json/displayName
-    readonly name = 'B&R Automation Tools';
-    readonly extensionId = 'vscode-brautomationtools';
+    readonly name = "B&R Automation Tools";
+    readonly extensionId = "vscode-brautomationtools";
 
     async canProvideConfiguration(uri: vscode.Uri): Promise<boolean> {
         // Check if file is within an AS project
@@ -77,7 +76,7 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
             const isInTemp = uriTools.isSubOf(asProject.paths.temp, uri);
             canProvide = isInLogical || isInPhysical || isInTemp;
         }
-        logger.debug('CppConfigurationProvider.canProvideConfiguration(uri)', { uri: uri.toString(true), return: canProvide });
+        logger.debug("CppConfigurationProvider.canProvideConfiguration(uri)", { uri: uri.toString(true), return: canProvide });
         return canProvide;
     }
 
@@ -89,9 +88,9 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
             uris: uris.map((uri) => uri.toString(true)),
             return: validConfigs,
             numRequested: uris.length,
-            numResults: validConfigs.length
+            numResults: validConfigs.length,
         };
-        logger.debug('CppConfigurationProvider.provideConfigurations(uris)', logData);
+        logger.debug("CppConfigurationProvider.provideConfigurations(uris)", logData);
         return validConfigs;
     }
 
@@ -99,10 +98,18 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
     // According to https://code.visualstudio.com/docs/cpp/c-cpp-properties-schema-reference 'includePath' is used for most features.
     // Currently 'browse.path' used is still by the C/C++ extension when no compiler is present, but in future versions 'includePath'
     // will be also used in this situation.
-    async canProvideBrowseConfiguration(): Promise<boolean> { return Promise.resolve(false); }
-    async provideBrowseConfiguration(): Promise<cppTools.WorkspaceBrowseConfiguration> { return Promise.resolve({ browsePath: [] }); }
-    async canProvideBrowseConfigurationsPerFolder(): Promise<boolean> { return Promise.resolve(false); }
-    async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cppTools.WorkspaceBrowseConfiguration> { return Promise.resolve({ browsePath: [] }); }
+    async canProvideBrowseConfiguration(): Promise<boolean> {
+        return Promise.resolve(false);
+    }
+    async provideBrowseConfiguration(): Promise<cppTools.WorkspaceBrowseConfiguration> {
+        return Promise.resolve({ browsePath: [] });
+    }
+    async canProvideBrowseConfigurationsPerFolder(): Promise<boolean> {
+        return Promise.resolve(false);
+    }
+    async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cppTools.WorkspaceBrowseConfiguration> {
+        return Promise.resolve({ browsePath: [] });
+    }
 
     //#endregion cppTools.CustomConfigurationProvider interface implementation
 
@@ -128,7 +135,7 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
                 standard: undefined,
                 compilerArgs: buildInfo.buildOptions,
                 compilerPath: buildInfo.compilerPath?.fsPath,
-            }
+            },
         };
         return config;
     }

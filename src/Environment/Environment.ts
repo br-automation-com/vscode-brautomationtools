@@ -1,27 +1,24 @@
 /**
  * Handling of installed PVI versions on the developer PC
  * @packageDocumentation
-*/
+ */
 
-import { logger } from '../Tools/Logger';
-import * as semver from 'semver';
-import { extensionConfiguration } from '../ExtensionConfiguration';
-import { getMatchingVersion } from '../Tools/SemVer';
-import { PviVersion } from './PviVersion';
-import { AutomationStudioVersion } from './AutomationStudioVersion';
-import { statusBar } from '../UI/StatusBar';
-
+import { logger } from "../Tools/Logger";
+import * as semver from "semver";
+import { extensionConfiguration } from "../ExtensionConfiguration";
+import { getMatchingVersion } from "../Tools/SemVer";
+import { PviVersion } from "./PviVersion";
+import { AutomationStudioVersion } from "./AutomationStudioVersion";
+import { statusBar } from "../UI/StatusBar";
 
 export class Environment {
-
     /** static only class */
-    private constructor() { }
+    private constructor() {}
 
     /** PVI (Process Variable Interface) environment */
     public static pvi = class {
-
         /** static only class */
-        private constructor() { }
+        private constructor() {}
 
         /**
          * Get all available PVI versions
@@ -30,7 +27,7 @@ export class Environment {
         public static async getVersions(): Promise<PviVersion[]> {
             if (this.#versions === undefined) {
                 this.#versions = this.#searchVersions();
-                statusBar.addBusyItem(this.#versions, 'Searching for installed PVI versions');
+                statusBar.addBusyItem(this.#versions, "Searching for installed PVI versions");
             }
             return await this.#versions;
         }
@@ -52,11 +49,11 @@ export class Environment {
          */
         public static async updateVersions(): Promise<PviVersion[]> {
             this.#versions = this.#searchVersions();
-            statusBar.addBusyItem(this.#versions, 'Searching for installed PVI versions');
+            statusBar.addBusyItem(this.#versions, "Searching for installed PVI versions");
             return await this.#versions;
         }
         static async #searchVersions(): Promise<PviVersion[]> {
-            logger.info('Start searching for PVI versions');
+            logger.info("Start searching for PVI versions");
             // search for PVI installations in all configured directories
             const foundVersions: PviVersion[] = [];
             const configuredDirs = extensionConfiguration.environment.pviInstallPaths;
@@ -78,9 +75,8 @@ export class Environment {
 
     /** Automation Studio environment */
     public static automationStudio = class {
-
         /** static only class */
-        private constructor() { }
+        private constructor() {}
 
         /**
          * Get all available Automation Studio versions
@@ -89,7 +85,7 @@ export class Environment {
         public static async getVersions(): Promise<AutomationStudioVersion[]> {
             if (this.#versions === undefined) {
                 this.#versions = this.#searchVersions();
-                statusBar.addBusyItem(this.#versions, 'Searching for installed AS versions');
+                statusBar.addBusyItem(this.#versions, "Searching for installed AS versions");
             }
             return await this.#versions;
         }
@@ -111,11 +107,11 @@ export class Environment {
          */
         public static async updateVersions(): Promise<AutomationStudioVersion[]> {
             this.#versions = this.#searchVersions();
-            statusBar.addBusyItem(this.#versions, 'Searching for installed AS versions');
+            statusBar.addBusyItem(this.#versions, "Searching for installed AS versions");
             return await this.#versions;
         }
         static async #searchVersions(): Promise<AutomationStudioVersion[]> {
-            logger.info('Start searching for Automation Studio versions');
+            logger.info("Start searching for Automation Studio versions");
             // search for Automation Studio installations in all configured directories
             const foundVersions: AutomationStudioVersion[] = [];
             const configuredDirs = extensionConfiguration.environment.automationStudioInstallPaths;

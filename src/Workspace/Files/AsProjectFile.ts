@@ -1,25 +1,24 @@
-import * as vscode from 'vscode';
-import { Uri } from 'vscode';
-import { anyToBoolOrUndefined } from '../../Tools/Helpers';
-import { logger } from '../../Tools/Logger';
-import { pathBasename } from '../../Tools/UriTools';
-import { AsXmlFile } from './AsXmlFile';
-import { ParsedXmlObject } from './AsXmlParser';
+import * as vscode from "vscode";
+import { Uri } from "vscode";
+import { anyToBoolOrUndefined } from "../../Tools/Helpers";
+import { logger } from "../../Tools/Logger";
+import { pathBasename } from "../../Tools/UriTools";
+import { AsXmlFile } from "./AsXmlFile";
+import { ParsedXmlObject } from "./AsXmlParser";
 
 /** Project global options for C-code */
 //TODO use in new architecture for some default defines
 export interface AsProjectCCodeOptions {
     /** Enable declarations of PLC variables in C-code with macros (e.g. `_LOCAL`) */
-    readonly enablePlcVarDeclarations?: boolean | undefined,
+    readonly enablePlcVarDeclarations?: boolean | undefined;
     /** Enables default include mechanism (<AsDefault.h>) be defining the C-macro `_DEFAULT_INCLUDES` during build */
-    readonly enableDefaultIncludes?: boolean | undefined,
+    readonly enableDefaultIncludes?: boolean | undefined;
 }
 
 /**
  * Automation Studio project file representation (*.apj)
  */
 export class AsProjectFile extends AsXmlFile {
-
     /**
      * Creates an Automation Studio project file representation from a specified URI to the file
      * @param filePath The project file path. e.g. `C:\Projects\Test\Test.apj`
@@ -41,8 +40,8 @@ export class AsProjectFile extends AsXmlFile {
     protected constructor(filePath: Uri, fileContent: string) {
         super(filePath, fileContent);
         // Check root object name
-        if (this.xmlRootName !== 'Project') {
-            throw new Error('Root element name is not <Project>');
+        if (this.xmlRootName !== "Project") {
+            throw new Error("Root element name is not <Project>");
         }
         // assign and check versions
         this.#workingVersion = this.versionHeader.asWorkingVersion ?? this.versionHeader.asVersion;
@@ -120,5 +119,5 @@ function getProjectDescription(rootElement: ParsedXmlObject): string {
     const rootAny = rootElement as any;
     const description = rootAny?._att?.Description as unknown;
     /* eslint-enable */
-    return typeof description === 'string' ? description : '';
+    return typeof description === "string" ? description : "";
 }

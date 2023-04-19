@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { isString } from './TypeGuards';
+import { isString } from "./TypeGuards";
 
 /**
  * Pushes items to an array, only if the item is not null or undefined
@@ -12,7 +12,7 @@ import { isString } from './TypeGuards';
  */
 export function pushDefined<T>(array: T[], ...items: (T | undefined | null)[]): void {
     for (const item of items) {
-        if ( (item !== undefined) && (item !== null) ) {
+        if (item !== undefined && item !== null) {
             array.push(item);
         }
     }
@@ -23,7 +23,7 @@ export function pushDefined<T>(array: T[], ...items: (T | undefined | null)[]): 
  * @param ms Delay time in milliseconds
  */
 export async function delay(ms: number): Promise<void> {
-    await new Promise( (resolve) => setTimeout(resolve, ms) );
+    await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -45,10 +45,10 @@ export function timeDiffString(start: Date, end: Date): string {
     // hours
     const hours = Math.floor(remain / 60);
     // string
-    const fff = `${millis}`.padStart(3, '0');
-    const ss = `${seconds}`.padStart(2, '0');
-    const mm = `${minutes}`.padStart(2, '0');
-    const hh = `${hours}`.padStart(2, '0');
+    const fff = `${millis}`.padStart(3, "0");
+    const ss = `${seconds}`.padStart(2, "0");
+    const mm = `${minutes}`.padStart(2, "0");
+    const hh = `${hours}`.padStart(2, "0");
     return `${hh}:${mm}:${ss}.${fff}`;
 }
 
@@ -56,20 +56,21 @@ export function timeDiffString(start: Date, end: Date): string {
  * Checks if a sting fullfills a specified filter.
  * @param value string value to check
  * @param filter filter value, if a RegExp with /g flag is used, it is automatically reset before testing
- * @returns 
- * 
+ * @returns
+ *
  * `value` === filter if filter is `string`
- * 
+ *
  * `filter.test(value)` if filter is `RegExp`
- * 
+ *
  * `true` if filter is `undefined` (all pass)
  */
 export function testStringFilter(value: string, filter: string | RegExp | undefined): boolean {
     if (filter === undefined) {
         return true;
     } else if (isString(filter)) {
-        return (filter === value);
-    } else { // is RegExp
+        return filter === value;
+    } else {
+        // is RegExp
         filter.lastIndex = 0; // reset index in case /g flag was set, see #32
         return filter.test(value);
     }
@@ -82,10 +83,10 @@ export function testStringFilter(value: string, filter: string | RegExp | undefi
  * @returns `true` for `'true'` `true` `'1'` and `1`, `false` for `'false'` `false` `'0'` and `0`, undefined for all other input
  */
 export function anyToBoolOrUndefined(value: unknown): boolean | undefined {
-    const valueToLower = typeof value === 'string' ? value.toLowerCase() : undefined;
-    if (valueToLower === 'true' || value === true || value === '1' || value === 1) {
+    const valueToLower = typeof value === "string" ? value.toLowerCase() : undefined;
+    if (valueToLower === "true" || value === true || value === "1" || value === 1) {
         return true;
-    } else if (valueToLower === 'false' || value === false || value === '0' || value === 0) {
+    } else if (valueToLower === "false" || value === false || value === "0" || value === 0) {
         return true;
     } else {
         return undefined;
@@ -105,22 +106,21 @@ export function stringToBool(value: string | undefined | null): boolean {
  * Split a raw string of shell arguments into an array of its separate commands / parameters.
  * This can be used to prevent automatic escaping of strings, containing white spaces by some
  * functions.
- * 
+ *
  * Already escaped parts of the string (e.g. `'-include "C:\My Path\SomeHeader.h"'`) will be split on each whitespace
  * and therefore break in the current implementation!
- * 
+ *
  * @param rawArgs Raw command line arguments contained in a single string. e.g. `'-D MY_DEFINE -D OTHER_DEFINE -Wall'`
  * @returns An array with all the build options separated on each whitespace. e.g. `['-D', 'MY_DEFINE', '-D', 'OTHER_DEFINE', '-Wall']`
- * 
+ *
  * If input is `undefined`, `null` or an empty string, an empty array is returned
  */
 export function splitShellArgs(rawArgs: string | undefined | null): string[] {
     // #30 - When splitting will handle escapes properly use a new function argument `escapeChar?: string | string[] | RegExp`
     // directly return for empty options
-    if ((!rawArgs) || (rawArgs.length === 0)) {
+    if (!rawArgs || rawArgs.length === 0) {
         return [];
     }
     const options = rawArgs.split(/\s/gm);
     return options;
 }
-

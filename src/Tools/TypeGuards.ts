@@ -11,7 +11,7 @@
  * @returns true if value is a `string[]`, false otherwise
  */
 export function isStringArray(value: unknown): value is string[] {
-    if (!Array.isArray(value) ) {
+    if (!Array.isArray(value)) {
         return false;
     }
     for (const elem of value) {
@@ -22,7 +22,6 @@ export function isStringArray(value: unknown): value is string[] {
     return true;
 }
 
-
 /**
  * Checks if a value is a primitive `string`.
  * Boxed `String` objects will return false.
@@ -30,7 +29,7 @@ export function isStringArray(value: unknown): value is string[] {
  * @returns true if value is a primitive `string`, false otherwise
  */
 export function isString(value: unknown): value is string {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
         return true;
     } else {
         return false;

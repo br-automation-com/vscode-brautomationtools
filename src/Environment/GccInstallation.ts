@@ -1,15 +1,14 @@
-import * as vscode from 'vscode';
-import * as uriTools from '../Tools/UriTools';
-import * as semver from 'semver';
-import { logger } from '../Tools/Logger';
-import { SystemGeneration, TargetArchitecture } from './CommonTypes';
-import { GccExecutable } from './GccExecutable';
+import * as vscode from "vscode";
+import * as uriTools from "../Tools/UriTools";
+import * as semver from "semver";
+import { logger } from "../Tools/Logger";
+import { SystemGeneration, TargetArchitecture } from "./CommonTypes";
+import { GccExecutable } from "./GccExecutable";
 
 /**
  * Representation of a gcc installation
  */
 export class GccInstallation {
-
     /**
      * Gets all gcc executables which are located in the Automation Studio `gnuinst` directory
      * @param root The Automation Studio `gnuinst` directory containing multiple gcc installations. e.g. `C:\BrAutomation\AS410\AS\gnuinst`
@@ -22,7 +21,7 @@ export class GccInstallation {
         const installation = new GccInstallation();
         await installation.#initialize(...rootUris);
         // done
-        logger.debug('GccInstallation.searchAutomationStudioGnuinst(root)', { root: root, result: installation });
+        logger.debug("GccInstallation.searchAutomationStudioGnuinst(root)", { root: root, result: installation });
         return installation;
     }
 
@@ -36,13 +35,13 @@ export class GccInstallation {
         const installation = new GccInstallation();
         await installation.#initialize(root);
         // done
-        logger.debug('GccInstallation.createFromDir(root)', { root: root, result: installation });
+        logger.debug("GccInstallation.createFromDir(root)", { root: root, result: installation });
         return installation;
     }
 
     /** Object is not ready to use after constructor due to async operations,
      * #initialize() has to be called for the object to be ready to use! */
-    private constructor() { }
+    private constructor() {}
 
     /** Async operations to finalize object construction */
     async #initialize(...roots: vscode.Uri[]): Promise<void> {
@@ -55,7 +54,7 @@ export class GccInstallation {
                 version = semver.coerce(dirName) ?? undefined;
             }
             // find bin directory
-            const binDir = await uriTools.findDirectory(root, 2, 'bin');
+            const binDir = await uriTools.findDirectory(root, 2, "bin");
             if (binDir === undefined) {
                 logger.warning(`Could not find directory "bin" of gcc in ${logger.formatUri(root)}.`);
                 continue;
@@ -72,7 +71,7 @@ export class GccInstallation {
 
     /** Targets available in this gcc version */
     public get executables(): GccExecutable[] {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${GccInstallation.name} object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized ${GccInstallation.name} object`);
         return this.#executables;
     }
     #executables: GccExecutable[] = [];
@@ -101,10 +100,10 @@ export class GccInstallation {
         const sorted = [...this.executables].sort((a, b) => GccExecutable.compareForQuery(b, a));
         // get matches for version, system generation and architecture. If argument === undefined all is a match
         const versionMatch = !version ? sorted : sorted.filter((el) => semver.eq(el.version, version));
-        const sgMatch = !systemGeneration ? sorted : sorted.filter((el) => (el.systemGeneration === systemGeneration));
-        const archMatch = !architecture ? sorted : sorted.filter((el) => (el.architecture === architecture));
+        const sgMatch = !systemGeneration ? sorted : sorted.filter((el) => el.systemGeneration === systemGeneration);
+        const archMatch = !architecture ? sorted : sorted.filter((el) => el.architecture === architecture);
         // get intersection of separate matches
-        const allMatch = versionMatch.filter((ele) => (sgMatch.includes(ele) && archMatch.includes(ele)));
+        const allMatch = versionMatch.filter((ele) => sgMatch.includes(ele) && archMatch.includes(ele));
         // find best match: matchAll > versionMatch > sgMatch > archMatch > noMatch
         if (allMatch.length > 0) {
             return allMatch[0];

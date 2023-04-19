@@ -1,15 +1,14 @@
-import * as vscode from 'vscode';
-import * as uriTools from '../Tools/UriTools';
-import * as semver from 'semver';
-import { logger } from '../Tools/Logger';
-import { GccInstallation } from './GccInstallation';
-import { BrAsBuildExe } from './BrAsBuildExe';
+import * as vscode from "vscode";
+import * as uriTools from "../Tools/UriTools";
+import * as semver from "semver";
+import { logger } from "../Tools/Logger";
+import { GccInstallation } from "./GccInstallation";
+import { BrAsBuildExe } from "./BrAsBuildExe";
 
 /**
  * Representation of an Automation Studio version
  */
 export class AutomationStudioVersion {
-
     /**
      * Gets all Automation Studio versions which are located in the installRoot.
      * @param installRoot The root directory containing multiple Automation Studio installations. e.g. `C:\BrAutomation`
@@ -61,11 +60,9 @@ export class AutomationStudioVersion {
         this.#version = await parseAutomationStudioVersion(this.#rootPath);
         // Find BR.AS.Build.exe
         this.#buildExe = await searchAutomationStudioBuildExe(this.#rootPath);
-        if (!this.#buildExe) {
-            throw new Error('Cannot find BR.AS.Build.exe');
-        }
+        if (!this.#buildExe) throw new Error("Cannot find BR.AS.Build.exe");
         // find gcc versions
-        const gccInstallRoot = vscode.Uri.joinPath(this.#rootPath, './AS/gnuinst');
+        const gccInstallRoot = vscode.Uri.joinPath(this.#rootPath, "./AS/gnuinst");
         this.#gccInstallation = await GccInstallation.searchAutomationStudioGnuinst(gccInstallRoot);
         // init done
         this.#isInitialized = true;
@@ -74,28 +71,28 @@ export class AutomationStudioVersion {
 
     /** The root URI of the Automation Studio version */
     public get rootPath(): vscode.Uri {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized ${AutomationStudioVersion.name} object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized ${AutomationStudioVersion.name} object`);
         return this.#rootPath;
     }
     #rootPath: vscode.Uri;
 
     /** The Automation Studio version */
     public get version(): semver.SemVer {
-        if (!this.#isInitialized || !this.#version) { throw new Error(`Use of not initialized ${AutomationStudioVersion.name} object`); }
+        if (!this.#isInitialized || !this.#version) throw new Error(`Use of not initialized ${AutomationStudioVersion.name} object`);
         return this.#version;
     }
     #version: semver.SemVer | undefined;
 
     /** The Automation Studio project build tool */
     public get buildExe(): BrAsBuildExe {
-        if (!this.#isInitialized || !this.#buildExe) { throw new Error(`Use of not initialized ${AutomationStudioVersion.name} object`); }
+        if (!this.#isInitialized || !this.#buildExe) throw new Error(`Use of not initialized ${AutomationStudioVersion.name} object`);
         return this.#buildExe;
     }
     #buildExe: BrAsBuildExe | undefined;
 
     /** gcc compiler versions available in this Automation Studio version */
     public get gccInstallation(): GccInstallation {
-        if (!this.#isInitialized || !this.#gccInstallation) { throw new Error(`Use of not initialized ${AutomationStudioVersion.name} object`); }
+        if (!this.#isInitialized || !this.#gccInstallation) throw new Error(`Use of not initialized ${AutomationStudioVersion.name} object`);
         return this.#gccInstallation;
     }
     #gccInstallation: GccInstallation | undefined;
@@ -121,16 +118,20 @@ async function parseAutomationStudioVersion(asRoot: vscode.Uri): Promise<semver.
     // Try to get version from ./BrSetup/VInfo/ProductInfo_bin-en.brv or ./BrSetup/VInfo/ProductInfo_bin-de.brv
     // -> Depending on installed languages both or only one may exist
     // -> In older AS versions bin was written in caps (Bin)
-    const prodInfoBasePath = uriTools.pathJoin(asRoot, 'BrSetup/VInfo');
-    const prodInfoPathEn = uriTools.pathJoin(prodInfoBasePath, 'ProductInfo_bin-en.brv');
-    const prodInfoPathEnOld = uriTools.pathJoin(prodInfoBasePath, 'ProductInfo_Bin-en.brv');
-    const prodInfoPathDe = uriTools.pathJoin(prodInfoBasePath, 'ProductInfo_bin-de.brv');
-    const prodInfoPathDeOld = uriTools.pathJoin(prodInfoBasePath, 'ProductInfo_Bin-de.brv');
-    const prodInfoPath = await uriTools.exists(prodInfoPathEn) ? prodInfoPathEn
-        : await uriTools.exists(prodInfoPathDe) ? prodInfoPathDe
-            : await uriTools.exists(prodInfoPathEnOld) ? prodInfoPathEnOld
-                : await uriTools.exists(prodInfoPathDeOld) ? prodInfoPathDeOld
-                    : undefined;
+    const prodInfoBasePath = uriTools.pathJoin(asRoot, "BrSetup/VInfo");
+    const prodInfoPathEn = uriTools.pathJoin(prodInfoBasePath, "ProductInfo_bin-en.brv");
+    const prodInfoPathEnOld = uriTools.pathJoin(prodInfoBasePath, "ProductInfo_Bin-en.brv");
+    const prodInfoPathDe = uriTools.pathJoin(prodInfoBasePath, "ProductInfo_bin-de.brv");
+    const prodInfoPathDeOld = uriTools.pathJoin(prodInfoBasePath, "ProductInfo_Bin-de.brv");
+    const prodInfoPath = (await uriTools.exists(prodInfoPathEn))
+        ? prodInfoPathEn
+        : (await uriTools.exists(prodInfoPathDe))
+        ? prodInfoPathDe
+        : (await uriTools.exists(prodInfoPathEnOld))
+        ? prodInfoPathEnOld
+        : (await uriTools.exists(prodInfoPathDeOld))
+        ? prodInfoPathDeOld //
+        : undefined;
     if (prodInfoPath !== undefined) {
         try {
             const prodInfoDoc = await vscode.workspace.openTextDocument(prodInfoPath);
@@ -162,7 +163,7 @@ async function parseAutomationStudioVersion(asRoot: vscode.Uri): Promise<semver.
         logger.warning(`Failed to parse AS Version from directory name ${logger.formatUri(asRoot)}. AS will be listed as V0.0.0`);
     }
     // set to V0.0.0 as backup, so AS is still available but with wrong version...
-    return new semver.SemVer('0.0.0');
+    return new semver.SemVer("0.0.0");
 }
 
 /**
@@ -172,17 +173,17 @@ async function parseAutomationStudioVersion(asRoot: vscode.Uri): Promise<semver.
  */
 async function searchAutomationStudioBuildExe(asRoot: vscode.Uri): Promise<BrAsBuildExe | undefined> {
     // english
-    const buildExeUriEn = uriTools.pathJoin(asRoot, 'Bin-en/BR.AS.Build.exe');
+    const buildExeUriEn = uriTools.pathJoin(asRoot, "Bin-en/BR.AS.Build.exe");
     if (await uriTools.exists(buildExeUriEn)) {
         return new BrAsBuildExe(buildExeUriEn);
     }
     // german
-    const buildExeUriDe = uriTools.pathJoin(asRoot, 'Bin-de/BR.AS.Build.exe');
+    const buildExeUriDe = uriTools.pathJoin(asRoot, "Bin-de/BR.AS.Build.exe");
     if (await uriTools.exists(buildExeUriDe)) {
         return new BrAsBuildExe(buildExeUriDe);
     }
     // slower search if none was found yet
-    const searchPattern = new vscode.RelativePattern(asRoot, '**/BR.AS.Build.exe');
+    const searchPattern = new vscode.RelativePattern(asRoot, "**/BR.AS.Build.exe");
     const searchResult = await vscode.workspace.findFiles(searchPattern);
     if (searchResult.length > 0) {
         return new BrAsBuildExe(searchResult[0]);

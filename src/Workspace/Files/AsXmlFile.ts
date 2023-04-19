@@ -1,8 +1,8 @@
-import * as vscode from 'vscode';
-import { Uri } from 'vscode';
-import { createFile, replaceAllTextInFile } from '../../Tools/FileTools';
-import { logger } from '../../Tools/Logger';
-import { AsXmlBuilder, AsXmlParser, ParsedXmlObject } from './AsXmlParser';
+import * as vscode from "vscode";
+import { Uri } from "vscode";
+import { createFile, replaceAllTextInFile } from "../../Tools/FileTools";
+import { logger } from "../../Tools/Logger";
+import { AsXmlBuilder, AsXmlParser, ParsedXmlObject } from "./AsXmlParser";
 
 /**
  * The Automation Studio XML processing instruction data containing file and project versions
@@ -20,7 +20,6 @@ export interface AsXmlVersionHeader {
  * Representation of a simple Automation Studio XML file. Can be extended for specialized Automation Studio Files
  */
 export class AsXmlFile {
-
     /**
      * Automation Studio XML file representation from a specified file path
      * @param filePath The path to the XML file. e.g. `C:\Projects\Test\Logical\MyFolder\Package.pkg` or `C:\Projects\Test\Logical\MyLib\ANSIC.lby`
@@ -77,7 +76,6 @@ export class AsXmlFile {
     }
     #xmlRootName: string;
 
-
     /** The javascript object representation of the XML root element */
     protected get xmlRootObj(): ParsedXmlObject {
         return this.#xmlRootObj;
@@ -105,7 +103,7 @@ export class AsXmlFile {
      * @returns A promise which resolves to true on success
      */
     public async writeToFile(filePath: Uri = this.filePath): Promise<boolean> {
-        if (!this.checkWriteToFilePossible()) { return false; }
+        if (!this.checkWriteToFilePossible()) return false;
         const xml = this.toXml();
         await createFile(filePath, { ignoreIfExists: true }); // keep existing so the encoding and newline settings are kept by VS code
         return await replaceAllTextInFile(filePath, xml);
@@ -126,10 +124,13 @@ export class AsXmlFile {
     }
 
     #hasLegacyVersionHeader(): boolean {
-        const headerIsEmpty = this.versionHeader.asVersion ? false
-            : this.versionHeader.asFileVersion ? false
-                : this.versionHeader.asWorkingVersion ? false
-                    : true;
+        const headerIsEmpty = this.versionHeader.asVersion //
+            ? false
+            : this.versionHeader.asFileVersion
+            ? false
+            : this.versionHeader.asWorkingVersion
+            ? false
+            : true;
         return headerIsEmpty;
     }
 }
@@ -141,16 +142,16 @@ function getXmlVersionHeader(xmlObj: ParsedXmlObject): AsXmlVersionHeader {
     //TODO currently does not work with old PI of AS version (not in attribute syntax)
     /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const xmlAny = xmlObj as any; //HACK to access by indexer. find out how to solve properly?
-    const versionObj = xmlAny?.['?AutomationStudio']?._att;
+    const versionObj = xmlAny?.["?AutomationStudio"]?._att;
     const asVersion = versionObj?.Version as unknown;
     const asWorkingVersion = versionObj?.WorkingVersion as unknown;
     const asFileVersion = versionObj?.FileVersion as unknown;
     /* eslint-enable */
     // return value
     return {
-        asVersion: typeof asVersion === 'string' ? asVersion : undefined,
-        asWorkingVersion: typeof asWorkingVersion === 'string' ? asWorkingVersion : undefined,
-        asFileVersion: typeof asFileVersion === 'string' ? asFileVersion : undefined,
+        asVersion: typeof asVersion === "string" ? asVersion : undefined,
+        asWorkingVersion: typeof asWorkingVersion === "string" ? asWorkingVersion : undefined,
+        asFileVersion: typeof asFileVersion === "string" ? asFileVersion : undefined,
     };
 }
 
@@ -172,24 +173,24 @@ function setXmlVersionHeader(xmlObj: ParsedXmlObject, versionHeader: AsXmlVersio
     // add attribute object to PI node
     /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const xmlAny = xmlObj as any; //HACK to access by indexer. find out how to solve properly?
-    xmlAny['?AutomationStudio'] = { _att: attributesObj };
+    xmlAny["?AutomationStudio"] = { _att: attributesObj };
     /* eslint-enable */
 }
 
-function getXmlRootData(xmlObj: ParsedXmlObject): { name: string, value: ParsedXmlObject } {
+function getXmlRootData(xmlObj: ParsedXmlObject): { name: string; value: ParsedXmlObject } {
     const entries = Object.entries(xmlObj);
     // filter out entries of non-elements
-    const withoutPI = entries.filter(([key, val]) => !key.startsWith('?'));
-    const withoutComments = withoutPI.filter(([key, val]) => key !== '_cmt'); //TODO do it in XmlParser? this option needs to be in sync with there
+    const withoutPI = entries.filter(([key, val]) => !key.startsWith("?"));
+    const withoutComments = withoutPI.filter(([key, val]) => key !== "_cmt"); //TODO do it in XmlParser? this option needs to be in sync with there
     if (withoutComments.length !== 1) {
-        throw new Error('XML object contains multiple or no root elements');
+        throw new Error("XML object contains multiple or no root elements");
     }
     // get and check root value
     /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const [rootKey, rootValAny] = withoutComments[0];
     const rootVal = rootValAny as unknown;
-    if (typeof rootVal !== 'object' || rootVal === null) {
-        throw new Error('XML root element is not an object');
+    if (typeof rootVal !== "object" || rootVal === null) {
+        throw new Error("XML root element is not an object");
     }
     /* eslint-enable */
     return { name: rootKey, value: rootVal };

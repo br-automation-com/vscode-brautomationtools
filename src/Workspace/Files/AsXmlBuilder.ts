@@ -1,29 +1,28 @@
-import { XMLBuilder } from 'fast-xml-parser';
-import { logger } from '../../Tools/Logger';
-import { ParsedXmlObject } from './AsXmlParser';
+import { XMLBuilder } from "fast-xml-parser";
+import { logger } from "../../Tools/Logger";
+import { ParsedXmlObject } from "./AsXmlParser";
 
 export class AsXmlBuilder {
-
     #builder = new XMLBuilder({
         // shared options, keep in sync with AsXmlParser
-        textNodeName: '_txt',
+        textNodeName: "_txt",
         ignoreAttributes: false,
-        attributesGroupName: '_att',
-        attributeNamePrefix: '',
-        commentPropName: '_cmt',
+        attributesGroupName: "_att",
+        attributeNamePrefix: "",
+        commentPropName: "_cmt",
         suppressBooleanAttributes: false,
 
         // Builder only options
         format: true,
         suppressEmptyNode: true,
-        indentBy: '  ',
+        indentBy: "  ",
     });
 
     public build(xmlObj: ParsedXmlObject): string {
         const buildResult = this.#builder.build(xmlObj) as unknown;
-        if (typeof buildResult !== 'string') {
-            logger.error('AsXmlBuilder buildResult is not of type string!');
-            return '';
+        if (typeof buildResult !== "string") {
+            logger.error("AsXmlBuilder buildResult is not of type string!");
+            return "";
         }
         return this.#reformatXml(buildResult);
     }
@@ -45,5 +44,5 @@ function makeSpaceOnSelfClosingTag(xmlBefore: string): string {
 }
 
 function toCrLf(value: string): string {
-    return value.replace(/(?:\r\n|\r|\n)/g, '\r\n');
+    return value.replace(/(?:\r\n|\r|\n)/g, "\r\n");
 }

@@ -1,14 +1,13 @@
-import * as vscode from 'vscode';
-import { logger } from '../Tools/Logger';
-import * as uriTools from '../Tools/UriTools';
-import * as semver from 'semver';
-import { PviTransferExe } from './PviTransferExe';
+import * as vscode from "vscode";
+import { logger } from "../Tools/Logger";
+import * as uriTools from "../Tools/UriTools";
+import * as semver from "semver";
+import { PviTransferExe } from "./PviTransferExe";
 
 /**
  * Representation of a PVI (Process Variable Interface) version
  */
 export class PviVersion {
-
     /**
      * Gets all PVI versions which are located in the rootUri.
      * @param installRoot The root directory containing multiple PVI installations. e.g. `C:\BrAutomation\PVI`
@@ -61,7 +60,7 @@ export class PviVersion {
         // Find PVITransfer.exe
         this.#pviTransfer = await searchPviTransferExe(this.#rootPath);
         if (!this.#pviTransfer) {
-            throw new Error('Cannot find PVITransfer.exe');
+            throw new Error("Cannot find PVITransfer.exe");
         }
         // init done
         this.#isInitialized = true;
@@ -70,21 +69,21 @@ export class PviVersion {
 
     /** The root URI of the PVI version */
     public get rootPath(): vscode.Uri {
-        if (!this.#isInitialized) { throw new Error('Use of not initialized Pvi object'); }
+        if (!this.#isInitialized) throw new Error("Use of not initialized Pvi object");
         return this.#rootPath;
     }
     #rootPath: vscode.Uri;
 
     /** The version of the PVI */
     public get version(): semver.SemVer {
-        if (!this.#isInitialized || !this.#version) { throw new Error('Use of not initialized Pvi object'); }
+        if (!this.#isInitialized || !this.#version) throw new Error("Use of not initialized Pvi object");
         return this.#version;
     }
     #version: semver.SemVer | undefined;
 
     /** PVITransfer.exe of this PVI version */
     public get pviTransfer(): PviTransferExe {
-        if (!this.#isInitialized || !this.#pviTransfer) { throw new Error('Use of not initialized Pvi object'); }
+        if (!this.#isInitialized || !this.#pviTransfer) throw new Error("Use of not initialized Pvi object");
         return this.#pviTransfer;
     }
     #pviTransfer: PviTransferExe | undefined;
@@ -115,7 +114,7 @@ async function parsePviVersion(pviRoot: vscode.Uri): Promise<semver.SemVer> {
         logger.warning(`Failed to parse PVI Version from directory name ${logger.formatUri(pviRoot)}. PVI will be listed as V0.0.0`);
     }
     // set to V0.0.0 as backup, so PVI is still available but with wrong version...
-    return Promise.resolve(new semver.SemVer('0.0.0'));
+    return Promise.resolve(new semver.SemVer("0.0.0"));
 }
 
 /**
@@ -125,17 +124,17 @@ async function parsePviVersion(pviRoot: vscode.Uri): Promise<semver.SemVer> {
  */
 async function searchPviTransferExe(pviRoot: vscode.Uri): Promise<PviTransferExe | undefined> {
     // Standard installation path for AS or separate PVI installation
-    const transferExeAsInstall = vscode.Uri.joinPath(pviRoot, 'PVI/Tools/PVITransfer/PVITransfer.exe'); // Standard installation path for AS installation
+    const transferExeAsInstall = vscode.Uri.joinPath(pviRoot, "PVI/Tools/PVITransfer/PVITransfer.exe"); // Standard installation path for AS installation
     if (await uriTools.exists(transferExeAsInstall)) {
         return new PviTransferExe(transferExeAsInstall);
     }
     // Directly in root directory (e.g. by RUC export)
-    const transferExeRucExport = vscode.Uri.joinPath(pviRoot, 'PVITransfer.exe');
+    const transferExeRucExport = vscode.Uri.joinPath(pviRoot, "PVITransfer.exe");
     if (await uriTools.exists(transferExeRucExport)) {
         return new PviTransferExe(transferExeRucExport);
     }
     // slower search if none was found yet
-    const searchPattern = new vscode.RelativePattern(pviRoot, '**/PVITransfer.exe');
+    const searchPattern = new vscode.RelativePattern(pviRoot, "**/PVITransfer.exe");
     const searchResult = await vscode.workspace.findFiles(searchPattern);
     if (searchResult.length > 0) {
         return new PviTransferExe(searchResult[0]);
