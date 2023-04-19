@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 
 
-export async function testProvideHeader(context: vscode.ExtensionContext) {
+export async function testProvideHeader(context: vscode.ExtensionContext): Promise<void> {
     //TODO providing a text document works fine, but how to make it accessible for C/C++ extension?
     const myProvider = new class implements vscode.TextDocumentContentProvider {
 
@@ -39,10 +39,10 @@ export async function testProvideHeader(context: vscode.ExtensionContext) {
 
 
 
-                __asm__(".section \".plc\"");
+                __asm__(".section ".plc"");
 
                 /* Used IEC files */
-                __asm__(".ascii \"iecfile \\\"Logical/NoErrNoWrn/CPrgMulti/Variables.var\\\" scope \\\"local\\\"\\n\"");
+                __asm__(".ascii "iecfile \\"Logical/NoErrNoWrn/CPrgMulti/Variables.var\\" scope \\"local\\"\\n"");
 
                 /* Exported library functions and function blocks */
 
@@ -56,7 +56,7 @@ export async function testProvideHeader(context: vscode.ExtensionContext) {
         }
     };
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('myScheme', myProvider));
-    let uri = vscode.Uri.parse('myScheme:SomeTest.h');
-    let doc = await vscode.workspace.openTextDocument(uri); // calls back into the provider
+    const uri = vscode.Uri.parse('myScheme:SomeTest.h');
+    const doc = await vscode.workspace.openTextDocument(uri); // calls back into the provider
     await vscode.window.showTextDocument(doc, { preview: false });
 }

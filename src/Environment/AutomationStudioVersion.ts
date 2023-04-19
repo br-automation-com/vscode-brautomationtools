@@ -101,7 +101,7 @@ export class AutomationStudioVersion {
     #gccInstallation: GccInstallation | undefined;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public toJSON(): Record<string, unknown> {
         return {
             rootPath: this.rootPath.toString(true),
             version: this.version.version,
@@ -154,7 +154,7 @@ async function parseAutomationStudioVersion(asRoot: vscode.Uri): Promise<semver.
     const asDirRegExp = /^AS(\d)(\d+)$/;
     const match = asDirRegExp.exec(dirName);
     if (match && match.length >= 3) {
-        version = semver.coerce(`${match![1]}.${match![2]}.0`) ?? undefined;
+        version = semver.coerce(`${match[1]}.${match[2]}.0`) ?? undefined;
     }
     if (version) {
         return version;

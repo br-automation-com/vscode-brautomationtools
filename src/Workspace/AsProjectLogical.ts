@@ -1,6 +1,6 @@
-import { RelativePattern, Uri, workspace } from 'vscode';
+import { Uri } from 'vscode';
 import { logger } from '../Tools/Logger';
-import { isSubOf, pathBasename, pathDirname } from '../Tools/UriTools';
+import { isSubOf, pathDirname } from '../Tools/UriTools';
 import { AsProjectPou } from './AsProjectPOU';
 import { AsPackageFile } from './Files/AsPackageFile';
 
@@ -68,7 +68,7 @@ export class AsProjectLogical {
     #logicalPkg: AsPackageFile | undefined;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public toJSON(): Record<string, unknown> {
         return {
             rootPath: this.rootPath.toString(true),
             pous: this.pous,

@@ -13,7 +13,7 @@ export class XxxxFile extends AsXmlFile {
      * @param filePath The XXXX file path. e.g. `C:\Projects\Test\XXXX.xxxx`
      * @returns The XXXX file representation which was parsed from the file
      */
-    public static async createFromPath(filePath: Uri): Promise<XxxxFile | undefined> {
+    public static override async createFromFile(filePath: Uri): Promise<XxxxFile | undefined> {
         // Create and initialize object
         try {
             const textDoc = await vscode.workspace.openTextDocument(filePath);
@@ -39,7 +39,7 @@ export class XxxxFile extends AsXmlFile {
     #xxxxx: string;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public override toJSON(): Record<string, unknown> {
         const obj = super.toJSON();
         obj.xxxxx = this.xxxxx;
         //TODO

@@ -17,7 +17,7 @@ const configRootKey = 'vscode-brautomationtools';
 /**
  * Get configuration of this extension
  */
-function getConfiguration() {
+function getConfiguration(): vscode.WorkspaceConfiguration {
     return vscode.workspace.getConfiguration(configRootKey);
 }
 
@@ -27,7 +27,7 @@ function getConfiguration() {
  * @param configValue Value which should be converted
  * @returns Returns the LogLevel behind the configValue, or `LogLevel.Debug` if the conversion failed
  */
-function toLogLevel(configValue: any): LogLevel{
+function toLogLevel(configValue: unknown): LogLevel{
     let result = LogLevel.debug;
     switch (configValue) {
         case 'Fatal':
@@ -66,7 +66,7 @@ function toLogLevel(configValue: any): LogLevel{
  * @param configValue Value which should be converted
  * @returns Returns the LogAutoShowMode behind the configValue, or `LogAutoShowMode.always` if the conversion failed
  */
-function toLogAutoShowMode(configValue: any): LogAutoShowMode {
+function toLogAutoShowMode(configValue: unknown): LogAutoShowMode {
     let result = LogAutoShowMode.always;
     switch (configValue) {
         case 'Always':
@@ -98,11 +98,11 @@ class ExtensionConfiguration {
         return this.#instance;
     }
     private constructor() {
-        vscode.workspace.onDidChangeConfiguration(this.#configChangedListener);
+        vscode.workspace.onDidChangeConfiguration((ev) => this.#configChangedListener(ev));
     }
 
 
-    #configChangedListener(ev: vscode.ConfigurationChangeEvent) {
+    #configChangedListener(ev: vscode.ConfigurationChangeEvent): void {
         const reloadRequiredList = [
             'environment.automationStudioInstallPaths',
             'environment.pviInstallPaths',
@@ -118,7 +118,7 @@ class ExtensionConfiguration {
             }
         }
         if (reloadRequired) {
-            notifications.configChangedMessage();
+            void notifications.configChangedMessage();
         }
     }
 
@@ -139,7 +139,7 @@ class ExtensionConfiguration {
             }
         }
         public set defaultBuildMode(value: string | undefined) {
-            getConfiguration().update(this.#defaultBuildModeKey, value, vscode.ConfigurationTarget.Global);
+            void getConfiguration().update(this.#defaultBuildModeKey, value, vscode.ConfigurationTarget.Global);
         }
     }(this);
 
@@ -161,7 +161,7 @@ class ExtensionConfiguration {
         }
         public set automationStudioInstallPaths(value: vscode.Uri[] | undefined) {
             const configValue = value?.map((uri) => uri.fsPath);
-            getConfiguration().update(this.#automationStudioInstallPathsKey, configValue, vscode.ConfigurationTarget.Global);
+            void getConfiguration().update(this.#automationStudioInstallPathsKey, configValue, vscode.ConfigurationTarget.Global);
         }
 
 
@@ -177,7 +177,7 @@ class ExtensionConfiguration {
         }
         public set pviInstallPaths(value: vscode.Uri[] | undefined) {
             const configValue = value?.map((uri) => uri.fsPath);
-            getConfiguration().update(this.#pviInstallPathsKey, configValue, vscode.ConfigurationTarget.Global);
+            void getConfiguration().update(this.#pviInstallPathsKey, configValue, vscode.ConfigurationTarget.Global);
         }
     }(this);
 
@@ -193,7 +193,7 @@ class ExtensionConfiguration {
             return toLogLevel(value);
         }
         public set logLevel(value: LogLevel | undefined) {
-            getConfiguration().update(this.#logLevelKey, value, vscode.ConfigurationTarget.Global);
+            void getConfiguration().update(this.#logLevelKey, value, vscode.ConfigurationTarget.Global);
         }
 
 
@@ -203,7 +203,7 @@ class ExtensionConfiguration {
             return toLogAutoShowMode(value);
         }
         public set showOutputOnImportantMessage(value: LogAutoShowMode | undefined) {
-            getConfiguration().update(this.#showOutputOnImportantMessageKey, value, vscode.ConfigurationTarget.Global);
+            void getConfiguration().update(this.#showOutputOnImportantMessageKey, value, vscode.ConfigurationTarget.Global);
         }
 
 
@@ -213,7 +213,7 @@ class ExtensionConfiguration {
             return value === true ? true : false;
         }
         public set prettyPrintAdditionalData(value: boolean | undefined) {
-            getConfiguration().update(this.#prettyPrintAdditionalDataKey, value, vscode.ConfigurationTarget.Global);
+            void getConfiguration().update(this.#prettyPrintAdditionalDataKey, value, vscode.ConfigurationTarget.Global);
         }
     }(this);
 
@@ -229,7 +229,7 @@ class ExtensionConfiguration {
             return value === true ? true : false;
         }
         public set hideActivationMessage(value: boolean | undefined) {
-            getConfiguration().update(this.#hideActivationMessageKey, value, vscode.ConfigurationTarget.Global);
+            void getConfiguration().update(this.#hideActivationMessageKey, value, vscode.ConfigurationTarget.Global);
         }
 
 
@@ -239,7 +239,7 @@ class ExtensionConfiguration {
             return value === true ? true : false;
         }
         public set hideNewVersionMessage(value: boolean | undefined) {
-            getConfiguration().update(this.#hideNewVersionMessageKey, value, vscode.ConfigurationTarget.Global);
+            void getConfiguration().update(this.#hideNewVersionMessageKey, value, vscode.ConfigurationTarget.Global);
         }
     }(this);
 

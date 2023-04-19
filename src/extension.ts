@@ -14,12 +14,11 @@ import { WorkspaceProjects, registerProjectWorkspace } from './Workspace/BRAsPro
 import { notifications } from './UI/Notifications';
 import { extensionState } from './ExtensionState';
 import { extensionConfiguration } from './ExtensionConfiguration';
-import { statusBar } from './UI/StatusBar';
 import { Environment } from './Environment/Environment';
 
 
 // Activation event
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	// Set up logger
 	logger.configuration = {
 		level: extensionConfiguration.logging.logLevel,
@@ -30,7 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Initialize modules
 	extensionState.initialize(context);
 	notifications.initialize(context);
-	notifications.newVersionMessage();
+	void notifications.newVersionMessage();
 	registerApiTests(context);
 	registerCommands(context);
 	registerBuildTaskProviders(context);
@@ -40,11 +39,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	const waitPviVersions = Environment.pvi.getVersions();
 	const waitWorkspaceProjects = WorkspaceProjects.getProjects();
 	// TODO do we need to await these? Will probably be remove after architectural changes #5
-	await registerCppToolsConfigurationProvider(context);
-	await registerProjectWorkspace(context);
+	await registerCppToolsConfigurationProvider(context); // TODO clarify async in #55
+	registerProjectWorkspace(context); // TODO clarify async in #55
 	// Register events
-	let disposable: vscode.Disposable;
-	disposable = WorkspaceProjects.onCppRelevantDataChanged(() => didChangeCppToolsConfig());
+	const disposable = WorkspaceProjects.onCppRelevantDataChanged(() => didChangeCppToolsConfig());
 	context.subscriptions.push(disposable);
 	// Show activation message and log entry when all is done
 	await Promise.all([
@@ -53,12 +51,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		waitWorkspaceProjects,
 	]);
 	logger.info('Activation of B&R Automation Tools extension finished');
-	notifications.activationMessage();
+	void notifications.activationMessage();
 }
 
 
 // this method is called when your extension is deactivated
-export function deactivate() {
+export function deactivate(): void {
 	logger.info('Your extension "vscode-brautomationtools" is now deactivated!');
-	vscode.window.showInformationMessage('Extension B&R Automation Tools is now deactivated!');
+	void vscode.window.showInformationMessage('Extension B&R Automation Tools is now deactivated!');
 }

@@ -17,9 +17,8 @@ import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
  * Registers all task providers
  * @param context Extension context to push disposables
  */
-export function registerTaskProviders(context: vscode.ExtensionContext) {
-    let disposable: vscode.Disposable | undefined;
-    disposable = vscode.tasks.registerTaskProvider(buildTaskTypeName, new BrAsBuildTaskProvider());
+export function registerTaskProviders(context: vscode.ExtensionContext): void {
+    const disposable = vscode.tasks.registerTaskProvider(buildTaskTypeName, new BrAsBuildTaskProvider());
     context.subscriptions.push(disposable);
 }
 
@@ -104,21 +103,21 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
      * Used to provide standard tasks available in the workspace.
      * Tasks will be executed after selection without calling resolveTask().
      */
-    public async provideTasks(): Promise<vscode.Task[] | undefined> {
+    public provideTasks(): vscode.Task[] | undefined {
         const result: vscode.Task[] = [];
         // task for undefined configuration
-        const taskBuildWithDialogs = await BrAsBuildTaskProvider.definitionToTask({
+        const taskBuildWithDialogs = BrAsBuildTaskProvider.definitionToTask({
             type: buildTaskTypeName
         });
         result.push(taskBuildWithDialogs);
         // task to build cross reference
-        const taskBuildCrossRef = await BrAsBuildTaskProvider.definitionToTask({
+        const taskBuildCrossRef = BrAsBuildTaskProvider.definitionToTask({
             type:                 buildTaskTypeName,
             buildCrossReferences: true
         });
         result.push(taskBuildCrossRef);
         // task to clean project
-        const taskCleanProject = await BrAsBuildTaskProvider.definitionToTask({
+        const taskCleanProject = BrAsBuildTaskProvider.definitionToTask({
             type:            buildTaskTypeName,
             cleanTemporary:  true,
             cleanBinary:     true,
@@ -136,12 +135,12 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
      * This is not called when the task is executed in the selection dialog after provideTasks()
      * @param task The task from the tasks.json or the recently used selection.
      */
-    public async resolveTask(task: vscode.Task): Promise<vscode.Task | undefined> {
+    public resolveTask(task: vscode.Task): vscode.Task | undefined {
         const asBuildDefinition = BrAsBuildTaskProvider.taskToDefinition(task);
         if (!asBuildDefinition) {
             return undefined;
         }
-        const buildTask = await BrAsBuildTaskProvider.definitionToTask(asBuildDefinition);
+        const buildTask = BrAsBuildTaskProvider.definitionToTask(asBuildDefinition);
         buildTask.definition = task.definition; // resolveTask requires that the original definition object is used. Otherwise a new call to provideTasks is done.
         return buildTask;
     }
@@ -165,10 +164,10 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
      * Creates a build task for Br.As.Build.exe by using the task definition values.
      * @param definition The defined values of the task
      */
-    private static async definitionToTask(definition: BrAsBuildTaskDefinition): Promise<vscode.Task> {
+    private static definitionToTask(definition: BrAsBuildTaskDefinition): vscode.Task {
         // create execution and task
-        let name = this.definitionToTaskName(definition);
-        const customExec = new vscode.CustomExecution(async () => new BrAsBuildTerminal(definition));
+        const name = this.definitionToTaskName(definition);
+        const customExec = new vscode.CustomExecution(async () => Promise.resolve(new BrAsBuildTerminal(definition)));
         const task = new vscode.Task(
             definition,                  // taskDefinition
             vscode.TaskScope.Workspace,  // scope
@@ -250,8 +249,9 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
 
 
     // The task should wait to do further execution until [Pseudoterminal.open](#Pseudoterminal.open) is called.
-    async open(initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
-        this.executeBuild();
+    open(initialDimensions: vscode.TerminalDimensions | undefined): void {
+        void this.executeBuild(); //TODO it seems like the handling here for the promise... is not done well
+         // TODO clarify async in #55
     }
 
 
@@ -343,7 +343,7 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
      * Writes to the terminal
      * @param text Text to write
      */
-    private write(text?: string) {
+    private write(text?: string): void {
         this.writeEmitter.fire(text ?? '');
     }
 
@@ -351,7 +351,7 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
      * Writes to the terminal and appends a new line
      * @param text Text to write
      */
-    private writeLine(text?: string) {
+    private writeLine(text?: string): void {
         this.write(text);
         this.write('\r\n');
     }
@@ -361,7 +361,7 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
      * Signals that the terminals execution is done.
      * @param exitCode The exit code of the terminal
      */
-    private done(exitCode?: number | void) {
+    private done(exitCode?: number | void): void {
         this.buildProcess = undefined;
         this.doneEmitter.fire(exitCode);
     }

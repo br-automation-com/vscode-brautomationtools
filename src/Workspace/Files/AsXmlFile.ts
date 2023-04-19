@@ -85,7 +85,7 @@ export class AsXmlFile {
     #xmlRootObj: ParsedXmlObject;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public toJSON(): Record<string, unknown> {
         return {
             filePath: this.filePath.toString(true),
             versionHeader: this.versionHeader,
@@ -139,11 +139,13 @@ export class AsXmlFile {
  */
 function getXmlVersionHeader(xmlObj: ParsedXmlObject): AsXmlVersionHeader {
     //TODO currently does not work with old PI of AS version (not in attribute syntax)
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const xmlAny = xmlObj as any; //HACK to access by indexer. find out how to solve properly?
     const versionObj = xmlAny?.['?AutomationStudio']?._att;
     const asVersion = versionObj?.Version as unknown;
     const asWorkingVersion = versionObj?.WorkingVersion as unknown;
     const asFileVersion = versionObj?.FileVersion as unknown;
+    /* eslint-enable */
     // return value
     return {
         asVersion: typeof asVersion === 'string' ? asVersion : undefined,
@@ -168,8 +170,10 @@ function setXmlVersionHeader(xmlObj: ParsedXmlObject, versionHeader: AsXmlVersio
         attributesObj.FileVersion = versionHeader.asFileVersion;
     }
     // add attribute object to PI node
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const xmlAny = xmlObj as any; //HACK to access by indexer. find out how to solve properly?
     xmlAny['?AutomationStudio'] = { _att: attributesObj };
+    /* eslint-enable */
 }
 
 function getXmlRootData(xmlObj: ParsedXmlObject): { name: string, value: ParsedXmlObject } {
@@ -181,10 +185,12 @@ function getXmlRootData(xmlObj: ParsedXmlObject): { name: string, value: ParsedX
         throw new Error('XML object contains multiple or no root elements');
     }
     // get and check root value
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const [rootKey, rootValAny] = withoutComments[0];
     const rootVal = rootValAny as unknown;
     if (typeof rootVal !== 'object' || rootVal === null) {
         throw new Error('XML root element is not an object');
     }
+    /* eslint-enable */
     return { name: rootKey, value: rootVal };
 }

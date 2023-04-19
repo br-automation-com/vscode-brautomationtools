@@ -4,7 +4,6 @@
  */
 
 import * as vscode from 'vscode';
-import { isSubOf, isFile, pathParsedUri, pathsFromTo, isDirectory, listSubFiles } from '../Tools/UriTools';
 import { AsProject } from './AsProject';
 import { statusBar } from '../UI/StatusBar';
 import { AsProjectCBuildInfo } from '../Environment/AsProjectCBuildData';
@@ -108,10 +107,9 @@ export class WorkspaceProjects {
  * Activation of AS project workspace
  * @param context context to register disposables
  */
-export async function registerProjectWorkspace(context: vscode.ExtensionContext) {
+export function registerProjectWorkspace(context: vscode.ExtensionContext): void {
     // register to update on change of workspace folders
-    let disposable: vscode.Disposable;
-    disposable = vscode.workspace.onDidChangeWorkspaceFolders(() => WorkspaceProjects.updateProjects()); // Should we register also outside of here in extension.ts?
+    const disposable = vscode.workspace.onDidChangeWorkspaceFolders(() => WorkspaceProjects.updateProjects()); // Should we register also outside of here in extension.ts?
     context.subscriptions.push(disposable);
     //TODO also push internal disposables (FileSystemWatcher...)? How? Figure out in #5 architectural changes.
 }

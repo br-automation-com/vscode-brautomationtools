@@ -46,9 +46,9 @@ export async function insertTextAtBeginOfFile(uri: vscode.Uri, newText: string):
 export async function replaceAllTextInFile(uri: vscode.Uri, newText: string): Promise<boolean> {
 	const doc = await vscode.workspace.openTextDocument(uri);
 	// get range to replace whole document
-	var firstLine = doc.lineAt(0);
-	var lastLine = doc.lineAt(doc.lineCount - 1);
-	var fullRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
+	const firstLine = doc.lineAt(0);
+	const lastLine = doc.lineAt(doc.lineCount - 1);
+	const fullRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
 	// replace text
 	const wsedit = new vscode.WorkspaceEdit();
 	wsedit.replace(uri, fullRange, newText);

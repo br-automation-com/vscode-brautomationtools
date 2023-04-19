@@ -10,7 +10,6 @@ export { AsXmlBuilder };
 export type ParsedXmlObject = object;
 
 export class AsXmlParser {
-    public constructor() { }
 
     #parser = new XMLParser({
         /** shared options, keep in sync with {@link AsXmlBuilder} */
@@ -62,7 +61,7 @@ function checkNodeIsArray(
     jPath: string,
     isLeafNode: boolean,
     isAttribute: boolean
-) {
+): boolean {
     return arrayPaths.some((path) => path === jPath);
 }
 
@@ -70,6 +69,7 @@ function checkNodeIsArray(
 const nodePathIsObjectsRegEx = /^([A-Za-z]+)\.Objects\.Object$/;
 const nodePathIsFilesRegEx = /^([A-Za-z]+)\.Files\.File$/;
 const nodePathIsConfigurationsRegEx = /^([A-Za-z]+)\.Configurations\.Configuration$/;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function checkNodeIsArrayRegex(tagName: string, jPath: string, isLeafNode: boolean, isAttribute: boolean): boolean {
     //TODO check which variant is better in terms of maintainability (or performance)
     return isAttribute ? false

@@ -39,7 +39,7 @@ export class AsPackageFile extends AsXmlFile {
      * @param filePath The path to the package file. e.g. `C:\Projects\Test\Logical\MyFolder\Package.pkg` or `C:\Projects\Test\Logical\MyLib\ANSIC.lby`
      * @returns The Automation Studio package file representation which was parsed from the file
      */
-    public static async createFromFile(filePath: Uri): Promise<AsPackageFile | undefined> {
+    public static override async createFromFile(filePath: Uri): Promise<AsPackageFile | undefined> {
         // Create and initialize object
         try {
             const textDoc = await vscode.workspace.openTextDocument(filePath);
@@ -96,7 +96,7 @@ export class AsPackageFile extends AsXmlFile {
     }
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public override toJSON(): Record<string, unknown> {
         const obj = super.toJSON();
         obj.dirPath = this.dirPath.toString(true);
         obj.type = this.type;
@@ -107,8 +107,10 @@ export class AsPackageFile extends AsXmlFile {
 }
 
 function getSubType(rootElement: ParsedXmlObject): string | undefined {
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const rootAny = rootElement as any;
     const subType = rootAny?._att?.SubType as unknown;
+    /* eslint-enable */
     return typeof subType === 'string' ? subType : undefined;
 }
 
@@ -127,6 +129,7 @@ function getChildArrayData(rootElement: ParsedXmlObject): { name: string, childr
     Maybe we'd better make a helper to extract the objects element from XML...
     It would be also easier to handle special cases such as the Files / Objects difference in libs and programs (not in normal pkg files?? old AS??)...
     */
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const rootAny = rootElement as any;
     let children: unknown;
     //
@@ -147,6 +150,7 @@ function getChildArrayData(rootElement: ParsedXmlObject): { name: string, childr
         if (!Array.isArray(children)) { throw new Error(`XML object "ROOT.Configurations.Configuration is no array!"`); }
         return { name: 'Configuration', children: children };
     }
+    /* eslint-enable */
     // no match --> error
     throw new Error('Package child objects data not found');
 }
@@ -156,6 +160,7 @@ function getChildArrayData(rootElement: ParsedXmlObject): { name: string, childr
  * @param element A single <File> or <Object> element of the package file
  */
 function xmlElementToPackageObject(child: unknown, childName: string, packageDir: Uri): AsPackageObject {
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const childAny = child as any;
     // path is mandatory and therefore throws if not existing
     let winPath: unknown = childAny?._txt;
@@ -181,8 +186,9 @@ function xmlElementToPackageObject(child: unknown, childName: string, packageDir
     const isPrivate = anyToBoolOrUndefined(childAny?._att?.Private);
     const description = childAny?._att?.Description as unknown;
     const language = childAny?._att?.Language as unknown;
+    /* eslint-enable */
     // function to resolve path from project root
-    const resolvePath = (projectRoot: Uri) => {
+    const resolvePath = (projectRoot: Uri): Uri => {
         if (!isReference) {
             return pathResolve(packageDir, posixPath);
         } else {

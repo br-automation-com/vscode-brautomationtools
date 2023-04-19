@@ -25,7 +25,7 @@ export class AsProjectFile extends AsXmlFile {
      * @param filePath The project file path. e.g. `C:\Projects\Test\Test.apj`
      * @returns The Automation Studio project file representation which was parsed from the file
      */
-    public static async createFromFile(filePath: Uri): Promise<AsProjectFile | undefined> {
+    public static override async createFromFile(filePath: Uri): Promise<AsProjectFile | undefined> {
         // Create and initialize object
         try {
             const textDoc = await vscode.workspace.openTextDocument(filePath);
@@ -87,7 +87,7 @@ export class AsProjectFile extends AsXmlFile {
     #cCodeOptions: AsProjectCCodeOptions;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public override toJSON(): Record<string, unknown> {
         const obj = super.toJSON();
         obj.projectName = this.projectName;
         obj.projectDescription = this.projectDescription;
@@ -103,16 +103,22 @@ export class AsProjectFile extends AsXmlFile {
  * @param rootElement The root <Project> element object
  */
 function getCCodeOptions(rootElement: ParsedXmlObject): AsProjectCCodeOptions {
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const rootAny = rootElement as any;
     const cOptions = rootAny?.ANSIC?._att;
+    const enablePlcVarDeclarations = anyToBoolOrUndefined(cOptions?.Declarations);
+    const enableDefaultIncludes = anyToBoolOrUndefined(cOptions?.DefaultIncludes);
+    /* eslint-enable */
     return {
-        enablePlcVarDeclarations: anyToBoolOrUndefined(cOptions?.Declarations),
-        enableDefaultIncludes: anyToBoolOrUndefined(cOptions?.DefaultIncludes),
+        enablePlcVarDeclarations: enablePlcVarDeclarations,
+        enableDefaultIncludes: enableDefaultIncludes,
     };
 }
 
 function getProjectDescription(rootElement: ParsedXmlObject): string {
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const rootAny = rootElement as any;
     const description = rootAny?._att?.Description as unknown;
+    /* eslint-enable */
     return typeof description === 'string' ? description : '';
 }

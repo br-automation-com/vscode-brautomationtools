@@ -141,7 +141,7 @@ export class GccExecutable {
     }
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public toJSON(): Record<string, unknown> {
         return {
             exePath: this.exePath.toString(true),
             version: this.version.version,

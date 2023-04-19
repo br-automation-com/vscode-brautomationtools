@@ -113,7 +113,7 @@ export class AsProjectPou {
     #pouPkg: AsPackageFile | undefined;
 
     /** toJSON required as getter properties are not shown in JSON.stringify() otherwise */
-    public toJSON(): any {
+    public toJSON(): Record<string, unknown> {
         return {
             rootPath: this.rootPath.toString(true),
             type: this.type,

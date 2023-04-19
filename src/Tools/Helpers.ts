@@ -10,10 +10,10 @@ import { isString } from './TypeGuards';
  * @param array Array to which item is pushed
  * @param item Item which is checked and pushed
  */
-export function pushDefined<T>(array: T[], ...items: (T | undefined | null)[]) {
+export function pushDefined<T>(array: T[], ...items: (T | undefined | null)[]): void {
     for (const item of items) {
         if ( (item !== undefined) && (item !== null) ) {
-            array.push(item!);
+            array.push(item);
         }
     }
 }
@@ -22,8 +22,8 @@ export function pushDefined<T>(array: T[], ...items: (T | undefined | null)[]) {
  * Creates a delay, which can be awaited.
  * @param ms Delay time in milliseconds
  */
-export function delay(ms: number) {
-    return new Promise( (resolve) => setTimeout(resolve, ms) );
+export async function delay(ms: number): Promise<void> {
+    await new Promise( (resolve) => setTimeout(resolve, ms) );
 }
 
 /**
