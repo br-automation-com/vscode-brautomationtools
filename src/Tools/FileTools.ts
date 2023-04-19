@@ -3,8 +3,7 @@
  * @packageDocumentation
  */
 
-import * as vscode from 'vscode';
-
+import * as vscode from "vscode";
 
 /**
  * Creates a file at a given URI
@@ -12,12 +11,11 @@ import * as vscode from 'vscode';
  * @param options Options for the file creation
  * @return A thenable that resolves when the creation could be applied
  */
-export async function createFile(uri: vscode.Uri, options?: { overwrite?: boolean, ignoreIfExists?: boolean }): Promise<boolean> {
+export async function createFile(uri: vscode.Uri, options?: { overwrite?: boolean; ignoreIfExists?: boolean }): Promise<boolean> {
     const wsedit = new vscode.WorkspaceEdit();
     wsedit.createFile(uri, options);
     return vscode.workspace.applyEdit(wsedit);
 }
-
 
 /**
  * Inserts a given text at a given position in a file. File is automatically saved and therefore the editor will not be opened.
@@ -26,13 +24,12 @@ export async function createFile(uri: vscode.Uri, options?: { overwrite?: boolea
  * @param newText The text which will be inserted
  */
 export async function insertTextInFile(uri: vscode.Uri, position: vscode.Position, newText: string): Promise<boolean> {
-	const doc = await vscode.workspace.openTextDocument(uri);
-	const wsedit = new vscode.WorkspaceEdit();
-	wsedit.insert(uri, position, newText);
-	await vscode.workspace.applyEdit(wsedit);
-	return doc.save();
+    const doc = await vscode.workspace.openTextDocument(uri);
+    const wsedit = new vscode.WorkspaceEdit();
+    wsedit.insert(uri, position, newText);
+    await vscode.workspace.applyEdit(wsedit);
+    return doc.save();
 }
-
 
 /**
  * Inserts a given text at the begin of a file. File is automatically saved and therefore the editor will not be opened.
@@ -44,14 +41,14 @@ export async function insertTextAtBeginOfFile(uri: vscode.Uri, newText: string):
 }
 
 export async function replaceAllTextInFile(uri: vscode.Uri, newText: string): Promise<boolean> {
-	const doc = await vscode.workspace.openTextDocument(uri);
-	// get range to replace whole document
-	const firstLine = doc.lineAt(0);
-	const lastLine = doc.lineAt(doc.lineCount - 1);
-	const fullRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
-	// replace text
-	const wsedit = new vscode.WorkspaceEdit();
-	wsedit.replace(uri, fullRange, newText);
-	await vscode.workspace.applyEdit(wsedit);
-	return await doc.save();
+    const doc = await vscode.workspace.openTextDocument(uri);
+    // get range to replace whole document
+    const firstLine = doc.lineAt(0);
+    const lastLine = doc.lineAt(doc.lineCount - 1);
+    const fullRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
+    // replace text
+    const wsedit = new vscode.WorkspaceEdit();
+    wsedit.replace(uri, fullRange, newText);
+    await vscode.workspace.applyEdit(wsedit);
+    return await doc.save();
 }

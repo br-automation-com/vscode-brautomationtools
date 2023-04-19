@@ -3,15 +3,14 @@
  * @packageDocumentation
  */
 
-import * as vscode from 'vscode';
-import { AsProject } from './AsProject';
-import { statusBar } from '../UI/StatusBar';
-import { AsProjectCBuildInfo } from '../Environment/AsProjectCBuildData';
-
+import * as vscode from "vscode";
+import { AsProject } from "./AsProject";
+import { statusBar } from "../UI/StatusBar";
+import { AsProjectCBuildInfo } from "../Environment/AsProjectCBuildData";
 
 export class WorkspaceProjects {
     /** static only class */
-    private constructor() { }
+    private constructor() {}
 
     /**
      * Get all available AS projects within all workspace folders
@@ -20,7 +19,7 @@ export class WorkspaceProjects {
     public static async getProjects(): Promise<AsProject[]> {
         if (this.#projects === undefined) {
             this.#projects = this.#searchProjects();
-            statusBar.addBusyItem(this.#projects, 'Parsing AS projects in workspace');
+            statusBar.addBusyItem(this.#projects, "Parsing AS projects in workspace");
         }
         return await this.#projects;
     }
@@ -74,13 +73,13 @@ export class WorkspaceProjects {
         }
         // set new projects
         this.#projects = this.#searchProjects();
-        statusBar.addBusyItem(this.#projects, 'Parsing AS projects in workspace');
+        statusBar.addBusyItem(this.#projects, "Parsing AS projects in workspace");
         return await this.#projects;
     }
     static async #searchProjects(baseUri?: vscode.Uri): Promise<AsProject[]> {
         //TODO rework, was directly copied from old findAsProjectInfo() function
         //TODO move search to AsProject class?
-        const searchPattern: vscode.GlobPattern = baseUri ? { base: baseUri.fsPath, pattern: '**/*.apj' } : '**/*.apj';
+        const searchPattern: vscode.GlobPattern = baseUri ? { base: baseUri.fsPath, pattern: "**/*.apj" } : "**/*.apj";
         const projectFileUris = await vscode.workspace.findFiles(searchPattern);
         const projects: AsProject[] = [];
         for (const projectFileUri of projectFileUris) {
@@ -101,7 +100,6 @@ export class WorkspaceProjects {
 }
 
 //#region exported functions
-
 
 /**
  * Activation of AS project workspace

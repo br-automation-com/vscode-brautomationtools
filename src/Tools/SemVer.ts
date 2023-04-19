@@ -1,9 +1,8 @@
-import { coerce, compare, satisfies, SemVer } from 'semver';
-import { logger } from './Logger';
-
+import { coerce, compare, satisfies, SemVer } from "semver";
+import { logger } from "./Logger";
 
 export interface HasVersion {
-    version: SemVer
+    version: SemVer;
 }
 
 /**
@@ -18,13 +17,13 @@ export function getMatchingVersion<T extends HasVersion>(source: T[], requested?
         return undefined;
     }
     // newest if no version defined
-    if ((requested === undefined) && !strict) {
+    if (requested === undefined && !strict) {
         return highestVersion(source);
     }
     // find match if version defined
     const requestAsSemVer = coerce(requested);
     if (!requestAsSemVer) {
-        logger.debug('requestVersion(source, requested, strict) -> requested is no valid SemVer', { requested: requested, strict: strict });
+        logger.debug("requestVersion(source, requested, strict) -> requested is no valid SemVer", { requested: requested, strict: strict });
         return undefined;
     }
     const matchMajorMinor = `${requestAsSemVer.major}.${requestAsSemVer.minor}.x`;

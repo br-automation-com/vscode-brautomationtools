@@ -17,5 +17,9 @@
         "FIXME",
         "TODO",
         "SYNC" // SYNC tag for places which need to be in sync with contribution points of package.json
-    ]
+    ],
+    "editor.formatOnSave": true,
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
 }

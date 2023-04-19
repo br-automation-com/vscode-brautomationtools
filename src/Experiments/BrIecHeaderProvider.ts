@@ -3,13 +3,11 @@
  * @packageDocumentation
  */
 
-import * as vscode from 'vscode';
-
+import * as vscode from "vscode";
 
 export async function testProvideHeader(context: vscode.ExtensionContext): Promise<void> {
     //TODO providing a text document works fine, but how to make it accessible for C/C++ extension?
-    const myProvider = new class implements vscode.TextDocumentContentProvider {
-
+    const myProvider = new (class implements vscode.TextDocumentContentProvider {
         // emitter and its event
         onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
         onDidChange = this.onDidChangeEmitter.event;
@@ -54,9 +52,9 @@ export async function testProvideHeader(context: vscode.ExtensionContext): Promi
             // simply invoke cowsay, use uri-path as text
             return header;
         }
-    };
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('myScheme', myProvider));
-    const uri = vscode.Uri.parse('myScheme:SomeTest.h');
+    })();
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("myScheme", myProvider));
+    const uri = vscode.Uri.parse("myScheme:SomeTest.h");
     const doc = await vscode.workspace.openTextDocument(uri); // calls back into the provider
     await vscode.window.showTextDocument(doc, { preview: false });
 }

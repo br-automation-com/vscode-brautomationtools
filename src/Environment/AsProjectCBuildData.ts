@@ -1,4 +1,4 @@
-import { Uri } from 'vscode';
+import { Uri } from "vscode";
 
 export interface AsProjectCBuildInfo {
     readonly compilerPath: Uri | undefined;

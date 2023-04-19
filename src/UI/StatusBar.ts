@@ -5,14 +5,12 @@
  * @packageDocumentation
  */
 
-import * as vscode from 'vscode';
-
+import * as vscode from "vscode";
 
 export interface BusyItem {
-    whenDone: Promise<unknown>,
-    text: string | undefined
+    whenDone: Promise<unknown>;
+    text: string | undefined;
 }
-
 
 /** Status bar handling */
 class StatusBar {
@@ -21,19 +19,16 @@ class StatusBar {
         return this.#instance;
     }
 
-
     private constructor() {
         // init busy status
-        this.#busyStatus.name = 'B&R Tools busy indicator';
-        this.#busyStatus.text = '$(sync~spin) B&R Tools';
+        this.#busyStatus.name = "B&R Tools busy indicator";
+        this.#busyStatus.text = "$(sync~spin) B&R Tools";
     }
 
-
     /** Status bar busy indicator */
-    #busyStatus = vscode.window.createStatusBarItem('vscode-brautomationtools.busyStatus',vscode.StatusBarAlignment.Left);
+    #busyStatus = vscode.window.createStatusBarItem("vscode-brautomationtools.busyStatus", vscode.StatusBarAlignment.Left);
     /** Items shown in the status bar busy indicator */
     #busyItems: Set<BusyItem> = new Set();
-
 
     /**
      * Adds an item to the busy indicator in the status bar. Can be used for long running processes to show a feedback to the user.
@@ -45,14 +40,16 @@ class StatusBar {
     addBusyItem(hideWhenDone: Promise<unknown>, text?: string | undefined): BusyItem {
         const item = {
             whenDone: hideWhenDone,
-            text: text
+            text: text,
         };
         this.#busyItems.add(item);
         this.#updateBusyStatus();
-        hideWhenDone.then(() => this.removeBusyItem(item), () => this.removeBusyItem(item));
+        hideWhenDone.then(
+            () => this.removeBusyItem(item),
+            () => this.removeBusyItem(item)
+        );
         return item;
     }
-
 
     /**
      * Removes an item from the busy indicator in the status bar.
@@ -62,7 +59,6 @@ class StatusBar {
         this.#busyItems.delete(item);
         this.#updateBusyStatus();
     }
-
 
     /** Updates the status of the busy indicator. */
     #updateBusyStatus(): void {
@@ -76,11 +72,10 @@ class StatusBar {
                 tooltipLines.push(`$(sync~spin) ${item.text}`);
             }
         }
-        const toolTipRaw = tooltipLines.join('\n\n');
+        const toolTipRaw = tooltipLines.join("\n\n");
         this.#busyStatus.tooltip = new vscode.MarkdownString(toolTipRaw, true);
         this.#busyStatus.show();
     }
-
 
     /**     */
     showConfigAndDeployedDummy(hideWhenDone: Promise<unknown>): void {
@@ -88,17 +83,17 @@ class StatusBar {
         //     in the extension, so an update works in both ways...
         // select configuration
         const selectConfig = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-        selectConfig.name = 'AS Configuration';
-        selectConfig.text = '$(gear) Config1';
-        selectConfig.tooltip = 'Select active configuration';
-        selectConfig.command = 'vscode-brautomationtools.dialogSelectBuildMode';
+        selectConfig.name = "AS Configuration";
+        selectConfig.text = "$(gear) Config1";
+        selectConfig.tooltip = "Select active configuration";
+        selectConfig.command = "vscode-brautomationtools.dialogSelectBuildMode";
         selectConfig.show();
         // select deployed object
         const selectDeployed = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-        selectDeployed.name = 'AS Deployed';
-        selectDeployed.text = '$(extensions) Program1';
-        selectDeployed.tooltip = 'Select deployed instance';
-        selectDeployed.command = 'vscode-brautomationtools.dialogSelectBuildMode';
+        selectDeployed.name = "AS Deployed";
+        selectDeployed.text = "$(extensions) Program1";
+        selectDeployed.tooltip = "Select deployed instance";
+        selectDeployed.command = "vscode-brautomationtools.dialogSelectBuildMode";
         selectDeployed.show();
         // hide when resolved
         void hideWhenDone.then(() => {

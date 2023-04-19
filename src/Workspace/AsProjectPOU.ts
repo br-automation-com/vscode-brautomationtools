@@ -1,18 +1,16 @@
-import { RelativePattern, Uri, workspace } from 'vscode';
-import { logger } from '../Tools/Logger';
-import { isSubOf, pathBasename, pathDirname } from '../Tools/UriTools';
-import { AsPackageFile } from './Files/AsPackageFile';
+import { RelativePattern, Uri, workspace } from "vscode";
+import { logger } from "../Tools/Logger";
+import { isSubOf, pathBasename, pathDirname } from "../Tools/UriTools";
+import { AsPackageFile } from "./Files/AsPackageFile";
 
-
-export type AsProjectPouType = 'library' | 'program' | 'dataObject' | 'other';
-export type AsProjectPouLanguage = 'IEC' | 'C/C++' | 'binary' | 'other';
+export type AsProjectPouType = "library" | "program" | "dataObject" | "other";
+export type AsProjectPouLanguage = "IEC" | "C/C++" | "binary" | "other";
 
 /**
  * Representation of a project program organization unit (POU).
  * A POU can be a library, a program or a data object
  */
 export class AsProjectPou {
-
     /**
      * Recursively searches for all POUs within a directory
      * @param searchRoot Root directory for start of search
@@ -20,7 +18,7 @@ export class AsProjectPou {
      */
     public static async searchPousInDir(searchRoot: Uri, projectRoot: Uri): Promise<AsProjectPou[]> {
         // get matching package files
-        const pouPattern = new RelativePattern(searchRoot, '**/*.{prg,lby,dob}');
+        const pouPattern = new RelativePattern(searchRoot, "**/*.{prg,lby,dob}");
         const pkgFilePaths = await workspace.findFiles(pouPattern);
         // create POUs for all files
         const pous: AsProjectPou[] = [];
@@ -67,13 +65,14 @@ export class AsProjectPou {
     protected async _initialize(): Promise<void> {
         this.#pouPkg = await AsPackageFile.createFromFile(this.#pouPkgPath);
         if (this.#pouPkg === undefined) {
-            throw new Error('Failed to create package file');
+            throw new Error("Failed to create package file");
         }
         this.#type = getPouTypeFromPackage(this.#pouPkg);
         this.#language = getPouLanguageFromPackage(this.#pouPkg, this.#type);
         //TODO list all files. This could maybe done on the AsPackageFile level with new methods
         //     e.g. AsPackageFile.getSubPackages(), .getFiles(), .traverse()
-        const fileUris = this.#pouPkg.getChildrenOfType('File')
+        const fileUris = this.#pouPkg
+            .getChildrenOfType("File") //
             .map((child) => child.resolvePath(this.#projectRoot));
         this.#listedFiles = fileUris;
         // init done
@@ -89,21 +88,21 @@ export class AsProjectPou {
 
     /** Type of POU */
     public get type(): AsProjectPouType {
-        if (!this.#isInitialized || !this.#type) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized || !this.#type) throw new Error(`Use of not initialized object`);
         return this.#type;
     }
     #type: AsProjectPouType | undefined;
 
     /** Language of the POU */
     public get language(): AsProjectPouLanguage {
-        if (!this.#isInitialized || !this.#language) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized || !this.#language) throw new Error(`Use of not initialized object`);
         return this.#language;
     }
     #language: AsProjectPouLanguage | undefined;
 
     /** Files listed within the POU package or any listed sub package */
     public get listedFiles(): Uri[] {
-        if (!this.#isInitialized || !this.#listedFiles) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized || !this.#listedFiles) throw new Error(`Use of not initialized object`);
         return this.#listedFiles;
     }
     #listedFiles: Uri[] | undefined;
@@ -140,14 +139,14 @@ export class AsProjectPou {
 function getPouTypeFromPackage(pouPkg: AsPackageFile): AsProjectPouType {
     const pkgType = pouPkg.type.toLowerCase();
     switch (pkgType) {
-        case 'program':
-            return 'program';
-        case 'library':
-            return 'library';
-        case 'dataobject':
-            return 'dataObject';
+        case "program":
+            return "program";
+        case "library":
+            return "library";
+        case "dataobject":
+            return "dataObject";
         default:
-            return 'other';
+            return "other";
     }
 }
 
@@ -160,35 +159,35 @@ function getPouTypeFromPackage(pouPkg: AsPackageFile): AsProjectPouType {
 function getPouLanguageFromPackage(pouPkg: AsPackageFile, pouType: AsProjectPouType): AsProjectPouLanguage {
     const pkgSubType = pouPkg.subType?.toLowerCase();
     // data objects are special, as they can have C/C++ or dat language, we will consider them as C/C++
-    if (pouType === 'dataObject') {
-        return 'C/C++';
+    if (pouType === "dataObject") {
+        return "C/C++";
     }
     // sub type defines language for programs and libraries in newer AS versions
     if (pkgSubType !== undefined) {
         switch (pkgSubType) {
-            case 'ansic':
-                return 'C/C++';
-            case 'iec':
-                return 'IEC';
-            case 'binary':
-                return 'binary';
+            case "ansic":
+                return "C/C++";
+            case "iec":
+                return "IEC";
+            case "binary":
+                return "binary";
             default:
-                return 'other';
+                return "other";
         }
     }
     // get the language from the file name for packages from older AS versions
     const pkgFileName = pathBasename(pouPkg.filePath).toLowerCase();
     switch (pkgFileName) {
-        case 'ansic.lby':
-        case 'ansic.prg':
-            return 'C/C++';
-        case 'iec.lby':
-        case 'iec.prg':
-            return 'IEC';
-        case 'binary.lby':
-        case 'binary.prg':
-            return 'binary';
+        case "ansic.lby":
+        case "ansic.prg":
+            return "C/C++";
+        case "iec.lby":
+        case "iec.prg":
+            return "IEC";
+        case "binary.lby":
+        case "binary.prg":
+            return "binary";
         default:
-            return 'other';
+            return "other";
     }
 }

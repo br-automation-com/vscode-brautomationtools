@@ -1,11 +1,10 @@
-import * as vscode from 'vscode';
-import {pathDirname, pathJoin} from '../Tools/UriTools';
+import * as vscode from "vscode";
+import { pathDirname, pathJoin } from "../Tools/UriTools";
 
 /**
  * General paths of an Automation Studio project
  */
 export class AsProjectPaths {
-
     /**
      * Derive project paths from the project file path
      * @param projectFilePath The path to the project file. e.g. `C:\Projects\Test\Test.apj`
@@ -13,11 +12,11 @@ export class AsProjectPaths {
     public constructor(projectFilePath: vscode.Uri) {
         this.#projectFile = projectFilePath;
         this.#projectRoot = pathDirname(this.#projectFile);
-        this.#logical = pathJoin(this.#projectRoot, 'Logical');
-        this.#physical = pathJoin(this.#projectRoot, 'Physical');
-        this.#temp = pathJoin(this.#projectRoot, 'Temp'); //Could be overriden by user settings, which is currently not supported
-        this.#tempIncludes = pathJoin(this.#temp, 'Includes');
-        this.#binaries = pathJoin(this.#projectRoot, 'Binaries'); //Could be overriden by user settings, which is currently not supported
+        this.#logical = pathJoin(this.#projectRoot, "Logical");
+        this.#physical = pathJoin(this.#projectRoot, "Physical");
+        this.#temp = pathJoin(this.#projectRoot, "Temp"); //Could be overriden by user settings, which is currently not supported
+        this.#tempIncludes = pathJoin(this.#temp, "Includes");
+        this.#binaries = pathJoin(this.#projectRoot, "Binaries"); //Could be overriden by user settings, which is currently not supported
     }
 
     /** Root path of the project */

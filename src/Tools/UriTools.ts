@@ -3,9 +3,9 @@
  * @packageDocumentation
  */
 
-import * as vscode from 'vscode';
-import { posix } from 'path'; // always use posix style path for vscode.Uri.path: https://github.com/microsoft/vscode-extension-samples/blob/master/fsconsumer-sample/README.md
-import { testStringFilter } from './Helpers';
+import * as vscode from "vscode";
+import { posix } from "path"; // always use posix style path for vscode.Uri.path: https://github.com/microsoft/vscode-extension-samples/blob/master/fsconsumer-sample/README.md
+import { testStringFilter } from "./Helpers";
 
 //#region implementations of path.posix for vscode.Uri
 // see also https://nodejs.org/docs/latest/api/path.html
@@ -21,16 +21,14 @@ export function pathBasename(uri: vscode.Uri, extension?: string): string {
     return posix.basename(uri.path, extension);
 }
 
-
 /**
  * Return the directory name of a path. Similar to the Unix dirname command.
  * @param uri the path to evaluate.
  */
 export function pathDirname(uri: vscode.Uri): vscode.Uri {
     const dirPath = posix.dirname(uri.path);
-    return uri.with({path: dirPath});
+    return uri.with({ path: dirPath });
 }
-
 
 /**
  * Uses path.posix.join to derive a new URI with a joined path
@@ -43,18 +41,16 @@ export function pathJoin(baseUri: vscode.Uri, ...append: string[]): vscode.Uri {
     //     behaviour is same as vscode api
     const basePath = baseUri.path;
     const joinedPath = posix.join(basePath, ...append);
-    const joinedUri = baseUri.with({path: joinedPath});
+    const joinedUri = baseUri.with({ path: joinedPath });
     return joinedUri;
 }
 
-
 export function pathRelative(from: vscode.Uri, to: vscode.Uri): string {
     // workaround to normalize file paths on windows (c:/ and C:/ get only normalized on uri.fspath, but not on vscode.Uri.file())
-    const usedFrom = (from.scheme !== 'file') ? from : vscode.Uri.file(from.fsPath);
-    const usedTo   = (to.scheme !== 'file')   ? to   : vscode.Uri.file(to.fsPath);
+    const usedFrom = from.scheme !== "file" ? from : vscode.Uri.file(from.fsPath);
+    const usedTo = to.scheme !== "file" ? to : vscode.Uri.file(to.fsPath);
     return posix.relative(usedFrom.path, usedTo.path);
 }
-
 
 /**
  * Uses path.posix.resolve to derive a new URI with a resolved path
@@ -64,10 +60,9 @@ export function pathRelative(from: vscode.Uri, to: vscode.Uri): string {
 export function pathResolve(baseUri: vscode.Uri, ...resolve: string[]): vscode.Uri {
     const basePath = baseUri.path;
     const resolvedPath = posix.resolve(basePath, ...resolve);
-    const resolvedUri = baseUri.with({path: resolvedPath});
+    const resolvedUri = baseUri.with({ path: resolvedPath });
     return resolvedUri;
 }
-
 
 /**
  * Returns an array of URIs which represent all relatives from one uri to another URI.
@@ -77,7 +72,7 @@ export function pathResolve(baseUri: vscode.Uri, ...resolve: string[]): vscode.U
  */
 export function pathsFromTo(from: vscode.Uri, to: vscode.Uri, replaceFrom?: vscode.Uri): vscode.Uri[] {
     // split relative path to single path entries
-    const splitRelatives = pathRelative(from, to).split('/');
+    const splitRelatives = pathRelative(from, to).split("/");
     // create all URIs relative to Temp/Includes
     const paths = [replaceFrom?.with({}) ?? from.with({})];
     let currentUri = paths[0];
@@ -98,14 +93,13 @@ export function pathsFromTo(from: vscode.Uri, to: vscode.Uri, replaceFrom?: vsco
 export function pathParsedUri(uri: vscode.Uri): ParsedPathUri {
     const parsedPath = posix.parse(uri.path);
     return {
-        root: uri.with({path: parsedPath.root}),
-        dir: uri.with({path: parsedPath.dir}),
+        root: uri.with({ path: parsedPath.root }),
+        dir: uri.with({ path: parsedPath.dir }),
         base: parsedPath.base,
-        ext: parsedPath.ext,//TODO maybe set undefined when empty?
-        name: parsedPath.name
+        ext: parsedPath.ext, //TODO maybe set undefined when empty?
+        name: parsedPath.name,
     };
 }
-
 
 /**
  * A parsed URI path object.
@@ -130,36 +124,36 @@ export interface ParsedPathUri {
 
 /**
  * Converts a windows style path to a posix style path in the following manner:
- * 
+ *
  * Absolute drive letter paths: `C:\Temp\Test.txt` → `/C:/Temp/Test.txt`
- * 
+ *
  * UNC paths: `\\Server\Share\Temp\Test.txt` → `/Server/Share/Temp/Test.txt`
- * 
+ *
  * Relative paths: `Temp\Test.txt` → `./Temp/Test.txt` and `..\Temp\Test.txt` → `./../Temp/Test.txt`
- * 
+ *
  * Absolute to current drive: `\Temp\Test.txt` → `./Temp/Test.txt`
  * Such paths are used in Automation Studio projects as relative to the project root. These paths
  * are interpreted relative, so they can be resolved properly when the context is known.
- * 
+ *
  * see also https://docs.microsoft.com/en-us/dotnet/standard/io/file-path-formats
  * @param winPath Windows style path as e.g. found in AS project package files
  * @returns Posix style relative or absolute path which can be used in `pathJoin()` or `pathResolve()`
  */
 export function winPathToPosixPath(winPath: string): string {
     // replace all \ first, so later checks can directly return result
-    const preparedPath = winPath.split('\\').join('/');
+    const preparedPath = winPath.split("\\").join("/");
     // Absolute drive letter path
     const driveLetterRegExp = /^([a-zA-Z]:)\//;
-    const driveLetterSubst = '/$1/';
+    const driveLetterSubst = "/$1/";
     if (driveLetterRegExp.test(preparedPath)) {
         return preparedPath.replace(driveLetterRegExp, driveLetterSubst);
     }
     // UNC paths
-    if (preparedPath.startsWith('//')) {
+    if (preparedPath.startsWith("//")) {
         return preparedPath.substring(1);
     }
     // Absolute to current drive → handled as relative
-    if (preparedPath.startsWith('/')) {
+    if (preparedPath.startsWith("/")) {
         return `.${preparedPath}`;
     }
     // all remaining ones are already relative
@@ -167,7 +161,6 @@ export function winPathToPosixPath(winPath: string): string {
 }
 
 //#endregion implementations of path.posix for vscode.Uri
-
 
 /**
  * Checks if an URI is a sub URI of a base URI
@@ -184,13 +177,12 @@ export function isSubOf(base: vscode.Uri, uri: vscode.Uri): boolean {
         return false;
     }
     const relative = pathRelative(base, uri);
-    if (relative.startsWith('..')) {
+    if (relative.startsWith("..")) {
         return false;
     } else {
         return true;
     }
 }
-
 
 /**
  * Checks if an URI exists
@@ -205,7 +197,6 @@ export async function exists(uri: vscode.Uri): Promise<boolean> {
     }
 }
 
-
 /**
  * Checks if a URI points to a file
  * @param uri URI which is checked
@@ -218,7 +209,6 @@ export async function isFile(uri: vscode.Uri): Promise<boolean> {
         return false;
     }
 }
-
 
 /**
  * Checks if a URI points to a directory
@@ -233,7 +223,6 @@ export async function isDirectory(uri: vscode.Uri): Promise<boolean> {
     }
 }
 
-
 /**
  * Lists the names of all subdirectories within a base URI.
  * @param baseUri The base for the list
@@ -242,7 +231,6 @@ export async function isDirectory(uri: vscode.Uri): Promise<boolean> {
 export async function listSubDirectoryNames(baseUri: vscode.Uri, filter?: string | RegExp): Promise<string[]> {
     return await listSubsOfType(baseUri, vscode.FileType.Directory, filter);
 }
-
 
 /**
  * Lists the full URIs of all subdirectories within a base URI.
@@ -254,7 +242,6 @@ export async function listSubDirectories(baseUri: vscode.Uri, filter?: string | 
     return dirNames.map((name) => pathJoin(baseUri, name));
 }
 
-
 /**
  * Lists the names of all the files within a base URI.
  * @param baseUri The base for the list.
@@ -263,7 +250,6 @@ export async function listSubDirectories(baseUri: vscode.Uri, filter?: string | 
 export async function listSubFileNames(baseUri: vscode.Uri, filter?: string | RegExp): Promise<string[]> {
     return await listSubsOfType(baseUri, vscode.FileType.File, filter);
 }
-
 
 /**
  * Lists the full URIs of all the files within a base URI.
@@ -289,7 +275,6 @@ async function listAllSubDirectories(...baseUris: vscode.Uri[]): Promise<vscode.
     }
     return result;
 }
-
 
 /**
  * Lists the names of all sub filesystem objects of a specified type within a base URI.

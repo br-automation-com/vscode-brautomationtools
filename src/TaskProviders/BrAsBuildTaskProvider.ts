@@ -3,15 +3,14 @@
  * @packageDocumentation
  */
 
-import * as vscode from 'vscode';
-import * as childProcess from 'child_process';
-import * as BrDialogs from '../UI/BrDialogs';
-import { logger } from '../Tools/Logger';
-import { extensionConfiguration } from '../ExtensionConfiguration';
-import { timeDiffString } from '../Tools/Helpers';
-import { Environment } from '../Environment/Environment';
-import { WorkspaceProjects } from '../Workspace/BRAsProjectWorkspace';
-
+import * as vscode from "vscode";
+import * as childProcess from "child_process";
+import * as BrDialogs from "../UI/BrDialogs";
+import { logger } from "../Tools/Logger";
+import { extensionConfiguration } from "../ExtensionConfiguration";
+import { timeDiffString } from "../Tools/Helpers";
+import { Environment } from "../Environment/Environment";
+import { WorkspaceProjects } from "../Workspace/BRAsProjectWorkspace";
 
 /**
  * Registers all task providers
@@ -22,32 +21,27 @@ export function registerTaskProviders(context: vscode.ExtensionContext): void {
     context.subscriptions.push(disposable);
 }
 
-
 //#region definitions and types from package.json contribution points
-
 
 /**
  * Task type name of BrAsBuild task provider
  */
 //SYNC Needs to be in sync with package.json/contributes/taskDefinitions/[n]/type
-const buildTaskTypeName = 'BrAsBuild';
-
+const buildTaskTypeName = "BrAsBuild";
 
 /**
  * Problem matchers for BrAsBuild task
  */
 //SYNC Needs to be in sync with package.json/contributes/problemMatchers/[n]/name
-const buildTaskProblemMatchers = ['$BrAsBuild'];
-
+const buildTaskProblemMatchers = ["$BrAsBuild"];
 
 /**
  * Literals to specify which can be used in BrAsBuildTaskDefinition for special functionality
  */
 //SYNC Needs to be in sync with package.json/contributes/taskDefinitions/[n]/ description and enums
-enum BrAsBuildLiterals{
-    useSettings = '$useSettings',
+enum BrAsBuildLiterals {
+    useSettings = "$useSettings",
 }
-
 
 /**
  * Task definition properties of BrAsBuild task provider
@@ -88,12 +82,9 @@ interface BrAsBuildTaskDefinition extends vscode.TaskDefinition {
     readonly additionalArguments?: string[];
 }
 
-
 //#endregion definitions and types from package.json contribution points
 
-
 //#region classes
-
 
 /**
  * Task provider for BR.AS.Build.exe
@@ -107,22 +98,22 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         const result: vscode.Task[] = [];
         // task for undefined configuration
         const taskBuildWithDialogs = BrAsBuildTaskProvider.definitionToTask({
-            type: buildTaskTypeName
+            type: buildTaskTypeName,
         });
         result.push(taskBuildWithDialogs);
         // task to build cross reference
         const taskBuildCrossRef = BrAsBuildTaskProvider.definitionToTask({
-            type:                 buildTaskTypeName,
-            buildCrossReferences: true
+            type: buildTaskTypeName,
+            buildCrossReferences: true,
         });
         result.push(taskBuildCrossRef);
         // task to clean project
         const taskCleanProject = BrAsBuildTaskProvider.definitionToTask({
-            type:            buildTaskTypeName,
-            cleanTemporary:  true,
-            cleanBinary:     true,
-            cleanGenerated:  true,
-            cleanDiagnosis:  false
+            type: buildTaskTypeName,
+            cleanTemporary: true,
+            cleanBinary: true,
+            cleanGenerated: true,
+            cleanDiagnosis: false,
         });
         result.push(taskCleanProject);
         // return
@@ -145,7 +136,6 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         return buildTask;
     }
 
-
     /**
      * Extracts a BrAsBuildTaskDefinition from a task
      * @param task The task containing the definition
@@ -159,7 +149,6 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         return asBuildDefinition;
     }
 
-
     /**
      * Creates a build task for Br.As.Build.exe by using the task definition values.
      * @param definition The defined values of the task
@@ -169,16 +158,15 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
         const name = this.definitionToTaskName(definition);
         const customExec = new vscode.CustomExecution(async () => Promise.resolve(new BrAsBuildTerminal(definition)));
         const task = new vscode.Task(
-            definition,                  // taskDefinition
-            vscode.TaskScope.Workspace,  // scope
-            name,                        // name
-            buildTaskTypeName,       // source (type)
-            customExec,                  // execution
+            definition, // taskDefinition
+            vscode.TaskScope.Workspace, // scope
+            name, // name
+            buildTaskTypeName, // source (type)
+            customExec, // execution
             buildTaskProblemMatchers // problemMatchers
         );
         return task;
     }
-
 
     /**
      * Generates a task name from a task definition.
@@ -187,20 +175,21 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
     private static definitionToTaskName(definition: BrAsBuildTaskDefinition): string {
         const nameContents: string[] = [];
         // basic task type
-        const isCleanTask =    definition.cleanBinary
-                            || definition.cleanDiagnosis
-                            || definition.cleanGenerated
-                            || definition.cleanTemporary;
+        const isCleanTask =
+            definition.cleanBinary ||
+            definition.cleanDiagnosis ||
+            definition.cleanGenerated || //
+            definition.cleanTemporary;
         const isCrossRefTask = definition.buildCrossReferences;
         if (isCleanTask) {
-            nameContents.push('Clean');
+            nameContents.push("Clean");
         } else if (isCrossRefTask) {
-            nameContents.push('Build cross references');
+            nameContents.push("Build cross references");
         } else {
-            if (definition.asBuildMode === 'Rebuild') {
-                nameContents.push('Rebuild');
+            if (definition.asBuildMode === "Rebuild") {
+                nameContents.push("Rebuild");
             } else {
-                nameContents.push('Build');
+                nameContents.push("Build");
             }
         }
         // project, configuration...
@@ -217,13 +206,12 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
             nameContents.push(`with RUC package`);
         }
         if (definition.additionalArguments) {
-            nameContents.push(`additional arguments '${definition.additionalArguments.join(' ')}'`);
+            nameContents.push(`additional arguments '${definition.additionalArguments.join(" ")}'`);
         }
         // return
-        return nameContents.join(' ');
+        return nameContents.join(" ");
     }
 }
-
 
 /**
  * A Pseudoterminal which starts BR.AS.Build.exe on opening
@@ -237,7 +225,6 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
     /** If set, a child process is active. Kill on user cancellation! */
     private buildProcess?: childProcess.ChildProcessWithoutNullStreams;
 
-
     /**
      * Creates a pseudoterminal which starts BR.AS.Build.exe on opening with the specified task definition.
      * Required but undefined task definition properties will prompt a user dialog for selection.
@@ -247,41 +234,36 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
         this.taskDefinition = taskDefinition;
     }
 
-
     // The task should wait to do further execution until [Pseudoterminal.open](#Pseudoterminal.open) is called.
     open(initialDimensions: vscode.TerminalDimensions | undefined): void {
         void this.executeBuild(); //TODO it seems like the handling here for the promise... is not done well
-         // TODO clarify async in #55
+        // TODO clarify async in #55
     }
-
 
     // Task cancellation should be handled using [Pseudoterminal.close](#Pseudoterminal.close).
     close(): void {
         if (this.buildProcess) {
             const killed = this.buildProcess.kill();
             if (!killed) {
-                logger.warning('Failed to kill BR.AS.Build.exe');
+                logger.warning("Failed to kill BR.AS.Build.exe");
             }
         }
     }
-
 
     // events to invoke for writing to UI and closing terminal
     onDidWrite = this.writeEmitter.event;
     onDidClose = this.doneEmitter.event;
 
-
     /**
      * Executes BR.AS.Build.exe and writes output to the terminal.
      */
     private async executeBuild(): Promise<void> {
-
-        this.writeLine('Preparing Automation Studio build task');
+        this.writeLine("Preparing Automation Studio build task");
         // get undefined values by dialog
         const usedDefinition = await processTaskDefinition(this.taskDefinition);
         if (!usedDefinition) {
-            this.writeLine('Dialog cancelled by user or setting not found.');
-            this.writeLine('No build will be executed.');
+            this.writeLine("Dialog cancelled by user or setting not found.");
+            this.writeLine("No build will be executed.");
             this.done(41);
             return;
         }
@@ -310,25 +292,25 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
         }
         // start build process
         const startTime = new Date();
-        this.writeLine('Starting Automation Studio build task');
+        this.writeLine("Starting Automation Studio build task");
         this.writeLine(`Start of build: ${startTime.toLocaleString()}`);
         const buildArgs = taskDefinitionToBuildArgs(usedDefinition);
-        this.writeLine(`${buildExe.fsPath} ${buildArgs.join(' ')}`);
+        this.writeLine(`${buildExe.fsPath} ${buildArgs.join(" ")}`);
         this.writeLine();
         this.buildProcess = childProcess.spawn(buildExe.fsPath, buildArgs);
         // print data with timestamp on data
-        this.buildProcess.stdout.on('data', (data) => {
+        this.buildProcess.stdout.on("data", (data) => {
             const time = new Date().toLocaleTimeString();
             const dataStr = String(data);
             this.write(`${time} ${dataStr}`);
         });
-        this.buildProcess.stderr.on('data', (data) => {
+        this.buildProcess.stderr.on("data", (data) => {
             const time = new Date().toLocaleTimeString();
             const dataStr = String(data);
             this.write(`${time} ${dataStr}`);
         });
         // print build duration on exit
-        this.buildProcess.on('exit', (code) => {
+        this.buildProcess.on("exit", (code) => {
             const endTime = new Date();
             const durationStr = timeDiffString(startTime, endTime);
             this.writeLine();
@@ -338,13 +320,12 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
         });
     }
 
-
     /**
      * Writes to the terminal
      * @param text Text to write
      */
     private write(text?: string): void {
-        this.writeEmitter.fire(text ?? '');
+        this.writeEmitter.fire(text ?? "");
     }
 
     /**
@@ -353,9 +334,8 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
      */
     private writeLine(text?: string): void {
         this.write(text);
-        this.write('\r\n');
+        this.write("\r\n");
     }
-
 
     /**
      * Signals that the terminals execution is done.
@@ -367,12 +347,9 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
     }
 }
 
-
 //#endregion classes
 
-
 //#region local functions
-
 
 /**
  * Replaces specified values of a BrAsBuildTaskDefinition
@@ -381,21 +358,20 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
  */
 function taskDefinitionWith(baseDef: BrAsBuildTaskDefinition, withDef: BrAsBuildTaskDefinition): BrAsBuildTaskDefinition {
     return {
-        type:                 withDef.type                 ?? baseDef.type,
-        asProjectFile:        withDef.asProjectFile        ?? baseDef.asProjectFile,
-        asBuildMode:          withDef.asBuildMode          ?? baseDef.asBuildMode,
-        asConfiguration:      withDef.asConfiguration      ?? baseDef.asConfiguration,
-        buildForSimulation:   withDef.buildForSimulation   ?? baseDef.buildForSimulation,
-        buildRUCPackage:      withDef.buildRUCPackage      ?? baseDef.buildRUCPackage,
+        type: withDef.type ?? baseDef.type,
+        asProjectFile: withDef.asProjectFile ?? baseDef.asProjectFile,
+        asBuildMode: withDef.asBuildMode ?? baseDef.asBuildMode,
+        asConfiguration: withDef.asConfiguration ?? baseDef.asConfiguration,
+        buildForSimulation: withDef.buildForSimulation ?? baseDef.buildForSimulation,
+        buildRUCPackage: withDef.buildRUCPackage ?? baseDef.buildRUCPackage,
         buildCrossReferences: withDef.buildCrossReferences ?? baseDef.buildCrossReferences,
-        cleanTemporary:       withDef.cleanTemporary       ?? baseDef.cleanTemporary,
-        cleanBinary:          withDef.cleanBinary          ?? baseDef.cleanBinary,
-        cleanGenerated:       withDef.cleanGenerated       ?? baseDef.cleanGenerated,
-        cleanDiagnosis:       withDef.cleanDiagnosis       ?? baseDef.cleanDiagnosis,
-        additionalArguments:  withDef.additionalArguments  ?? baseDef.additionalArguments,
+        cleanTemporary: withDef.cleanTemporary ?? baseDef.cleanTemporary,
+        cleanBinary: withDef.cleanBinary ?? baseDef.cleanBinary,
+        cleanGenerated: withDef.cleanGenerated ?? baseDef.cleanGenerated,
+        cleanDiagnosis: withDef.cleanDiagnosis ?? baseDef.cleanDiagnosis,
+        additionalArguments: withDef.additionalArguments ?? baseDef.additionalArguments,
     };
 }
-
 
 /**
  * Processes a raw task definition by searching and replacing empty values or special literals within the baseDefinition.
@@ -412,7 +388,6 @@ async function processTaskDefinition(baseDefinition: BrAsBuildTaskDefinition): P
     return withDialogs;
 }
 
-
 /**
  * Fills properties which are set BrAsBuildLiterals.UseSettings by getting the corresponding setting value.
  * @param baseDefinition The base definition which is extended.
@@ -428,13 +403,11 @@ function processTaskDefinitionWithSettings(baseDefinition: BrAsBuildTaskDefiniti
         }
     }
     // apply setting values
-    return taskDefinitionWith(baseDefinition,
-        {
-            type:        baseDefinition.type,
-            asBuildMode: asBuildMode
-        });
+    return taskDefinitionWith(baseDefinition, {
+        type: baseDefinition.type,
+        asBuildMode: asBuildMode,
+    });
 }
-
 
 /**
  * Fills undefined properties of a task definition by prompting dialogs to the user.
@@ -464,10 +437,11 @@ async function processTaskDefinitionWithDialogs(baseDefinition: BrAsBuildTaskDef
         }
     }
     // Build mode
-    const isCleanTask =    baseDefinition.cleanBinary
-                        || baseDefinition.cleanDiagnosis 
-                        || baseDefinition.cleanGenerated
-                        || baseDefinition.cleanTemporary;
+    const isCleanTask =
+        baseDefinition.cleanBinary ||
+        baseDefinition.cleanDiagnosis ||
+        baseDefinition.cleanGenerated || //
+        baseDefinition.cleanTemporary;
     const isCrossRefTask = baseDefinition.buildCrossReferences;
     let asBuildMode = baseDefinition.asBuildMode;
     if (!isCleanTask && !isCrossRefTask && !asBuildMode) {
@@ -477,15 +451,13 @@ async function processTaskDefinitionWithDialogs(baseDefinition: BrAsBuildTaskDef
         }
     }
     // apply dialog values
-    return taskDefinitionWith(baseDefinition, 
-        {
-            type: baseDefinition.type,
-            asProjectFile: asProjectFile,
-            asConfiguration: asConfiguration,
-            asBuildMode: asBuildMode
-        });
+    return taskDefinitionWith(baseDefinition, {
+        type: baseDefinition.type,
+        asProjectFile: asProjectFile,
+        asConfiguration: asConfiguration,
+        asBuildMode: asBuildMode,
+    });
 }
-
 
 /**
  * Creates the build arguments required for BR.AS.Build.exe based on a task definition.
@@ -495,40 +467,39 @@ function taskDefinitionToBuildArgs(definition: BrAsBuildTaskDefinition): string[
     if (definition.asProjectFile) {
         buildArgs.push(definition.asProjectFile);
     }
-    if (definition.asConfiguration && definition.asConfiguration !== '') {
-        buildArgs.push('-c');
+    if (definition.asConfiguration && definition.asConfiguration !== "") {
+        buildArgs.push("-c");
         buildArgs.push(definition.asConfiguration);
     }
-    if (definition.asBuildMode && definition.asBuildMode !== '') {
-        buildArgs.push('-buildMode');
+    if (definition.asBuildMode && definition.asBuildMode !== "") {
+        buildArgs.push("-buildMode");
         buildArgs.push(definition.asBuildMode);
     }
     if (definition.buildForSimulation ?? false) {
-        buildArgs.push('-simulation');
+        buildArgs.push("-simulation");
     }
     if (definition.buildRUCPackage ?? false) {
-        buildArgs.push('-buildRUCPackage');
+        buildArgs.push("-buildRUCPackage");
     }
     if (definition.buildCrossReferences ?? false) {
-        buildArgs.push('-X');
+        buildArgs.push("-X");
     }
     if (definition.cleanTemporary ?? false) {
-        buildArgs.push('-clean-temporary');
+        buildArgs.push("-clean-temporary");
     }
     if (definition.cleanBinary ?? false) {
-        buildArgs.push('-clean-binary');
+        buildArgs.push("-clean-binary");
     }
     if (definition.cleanGenerated ?? false) {
-        buildArgs.push('-clean-generated');
+        buildArgs.push("-clean-generated");
     }
     if (definition.cleanDiagnosis ?? false) {
-        buildArgs.push('-clean-diagnosis');
+        buildArgs.push("-clean-diagnosis");
     }
     if (definition.additionalArguments) {
         buildArgs.push(...definition.additionalArguments);
     }
     return buildArgs;
 }
-
 
 //#endregion local functions

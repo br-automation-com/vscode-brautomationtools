@@ -1,19 +1,18 @@
-import * as vscode from 'vscode';
-import { AsProjectCBuildInfo, mergeAsProjectCBuildInfo } from '../Environment/AsProjectCBuildData';
-import { Environment } from '../Environment/Environment';
-import { logger } from '../Tools/Logger';
-import { exists, isSubOf, pathJoin, pathsFromTo, uriToSingleFilePattern } from '../Tools/UriTools';
-import { AsProjectConfiguration } from './AsProjectConfiguration';
-import { AsProjectLogical } from './AsProjectLogical';
-import { AsProjectPaths } from './AsProjectPaths';
-import { AsProjectFile } from './Files/AsProjectFile';
-import { UserSettingsFile } from './Files/UserSettingsFile';
+import * as vscode from "vscode";
+import { AsProjectCBuildInfo, mergeAsProjectCBuildInfo } from "../Environment/AsProjectCBuildData";
+import { Environment } from "../Environment/Environment";
+import { logger } from "../Tools/Logger";
+import { exists, isSubOf, pathJoin, pathsFromTo, uriToSingleFilePattern } from "../Tools/UriTools";
+import { AsProjectConfiguration } from "./AsProjectConfiguration";
+import { AsProjectLogical } from "./AsProjectLogical";
+import { AsProjectPaths } from "./AsProjectPaths";
+import { AsProjectFile } from "./Files/AsProjectFile";
+import { UserSettingsFile } from "./Files/UserSettingsFile";
 
 /**
  * Representation of an Automation Studio project
  */
 export class AsProject implements vscode.Disposable {
-
     /**
      * Creates an Automation Studio project object from the path to the project file
      * @param projectFilePath The path to the project file. e.g. `C:\Projects\Test\Test.apj`
@@ -44,25 +43,25 @@ export class AsProject implements vscode.Disposable {
         // get project file
         this.#projectFile = await AsProjectFile.createFromFile(this.#paths.projectFile);
         if (!this.#projectFile) {
-            throw new Error('Project file could not be parsed');
+            throw new Error("Project file could not be parsed");
         }
         this.#name = this.#projectFile.projectName;
         this.#description = this.#projectFile.projectDescription;
         this.#workingVersion = this.#projectFile.workingVersion;
         // parse logical view
-        const logicalPkgPath = pathJoin(this.#paths.logical, 'Package.pkg');
+        const logicalPkgPath = pathJoin(this.#paths.logical, "Package.pkg");
         this.#logical = await AsProjectLogical.createFromPackage(logicalPkgPath, this.#paths.projectRoot);
         if (!this.#logical) {
-            throw new Error('Logical View contents could not be parsed');
+            throw new Error("Logical View contents could not be parsed");
         }
         // get configurations
-        const physicalPkgPath = pathJoin(this.#paths.physical, 'Physical.pkg');
+        const physicalPkgPath = pathJoin(this.#paths.physical, "Physical.pkg");
         this.#configurations = await AsProjectConfiguration.createFromPhysicalPkg(physicalPkgPath, this.#paths.projectRoot);
         if (this.#configurations.length === 0) {
             logger.warning(`No configurations found in project ${this.#name}`);
         }
         // apply active configuration and register listener for change
-        this.#userSettingsPath = pathJoin(this.#paths.projectRoot, 'LastUser.set');
+        this.#userSettingsPath = pathJoin(this.#paths.projectRoot, "LastUser.set");
         this.#activeConfiguration = await this.#getActiveConfiguration();
         const userSetWatcher = vscode.workspace.createFileSystemWatcher(uriToSingleFilePattern(this.#userSettingsPath));
         this.#disposables.push(userSetWatcher);
@@ -87,21 +86,21 @@ export class AsProject implements vscode.Disposable {
 
     /** The name of the project */
     public get name(): string {
-        if (!this.#isInitialized || !this.#name) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized || !this.#name) throw new Error(`Use of not initialized object`);
         return this.#name;
     }
     #name: string | undefined;
 
     /** Description of the project */
     public get description(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return this.#description;
     }
     #description: string | undefined;
 
     /** The working version of Automation Studio which is used for this project */
     public get workingVersion(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return this.#workingVersion;
     }
     #workingVersion: string | undefined;
@@ -114,25 +113,25 @@ export class AsProject implements vscode.Disposable {
 
     /** Representation of Logical View contents */
     public get logical(): AsProjectLogical {
-        if (!this.#isInitialized || !this.#logical) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized || !this.#logical) throw new Error(`Use of not initialized object`);
         return this.#logical;
     }
     #logical: AsProjectLogical | undefined;
 
     /** Configurations located in the project */
     public get configurations(): AsProjectConfiguration[] {
-        if (!this.#isInitialized || !this.#configurations) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized || !this.#configurations) throw new Error(`Use of not initialized object`);
         return this.#configurations;
     }
     #configurations: AsProjectConfiguration[] | undefined;
 
     /** The active configuration */
     public get activeConfiguration(): AsProjectConfiguration | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return this.#activeConfiguration;
     }
     private set activeConfiguration(value: AsProjectConfiguration | undefined) {
-        if (value === this.#activeConfiguration) { return; }
+        if (value === this.#activeConfiguration) return;
         this.#activeConfiguration = value;
         if (this.#isInitialized) {
             logger.info(`Active configuration changed to '${this.activeConfiguration?.name}'`);
@@ -145,12 +144,12 @@ export class AsProject implements vscode.Disposable {
 
     /** All project level build options for C programs and libraries (including general build options) */
     public get cBuildInfo(): AsProjectCBuildInfo {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         //TODO add all default stuff for AS project
         //TODO do not create here on every get call, initialize private field '#cBuildInfo' during init and return that one
         const options: string[] = [];
         if (this.#projectFile?.cCodeOptions.enableDefaultIncludes) {
-            options.push('-D', '_DEFAULT_INCLUDES');
+            options.push("-D", "_DEFAULT_INCLUDES");
         }
         options.push(...this.#defaultCompilerArgs);
         return {
@@ -168,15 +167,15 @@ export class AsProject implements vscode.Disposable {
     /** Standard compiler arguments for AS projects */
     readonly #defaultCompilerArgs = [
         //TODO are the default args somwhere in a config file?
-        '-fPIC',
-        '-O0',
-        '-g',
-        '-Wall',
+        "-fPIC",
+        "-O0",
+        "-g",
+        "-Wall",
         //'-ansi', // if this is used, initializer lists in C++ lead to an error from C/C++ extension, even though a build in AS works (e.g. std::vector<int> v = {1, 2, 42})
-        '-D',
-        '_SG4', //TODO this -D _SG4 should come from the configuration, depending on the system generation
-        '-D',
-        '_BUR_FORMAT_BRELF' //TODO investigate if this define needs to be called for all gcc versions / targets (bur/plc.h)
+        "-D",
+        "_SG4", //TODO this -D _SG4 should come from the configuration, depending on the system generation
+        "-D",
+        "_BUR_FORMAT_BRELF", //TODO investigate if this define needs to be called for all gcc versions / targets (bur/plc.h)
     ];
 
     /** Dispose all allocated resources */
@@ -224,8 +223,8 @@ export class AsProject implements vscode.Disposable {
         const pouData = this.#getCBuildDataForPou(uri);
         const activeCfg = this.activeConfiguration;
         const configData = activeCfg?.cBuildInfo;
-        const gccData = (await Environment.automationStudio.getVersion(this.workingVersion))
-            ?.gccInstallation.getExecutable(activeCfg?.gccVersion, activeCfg?.plcSystemGeneration, activeCfg?.plcCpuArchitecture, false)?.cBuildInfo;
+        const asVersion = await Environment.automationStudio.getVersion(this.workingVersion);
+        const gccData = asVersion?.gccInstallation.getExecutable(activeCfg?.gccVersion, activeCfg?.plcSystemGeneration, activeCfg?.plcCpuArchitecture, false)?.cBuildInfo;
         // merge build info from all sources
         return mergeAsProjectCBuildInfo(prjData, pouData, configData, gccData);
     }
@@ -251,7 +250,7 @@ export class AsProject implements vscode.Disposable {
         }
         // collect data depending on POU type
         switch (pou.type) {
-            case 'program': {
+            case "program": {
                 // for programs, the IEC declaration file tree is 'cloned' to a header file tree in the 'Temp/Includes' directory
                 const iecIncludeDirs = pathsFromTo(this.paths.logical, pou.rootPath, this.paths.tempIncludes);
                 iecIncludeDirs.reverse(); // highest folder level needs to be searched first on include
@@ -276,7 +275,7 @@ export class AsProject implements vscode.Disposable {
         if (!this.#userSettingsPath) {
             return defaultConfig;
         }
-        if (!await exists(this.#userSettingsPath)) {
+        if (!(await exists(this.#userSettingsPath))) {
             return defaultConfig;
         }
         const userSettingsFile = await UserSettingsFile.createFromFile(this.#userSettingsPath);
@@ -287,7 +286,7 @@ export class AsProject implements vscode.Disposable {
     /**
      * Change the active configuration of the project.
      * @param newConfigName The name of the new active configuration
-     * @returns 
+     * @returns
      */
     public async changeActiveConfiguration(newConfigName: string): Promise<void> {
         // Check if the given configuration exists in the project
@@ -309,18 +308,17 @@ export class AsProject implements vscode.Disposable {
      * @throws
      */
     async #changeActiveConfigurationInSettingFile(newConfigName: string): Promise<void> {
-        if (!this.#userSettingsPath || !await exists(this.#userSettingsPath)) {
-            throw new Error('File does not exist');
+        if (!this.#userSettingsPath || !(await exists(this.#userSettingsPath))) {
+            throw new Error("File does not exist");
         }
         const userSettingsFile = await UserSettingsFile.createFromFile(this.#userSettingsPath);
         if (userSettingsFile === undefined) {
-            throw new Error('File could not be parsed');
+            throw new Error("File could not be parsed");
         }
         userSettingsFile.activeConfiguration = newConfigName;
         const success = await userSettingsFile.writeToFile();
         if (!success) {
-            throw new Error('File could not be written');
+            throw new Error("File could not be written");
         }
-
     }
 }

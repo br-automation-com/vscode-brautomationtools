@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 /**
  * Representation of Automation Studio build exe (BR.AS.Build.exe)
@@ -9,9 +9,9 @@ export class BrAsBuildExe {
     public constructor(exePath: vscode.Uri) {
         this.#exePath = exePath;
     }
-    
+
     /** The path to the BR.AS.Build.exe file */
-    public get exePath() : vscode.Uri {
+    public get exePath(): vscode.Uri {
         return this.#exePath;
     }
     #exePath: vscode.Uri;

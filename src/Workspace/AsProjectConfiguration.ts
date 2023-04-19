@@ -1,18 +1,17 @@
-import * as vscode from 'vscode';
-import * as uriTools from '../Tools/UriTools';
-import { logger } from '../Tools/Logger';
-import { ConfigPackageFile } from './Files/ConfigPackageFile';
-import { CpuPackageFile } from './Files/CpuPackageFile';
-import { AsPackageFile } from './Files/AsPackageFile';
-import { AsProjectCBuildInfo } from '../Environment/AsProjectCBuildData';
-import { SystemGeneration, TargetArchitecture } from '../Environment/CommonTypes';
-import { getPlcProperties } from '../Environment/PlcLookup';
+import * as vscode from "vscode";
+import * as uriTools from "../Tools/UriTools";
+import { logger } from "../Tools/Logger";
+import { ConfigPackageFile } from "./Files/ConfigPackageFile";
+import { CpuPackageFile } from "./Files/CpuPackageFile";
+import { AsPackageFile } from "./Files/AsPackageFile";
+import { AsProjectCBuildInfo } from "../Environment/AsProjectCBuildData";
+import { SystemGeneration, TargetArchitecture } from "../Environment/CommonTypes";
+import { getPlcProperties } from "../Environment/PlcLookup";
 
 /**
  * Representation of an Automation Studio project configuration
  */
 export class AsProjectConfiguration {
-
     /**
      * Creates objects for all configurations of a project from the physical package file
      * @param physicalPkgPath The path to the physical package file. e.g. `C:\Projects\Test\Physical\Physical.pkg`
@@ -26,7 +25,7 @@ export class AsProjectConfiguration {
             return [];
         }
         // create configuration for each Configuration element
-        const configChildren = physicalPkg.getChildrenOfType('Configuration');
+        const configChildren = physicalPkg.getChildrenOfType("Configuration");
         const configurations: AsProjectConfiguration[] = [];
         for (const configChild of configChildren) {
             const configRoot = configChild.resolvePath(projectRoot);
@@ -70,14 +69,14 @@ export class AsProjectConfiguration {
     /** Async operations to finalize object construction */
     async #initialize(): Promise<void> {
         // Get mandatory main configuration package
-        const configPkgPath = uriTools.pathJoin(this.#rootPath, 'Config.pkg');
+        const configPkgPath = uriTools.pathJoin(this.#rootPath, "Config.pkg");
         this.#configPkg = await ConfigPackageFile.createFromFile(configPkgPath);
         if (!this.#configPkg) {
-            throw new Error('Configuration package could not be parsed');
+            throw new Error("Configuration package could not be parsed");
         }
         // Get optional cpu package
         const cpuRootPath = this.#configPkg.cpuChildObject.resolvePath(this.#projectRoot);
-        const cpuPkgPath = uriTools.pathJoin(cpuRootPath, 'Cpu.pkg');
+        const cpuPkgPath = uriTools.pathJoin(cpuRootPath, "Cpu.pkg");
         this.#cpuPkg = await CpuPackageFile.createFromFile(cpuPkgPath);
         // init done
         this.#isInitialized = true;
@@ -86,7 +85,7 @@ export class AsProjectConfiguration {
 
     /** The root URI of the configuration */
     public get rootPath(): vscode.Uri {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return this.#rootPath;
     }
     #rootPath: vscode.Uri;
@@ -97,7 +96,7 @@ export class AsProjectConfiguration {
      * Can be undefined if some of the configuration source files have missing attributes.
      */
     public get outPathOffset(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         const cpuPath = this.#configPkg?.cpuChildObject.path;
         if (cpuPath === undefined) {
             return undefined;
@@ -107,57 +106,57 @@ export class AsProjectConfiguration {
 
     /** The name of the configuration */
     public get name(): string {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return this.#name;
     }
     #name: string;
 
     /** Description of the configuration */
     public get description(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return this.#description;
     }
     #description: string | undefined;
 
     /** Module ID of the configured PLC */
     public get plcModuleId(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return this.#cpuPkg?.cpuConfig.cpuModuleId;
     }
 
     /** System generation of the configured PLC */
     public get plcSystemGeneration(): SystemGeneration {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return getPlcProperties(this.plcModuleId).systemGeneration;
     }
 
     /** CPU architecture of the configured PLC */
     public get plcCpuArchitecture(): TargetArchitecture {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return getPlcProperties(this.plcModuleId).architecture;
     }
 
     /** Automation Runtime version used in the configuration */
     public get arVersion(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return this.#cpuPkg?.cpuConfig.arVersion;
     }
 
     /** gcc version used in the configuration */
     public get gccVersion(): string | undefined {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return this.#cpuPkg?.cpuConfig.build.gccVersion;
     }
-    
+
     /** Configuration level include directories for C programs and libraries */
     public get cIncludeDirectories(): vscode.Uri[] {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         return this.#cpuPkg?.cpuConfig.build.resolveAnsiCIncludeDirs(this.#projectRoot) ?? [];
     }
 
     /** All configuration level build options for C programs and libraries (including general build options) */
     public get cBuildOptions(): string[] {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         const general = this.#cpuPkg?.cpuConfig.build.additionalBuildOptions ?? [];
         const cOnly = this.#cpuPkg?.cpuConfig.build.ansiCAdditionalBuildOptions ?? [];
         return general.concat(cOnly);
@@ -190,7 +189,7 @@ export class AsProjectConfiguration {
 
     /** All configuration level build options for IEC programs and libraries (including general build options) */
     public get iecBuildOptions(): string[] {
-        if (!this.#isInitialized) { throw new Error(`Use of not initialized object`); }
+        if (!this.#isInitialized) throw new Error(`Use of not initialized object`);
         const general = this.#cpuPkg?.cpuConfig.build.additionalBuildOptions ?? [];
         const iecOnly = this.#cpuPkg?.cpuConfig.build.iecAdditionalBuildOptions ?? [];
         return general.concat(iecOnly);

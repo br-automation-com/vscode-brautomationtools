@@ -1,10 +1,10 @@
-import * as vscode from 'vscode';
-import { Uri } from 'vscode';
-import { splitShellArgs } from '../../Tools/Helpers';
-import { logger } from '../../Tools/Logger';
-import { pathResolve, winPathToPosixPath } from '../../Tools/UriTools';
-import { AsPackageFile } from './AsPackageFile';
-import { ParsedXmlObject } from './AsXmlParser';
+import * as vscode from "vscode";
+import { Uri } from "vscode";
+import { splitShellArgs } from "../../Tools/Helpers";
+import { logger } from "../../Tools/Logger";
+import { pathResolve, winPathToPosixPath } from "../../Tools/UriTools";
+import { AsPackageFile } from "./AsPackageFile";
+import { ParsedXmlObject } from "./AsXmlParser";
 
 /** CPU and build configuration data */
 export interface CpuConfiguration {
@@ -26,7 +26,7 @@ export interface CpuConfiguration {
         readonly ansiCIncludeDirs: string[];
         /** Resolve `ansiCIncludeDirs` to get absolute URIs */
         readonly resolveAnsiCIncludeDirs: (projectRoot: Uri) => Uri[];
-    }
+    };
 }
 
 /**
@@ -34,7 +34,6 @@ export interface CpuConfiguration {
  * Cpu and build configuration data.
  */
 export class CpuPackageFile extends AsPackageFile {
-
     /**
      * Creates a Cpu package file representation from a specified URI to the file
      * @param filePath The Cpu package file path. e.g. `C:\Projects\Test\Physical\TestConfig\TestPLC\Cpu.pkg`
@@ -56,8 +55,8 @@ export class CpuPackageFile extends AsPackageFile {
     protected constructor(filePath: Uri, fileContent: string) {
         super(filePath, fileContent);
         // other properties rely on async and will be initialized in #initialize()
-        if (this.type !== 'Cpu') {
-            throw new Error('Root element name is not <Cpu>');
+        if (this.type !== "Cpu") {
+            throw new Error("Root element name is not <Cpu>");
         }
         this.#cpuConfig = getCpuConfiguration(this.xmlRootObj);
         // init done
@@ -82,17 +81,17 @@ export class CpuPackageFile extends AsPackageFile {
         // Collect missing properties
         const missingProperties: string[] = [];
         if (this.cpuConfig.cpuModuleId === undefined || this.cpuConfig.cpuModuleId.length === 0) {
-            missingProperties.push('CPU type');
+            missingProperties.push("CPU type");
         }
         if (this.cpuConfig.arVersion === undefined || this.cpuConfig.arVersion.length === 0) {
-            missingProperties.push('AR version');
+            missingProperties.push("AR version");
         }
         if (this.cpuConfig.build.gccVersion === undefined || this.cpuConfig.build.gccVersion.length === 0) {
-            missingProperties.push('gcc version');
+            missingProperties.push("gcc version");
         }
         // warn if there are missing properties
         if (missingProperties.length > 0) {
-            const missingString = missingProperties.join(', ');
+            const missingString = missingProperties.join(", ");
             logger.warning(`Cpu package file ${logger.formatUri(this.filePath)} does not contain the values: ${missingString}`);
         }
     }
@@ -107,8 +106,8 @@ function getCpuConfiguration(rootElement: ParsedXmlObject): CpuConfiguration {
     const rootAny = rootElement as any;
     // Get properties from <Configuration> element
     const configElement = rootAny.Configuration;
-    if (typeof configElement !== 'object' || configElement === null) {
-        throw new Error('No <Configuration> element found');
+    if (typeof configElement !== "object" || configElement === null) {
+        throw new Error("No <Configuration> element found");
     }
     const cpuModuleId = configElement?._att?.ModuleId as unknown;
     // Get properties from <AutomationRuntime> element
@@ -116,13 +115,13 @@ function getCpuConfiguration(rootElement: ParsedXmlObject): CpuConfiguration {
     // Get properties from <Build> element
     const gccVersion = configElement?.Build?._att?.GccVersion as unknown;
     const buildOptionsRaw = configElement?.Build?._att?.AdditionalBuildOptions as unknown;
-    const buildOptions = typeof buildOptionsRaw === 'string' ? splitShellArgs(buildOptionsRaw) : [];
+    const buildOptions = typeof buildOptionsRaw === "string" ? splitShellArgs(buildOptionsRaw) : [];
     const ansiCBuildOptionsRaw = configElement?.Build?._att?.AnsicAdditionalBuildOptions as unknown;
-    const ansiCBuildOptions = typeof ansiCBuildOptionsRaw === 'string' ? splitShellArgs(ansiCBuildOptionsRaw) : [];
+    const ansiCBuildOptions = typeof ansiCBuildOptionsRaw === "string" ? splitShellArgs(ansiCBuildOptionsRaw) : [];
     const iecBuildOptionsRaw = configElement?.Build?._att?.IecAdditionalBuildOptions as unknown;
-    const iecBuildOptions = typeof iecBuildOptionsRaw === 'string' ? splitShellArgs(iecBuildOptionsRaw) : [];
+    const iecBuildOptions = typeof iecBuildOptionsRaw === "string" ? splitShellArgs(iecBuildOptionsRaw) : [];
     const ansiCIncludeDirsRaw = configElement?.Build?._att?.AnsicIncludeDirectories as unknown;
-    const ansiCIncludeDirs = typeof ansiCIncludeDirsRaw === 'string' ? parseIncludeDirs(ansiCIncludeDirsRaw) : [];
+    const ansiCIncludeDirs = typeof ansiCIncludeDirsRaw === "string" ? parseIncludeDirs(ansiCIncludeDirsRaw) : [];
     /* eslint-enable */
     // function to resolve include URIs from project root
     const resolveAnsiCIncludeDirs = (projectRoot: Uri): Uri[] => {
@@ -130,10 +129,10 @@ function getCpuConfiguration(rootElement: ParsedXmlObject): CpuConfiguration {
     };
     // return info data
     return {
-        arVersion: typeof arVersion === 'string' ? arVersion : undefined,
-        cpuModuleId: typeof cpuModuleId === 'string' ? cpuModuleId : undefined,
+        arVersion: typeof arVersion === "string" ? arVersion : undefined,
+        cpuModuleId: typeof cpuModuleId === "string" ? cpuModuleId : undefined,
         build: {
-            gccVersion: typeof gccVersion === 'string' ? gccVersion : undefined,
+            gccVersion: typeof gccVersion === "string" ? gccVersion : undefined,
             additionalBuildOptions: buildOptions,
             ansiCAdditionalBuildOptions: ansiCBuildOptions,
             iecAdditionalBuildOptions: iecBuildOptions,
@@ -146,10 +145,10 @@ function getCpuConfiguration(rootElement: ParsedXmlObject): CpuConfiguration {
 /** Convert the raw value of the `AnsicIncludeDirectories` attribute to include paths */
 function parseIncludeDirs(rawIncludes: string | undefined | null): string[] {
     // directly return for empty includes
-    if ((!rawIncludes) || (rawIncludes.length === 0)) {
+    if (!rawIncludes || rawIncludes.length === 0) {
         return [];
     }
     // split multiple paths separated by ',' in file and change to posix style
-    const asStylePaths = rawIncludes.split(',');
+    const asStylePaths = rawIncludes.split(",");
     return asStylePaths.map((path) => winPathToPosixPath(path));
 }

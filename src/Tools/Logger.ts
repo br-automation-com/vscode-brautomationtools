@@ -3,12 +3,9 @@
  * @packageDocumentation
  */
 
-
-import * as vscode from 'vscode';
-
+import * as vscode from "vscode";
 
 //#region exported types
-
 
 /**
  * Levels for logging
@@ -25,7 +22,7 @@ export enum LogLevel {
     /** Detail -> Detailed insight what is happening */
     detail = 4,
     /** Debug -> All information for debugging purposes */
-    debug = 5
+    debug = 5,
 }
 
 /**
@@ -40,7 +37,6 @@ export enum LogAutoShowMode {
     never = 2,
 }
 
-
 /**
  * Configuration of the logger
  */
@@ -48,26 +44,23 @@ export interface LogConfiguration {
     /** Used level for logging. All log messages with a lower level will not be written */
     level: LogLevel;
     /** If activated, the log output will be automatically shown on messages of level Warning or higher */
-    showOutputOnImportantMessage: LogAutoShowMode,
+    showOutputOnImportantMessage: LogAutoShowMode;
     /** Additional data pretty print */
     prettyPrintAdditionalData: boolean;
 }
-
 
 export interface LogEntryAdditionalData {
     [data: string]: unknown;
 }
 
-
 /**
- * 
+ *
  */
 export class LogEntry {
     public readonly timestamp: Date;
     public readonly level: LogLevel;
     public readonly message: string;
     public readonly addData?: LogEntryAdditionalData; // Additional type so expected logging of 'undefined' can be distinguished from unused property 'LogEntry.data'
-
 
     constructor(level: LogLevel, message: string, data?: LogEntryAdditionalData) {
         this.timestamp = new Date();
@@ -77,17 +70,13 @@ export class LogEntry {
     }
 }
 
-
 //#endregion exported types
 
-
 //#region exported classes
-
 
 class Logger {
     /** Default logger instance */
     public static readonly default: Logger = new Logger();
-
 
     /** The configuration of the logger */
     public get configuration(): LogConfiguration {
@@ -101,9 +90,8 @@ class Logger {
     #configuration: LogConfiguration = {
         level: LogLevel.debug,
         showOutputOnImportantMessage: LogAutoShowMode.always,
-        prettyPrintAdditionalData: false
+        prettyPrintAdditionalData: false,
     };
-
 
     /** Write log with level fatal */
     public get fatal(): LogFunction {
@@ -114,7 +102,6 @@ class Logger {
     }
     #fatal: LogFunction = noOp;
 
-
     /** Write log with level error */
     public get error(): LogFunction {
         return this.#error;
@@ -123,7 +110,6 @@ class Logger {
         this.#error = logFunction;
     }
     #error: LogFunction = noOp;
-
 
     /** Write log with level warning */
     public get warning(): LogFunction {
@@ -134,7 +120,6 @@ class Logger {
     }
     #warning: LogFunction = noOp;
 
-
     /** Write log with level info */
     public get info(): LogFunction {
         return this.#info;
@@ -144,7 +129,6 @@ class Logger {
     }
     #info: LogFunction = noOp;
 
-
     /** Write log with level verbose */
     public get detail(): LogFunction {
         return this.#detail;
@@ -153,7 +137,6 @@ class Logger {
         this.#detail = logFunction;
     }
     #detail: LogFunction = noOp;
-
 
     /** Write log with level debug */
     public get debug(): LogFunction {
@@ -183,16 +166,13 @@ class Logger {
         Logger.#logChannel.show(true);
     }
 
-
     /** Create Logger with default settings */
     constructor() {
         this.#setLogFunctions();
     }
 
-
     /** VS Code output channel used for logging */
-    static #logChannel = vscode.window.createOutputChannel('vscode-brautomationtools');
-
+    static #logChannel = vscode.window.createOutputChannel("vscode-brautomationtools");
 
     /** Set the log function properties depending on the configuration */
     #setLogFunctions(): void {
@@ -262,7 +242,6 @@ class Logger {
         }
     }
 
-
     /**
      * Returns a formatted string representation of the logEntry.
      * @a '[11:33:42.007 - Fatal] My message' without additional data
@@ -273,12 +252,12 @@ class Logger {
     #formatLogEntry(logEntry: LogEntry): string {
         // header '[11:33:42.007 - Fatal]'
         const time = logEntry.timestamp.toLocaleTimeString();
-        const millis = logEntry.timestamp.getMilliseconds().toString().padStart(3, '0');
-        const level = LogLevel[logEntry.level].padStart(7, ' ');
+        const millis = logEntry.timestamp.getMilliseconds().toString().padStart(3, "0");
+        const level = LogLevel[logEntry.level].padStart(7, " ");
         const header = `[${time}.${millis} - ${level}]`;
         // message and if existing additional data
         const message = logEntry.message;
-        let additionalData = '';
+        let additionalData = "";
         if (logEntry.addData) {
             const undefReplacer = (key: string, val: unknown): unknown => (val === undefined ? null : val);
             if (this.configuration.prettyPrintAdditionalData) {
@@ -290,7 +269,6 @@ class Logger {
         // formatted message '[11:33:42.007 - Fatal] My message {data: {someProp:"hello"}}'
         return `${header} ${message}${additionalData}`;
     }
-
 
     /** Base log function which generates the output */
     #logBase(logEntry: LogEntry): void {
@@ -368,29 +346,20 @@ function noOp(): void {
     return;
 }
 
-
 //#endregion exported classes
-
 
 //#region exported functions
 
-
 //#endregion exported functions
-
 
 //#region exported variables
 
-
 export const logger = Logger.default;
-
 
 //#endregion exported variables
 
-
 //#region local types
 
-
 type LogFunction = (message: string, additionalData?: LogEntryAdditionalData) => void;
-
 
 //#endregion local types

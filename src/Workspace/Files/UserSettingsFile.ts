@@ -1,14 +1,13 @@
-import * as vscode from 'vscode';
-import { Uri } from 'vscode';
-import { logger } from '../../Tools/Logger';
-import { AsXmlFile } from './AsXmlFile';
-import { ParsedXmlObject } from './AsXmlParser';
+import * as vscode from "vscode";
+import { Uri } from "vscode";
+import { logger } from "../../Tools/Logger";
+import { AsXmlFile } from "./AsXmlFile";
+import { ParsedXmlObject } from "./AsXmlParser";
 
 /**
  * User specific project settings file representation (*.set in the project root)
  */
 export class UserSettingsFile extends AsXmlFile {
-
     /**
      * Creates a user settings file representation from a specified URI to the file
      * @param filePath The user settings file path. e.g. `C:\Projects\Test\LastUser.set`
@@ -34,8 +33,8 @@ export class UserSettingsFile extends AsXmlFile {
         const activeConfiguration = rootAny?.ConfigurationManager?._att?.ActiveConfigurationName as unknown;
         const deploymentTarget = rootAny?.Deployment?._att?.Value as unknown;
         /* eslint-enable */
-        this.#activeConfiguration = typeof activeConfiguration === 'string' ? activeConfiguration : undefined;
-        this.#deploymentTarget = typeof deploymentTarget === 'string' ? deploymentTarget : undefined;
+        this.#activeConfiguration = typeof activeConfiguration === "string" ? activeConfiguration : undefined;
+        this.#deploymentTarget = typeof deploymentTarget === "string" ? deploymentTarget : undefined;
     }
 
     /** The name of the active configuration */
@@ -72,7 +71,7 @@ function setActiveConfiguration(xmlRootObj: ParsedXmlObject, activeConfiguration
     /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const rootAny = xmlRootObj as any;
     const configManagerAtt = rootAny?.ConfigurationManager?._att ?? {};
-    if (typeof configManagerAtt !== 'object') { throw new Error('ROOT.ConfigurationManager._att is not an object'); }
+    if (typeof configManagerAtt !== "object") throw new Error("ROOT.ConfigurationManager._att is not an object");
     configManagerAtt.ActiveConfigurationName = activeConfiguration;
     if (rootAny?.ConfigurationManager === undefined) {
         rootAny.ConfigurationManager = { _att: configManagerAtt };
