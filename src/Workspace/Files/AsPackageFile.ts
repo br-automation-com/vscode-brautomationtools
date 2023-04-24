@@ -189,10 +189,10 @@ function xmlElementToPackageObject(child: unknown, childName: string, packageDir
     /* eslint-enable */
     // function to resolve path from project root
     const resolvePath = (projectRoot: Uri): Uri => {
-        if (!isReference) {
-            return pathResolve(packageDir, posixPath);
-        } else {
+        if (isReference === true) {
             return pathResolve(projectRoot, posixPath);
+        } else {
+            return pathResolve(packageDir, posixPath);
         }
     };
     // return result

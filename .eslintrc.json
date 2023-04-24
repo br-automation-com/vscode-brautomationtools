@@ -57,6 +57,7 @@
                 "args": "none"
             }
         ],
+        "@typescript-eslint/strict-boolean-expressions": "error",
         ////// Formatting
         // According to https://typescript-eslint.io/linting/troubleshooting/formatting/ it is bad practice to use a linter for formatting.
         // Therefore we removed the formatting rules and will use prettier for formatting

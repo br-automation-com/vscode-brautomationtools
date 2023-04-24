@@ -59,7 +59,7 @@ export async function getQuickPickValues<T>(items: ValueQuickPickItem<T>[], opti
         return undefined;
     }
     // auto select single value
-    if (options?.autoSelectSingleValue) {
+    if (options?.autoSelectSingleValue === true) {
         if (items.length === 1) {
             return [items[0].value];
         }
@@ -132,7 +132,7 @@ export async function getQuickPickSingleValue<T>(items: ValueQuickPickItem<T>[],
  */
 export async function yesNoDialog(prompt?: string): Promise<boolean | undefined> {
     const selected = await vscode.window.showQuickPick(["no", "yes"], { placeHolder: prompt });
-    if (!selected) {
+    if (selected === undefined || selected === "") {
         return undefined;
     } else {
         return selected === "yes";

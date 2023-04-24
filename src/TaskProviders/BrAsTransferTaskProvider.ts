@@ -276,13 +276,13 @@ class BrAsTransferTaskProvider implements vscode.TaskProvider {
         // install settings
         Helpers.pushDefined(nameContents, definition.installationSettings?.installMode);
         Helpers.pushDefined(nameContents, definition.installationSettings?.installRestriction);
-        if (definition.installationSettings?.keepPVValues) {
+        if (definition.installationSettings?.keepPVValues === true) {
             nameContents.push("keep PV val.");
         }
-        if (definition.installationSettings?.executeInitExit) {
+        if (definition.installationSettings?.executeInitExit === true) {
             nameContents.push("with INIT/EXIT");
         }
-        if (definition.installationSettings?.tryToBootInRUNMode) {
+        if (definition.installationSettings?.tryToBootInRUNMode === true) {
             nameContents.push("boot in run");
         }
         // PVITransfer arguments
@@ -349,24 +349,24 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
             return;
         }
         // Get project data
-        if (!usedDefinition.asProjectFile) {
+        if (usedDefinition.asProjectFile === undefined || usedDefinition.asProjectFile === "") {
             this.writeLine(`ERROR: No project file selected for transfer`);
             this.done(20);
             return;
         }
         const asProject = await WorkspaceProjects.getProjectForUri(vscode.Uri.file(usedDefinition.asProjectFile));
-        if (!asProject) {
+        if (asProject === undefined) {
             this.writeLine(`ERROR: Project ${usedDefinition.asProjectFile} not found`);
             this.done(30);
             return;
         }
-        if (!usedDefinition.asConfiguration) {
+        if (usedDefinition.asConfiguration === undefined || usedDefinition.asConfiguration === "") {
             this.writeLine(`ERROR: No configuration for transfer selected`);
             this.done(40);
             return;
         }
         const asConfigurationData = asProject.configurations.find((config) => config.name === usedDefinition.asConfiguration);
-        if (!asConfigurationData) {
+        if (asConfigurationData === undefined) {
             this.writeLine(`ERROR: Configuration not found in project`);
             this.done(45);
             return;
@@ -395,7 +395,7 @@ class BrPviTransferTerminal implements vscode.Pseudoterminal {
         // Get PVITransfer.exe in highest version
         // TODO Maybe start process in PviTransferExe.ts
         const pviTransferExe = (await Environment.pvi.getVersion())?.pviTransfer.exePath;
-        if (!pviTransferExe) {
+        if (pviTransferExe === undefined) {
             this.writeLine(`ERROR: No PVI version found`);
             this.done(70);
             return;
@@ -540,33 +540,33 @@ function processTaskDefinitionWithSettings(baseDefinition: BrAsTransferTaskDefin
 async function processTaskDefinitionWithDialogs(baseDefinition: BrAsTransferTaskDefinition): Promise<BrAsTransferTaskDefinition | undefined> {
     // Project file
     let asProjectFile = baseDefinition.asProjectFile;
-    if (!asProjectFile) {
+    if (asProjectFile === undefined || asProjectFile === "") {
         asProjectFile = (await BrDialogs.selectAsProjectFromWorkspace())?.paths.projectFile.fsPath;
-        if (!asProjectFile) {
+        if (asProjectFile === undefined || asProjectFile === "") {
             return undefined;
         }
     }
     // Configuration
     let asConfiguration = baseDefinition.asConfiguration;
-    if (!asConfiguration) {
+    if (asConfiguration === undefined || asConfiguration === "") {
         const asProject = await WorkspaceProjects.getProjectForUri(vscode.Uri.file(asProjectFile));
-        if (!asProject) {
+        if (asProject === undefined) {
             return undefined;
         }
         const selectedConfiguration = await BrDialogs.selectASProjectConfiguration(asProject);
         asConfiguration = selectedConfiguration?.name;
-        if (!asConfiguration) {
+        if (asConfiguration === undefined || asConfiguration === "") {
             return undefined;
         }
     }
     // PVI connection settings
     let pviDestinationAddress = baseDefinition.pviConnectionSettings?.destinationAddress;
-    if (!pviDestinationAddress) {
+    if (pviDestinationAddress === undefined || pviDestinationAddress === "") {
         pviDestinationAddress = await vscode.window.showInputBox({ prompt: "IP Address or host name of target" });
     }
     // Installation settings
     let installMode = baseDefinition.installationSettings?.installMode;
-    if (!installMode) {
+    if (installMode === undefined) {
         //TODO centralize pakage.json Enums, dialogs...
         installMode = await Dialogs.getQuickPickSingleValue(
             [
@@ -579,7 +579,7 @@ async function processTaskDefinitionWithDialogs(baseDefinition: BrAsTransferTask
         );
     }
     let installRestriction = baseDefinition.installationSettings?.installRestriction;
-    if (!installRestriction) {
+    if (installRestriction === undefined) {
         installRestriction = await Dialogs.getQuickPickSingleValue(
             [
                 { value: "AllowInitialInstallation", label: "Allow initial installation" },
@@ -657,34 +657,34 @@ function taskDefinitionToTransferArgs(definition: BrAsTransferTaskDefinition, pi
 async function createPILFileFromTaskDefinition(definition: BrAsTransferTaskDefinition, pilFile: vscode.Uri): Promise<boolean> {
     // connection command, device parameters
     const connDeviceParArgs: string[] = [];
-    if (definition.pviConnectionSettings?.deviceInterface) {
+    if (definition.pviConnectionSettings?.deviceInterface !== undefined) {
         connDeviceParArgs.push(`/IF=${definition.pviConnectionSettings.deviceInterface}`);
     }
-    if (definition.pviConnectionSettings?.sourceNode) {
+    if (definition.pviConnectionSettings?.sourceNode !== undefined) {
         connDeviceParArgs.push(`/SA=${definition.pviConnectionSettings.sourceNode}`);
     }
-    if (definition.pviConnectionSettings?.additionalDeviceParameters) {
+    if (definition.pviConnectionSettings?.additionalDeviceParameters !== undefined) {
         connDeviceParArgs.push(definition.pviConnectionSettings.additionalDeviceParameters);
     }
     const connDevicePar = connDeviceParArgs.join(" ");
     // connection command, CPU parameters
     const connCpuParArgs: string[] = [];
-    if (definition.pviConnectionSettings?.destinationAddress) {
+    if (definition.pviConnectionSettings?.destinationAddress !== undefined) {
         connCpuParArgs.push(`/IP=${definition.pviConnectionSettings.destinationAddress}`);
     }
-    if (definition.pviConnectionSettings?.destinationPort) {
+    if (definition.pviConnectionSettings?.destinationPort !== undefined) {
         connCpuParArgs.push(`/PT=${definition.pviConnectionSettings.destinationPort}`);
     }
-    if (definition.pviConnectionSettings?.communicationTimeout) {
+    if (definition.pviConnectionSettings?.communicationTimeout !== undefined) {
         connCpuParArgs.push(`/COMT=${definition.pviConnectionSettings.communicationTimeout}`);
     }
-    if (definition.pviConnectionSettings?.additionalCPUparameters) {
+    if (definition.pviConnectionSettings?.additionalCPUparameters !== undefined) {
         connCpuParArgs.push(definition.pviConnectionSettings.additionalCPUparameters);
     }
     const connCpuPar = connCpuParArgs.join(" ");
     // connection command, waiting time
     let connWaitingTime = "";
-    if (definition.pviConnectionSettings?.connectionEstablishedTimeout) {
+    if (definition.pviConnectionSettings?.connectionEstablishedTimeout !== undefined) {
         connWaitingTime = `WT=${definition.pviConnectionSettings.communicationTimeout}`;
     }
     // connection command, concatenate
@@ -693,7 +693,7 @@ async function createPILFileFromTaskDefinition(definition: BrAsTransferTaskDefin
     connCommandArgs.push(` "${connDevicePar}"`);
     connCommandArgs.push(`, "${connCpuPar}"`);
     connCommandArgs.push(`, "${connWaitingTime}"`);
-    if (definition.pviConnectionSettings?.remoteParameters) {
+    if (definition.pviConnectionSettings?.remoteParameters !== undefined) {
         connCommandArgs.push(`, "${definition.pviConnectionSettings.remoteParameters}"`);
     }
     const connCommand = connCommandArgs.join("");
@@ -703,9 +703,9 @@ async function createPILFileFromTaskDefinition(definition: BrAsTransferTaskDefin
         //TODO do not set default values here!
         `InstallMode=${definition.installationSettings?.installMode ?? "Consistent"}`,
         `InstallRestriction=${definition.installationSettings?.installRestriction ?? "AllowUpdatesWithoutDataLoss"}`,
-        `KeepPVValues=${definition.installationSettings?.keepPVValues ? "1" : "0"}`,
-        `ExecuteInitExit=${definition.installationSettings?.executeInitExit ? "1" : "0"}`,
-        `TryToBootInRUNMode=${definition.installationSettings?.tryToBootInRUNMode ? "1" : "0"}`,
+        `KeepPVValues=${definition.installationSettings?.keepPVValues === true ? "1" : "0"}`,
+        `ExecuteInitExit=${definition.installationSettings?.executeInitExit === true ? "1" : "0"}`,
+        `TryToBootInRUNMode=${definition.installationSettings?.tryToBootInRUNMode === true ? "1" : "0"}`,
     ].join(" ");
     const transferCommand = `Transfer "${transferRUCFile}", "${transferInstallSettings}"`;
     // create file

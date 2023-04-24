@@ -118,7 +118,7 @@ export function stringToBool(value: string | undefined | null): boolean {
 export function splitShellArgs(rawArgs: string | undefined | null): string[] {
     // #30 - When splitting will handle escapes properly use a new function argument `escapeChar?: string | string[] | RegExp`
     // directly return for empty options
-    if (!rawArgs || rawArgs.length === 0) {
+    if (rawArgs === undefined || rawArgs === null || rawArgs.length === 0) {
         return [];
     }
     const options = rawArgs.split(/\s/gm);

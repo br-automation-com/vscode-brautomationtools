@@ -145,7 +145,7 @@ function getCpuConfiguration(rootElement: ParsedXmlObject): CpuConfiguration {
 /** Convert the raw value of the `AnsicIncludeDirectories` attribute to include paths */
 function parseIncludeDirs(rawIncludes: string | undefined | null): string[] {
     // directly return for empty includes
-    if (!rawIncludes || rawIncludes.length === 0) {
+    if (rawIncludes === undefined || rawIncludes === null || rawIncludes.length === 0) {
         return [];
     }
     // split multiple paths separated by ',' in file and change to posix style
