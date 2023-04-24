@@ -11,6 +11,10 @@ Add new but unreleased features, fixes... here during development
 
 Users can look forward to these changes for the next release 😀😉
 
+## [0.0.8] - 2023-07-24
+
+Release with mostly internal changes and fixes.
+
 ### Added
 
 -   Added a command to change the active PLC configuration. Until now this was only possible by manually adjusting the LastUser.set file in the project root. [#1](https://github.com/br-automation-com/vscode-brautomationtools/issues/1)<br>
@@ -28,6 +32,8 @@ Users can look forward to these changes for the next release 😀😉
 -   The default connection port in the ArSim transfer task was adjusted.
     [#39](https://github.com/br-automation-com/vscode-brautomationtools/issues/39)<br/>
     Existing configurations defined in the tasks.json file are not affected by the template change and need to be adjusted manually.
+-   Added more strict linter, compiler and formatter rules, which lead to fixes of some small logic issues in some places. [#36](https://github.com/br-automation-com/vscode-brautomationtools/issues/36), [#56](https://github.com/br-automation-com/vscode-brautomationtools/issues/56), [#14](https://github.com/br-automation-com/vscode-brautomationtools/issues/14)
+-   Normalized all file path output in the log console. All file paths can now be clicked with `Ctrl + Click` and will open the correct file. [#33](https://github.com/br-automation-com/vscode-brautomationtools/issues/33)
 
 ## [0.0.7] - 2023-01-03
 
