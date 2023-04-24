@@ -68,7 +68,7 @@ class StatusBar {
         }
         const tooltipLines: string[] = [];
         for (const item of this.#busyItems) {
-            if (item.text) {
+            if (item.text !== undefined && item.text !== "") {
                 tooltipLines.push(`$(sync~spin) ${item.text}`);
             }
         }

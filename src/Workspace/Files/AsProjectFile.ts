@@ -46,7 +46,12 @@ export class AsProjectFile extends AsXmlFile {
         // assign and check versions
         this.#workingVersion = this.versionHeader.asWorkingVersion ?? this.versionHeader.asVersion;
         this.#exactVersion = this.versionHeader.asVersion ?? this.versionHeader.asWorkingVersion;
-        if (!this.#workingVersion || !this.#exactVersion) {
+        const versionMissing =
+            this.#workingVersion === undefined || //
+            this.#workingVersion === "" ||
+            this.#exactVersion === undefined ||
+            this.#exactVersion === "";
+        if (versionMissing) {
             logger.warning(`Could not find Automation Studio version data in ${logger.formatUri(filePath)}`);
         }
         // Other properties

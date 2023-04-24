@@ -124,14 +124,10 @@ export class AsXmlFile {
     }
 
     #hasLegacyVersionHeader(): boolean {
-        const headerIsEmpty = this.versionHeader.asVersion //
-            ? false
-            : this.versionHeader.asFileVersion
-            ? false
-            : this.versionHeader.asWorkingVersion
-            ? false
-            : true;
-        return headerIsEmpty;
+        const hasAsVersion = this.versionHeader.asVersion !== undefined && this.versionHeader.asVersion !== "";
+        const hasFileVersion = this.versionHeader.asFileVersion !== undefined && this.versionHeader.asFileVersion !== "";
+        const hasWorkingVersion = this.versionHeader.asWorkingVersion !== undefined && this.versionHeader.asWorkingVersion !== "";
+        return !hasAsVersion && !hasFileVersion && !hasWorkingVersion;
     }
 }
 

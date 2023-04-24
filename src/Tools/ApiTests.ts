@@ -40,58 +40,58 @@ async function testCommand(arg1: unknown, arg2: unknown, context: vscode.Extensi
     logger.showOutput();
     logHeader("Test command start");
     // select tests to execute
-    if (await Dialogs.yesNoDialog("Run tests for temporary stuff?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for temporary stuff?")) === true) {
         await testTemp(context);
     }
-    if (await Dialogs.yesNoDialog("Run various tests?")) {
+    if ((await Dialogs.yesNoDialog("Run various tests?")) === true) {
         await testVarious(arg1, arg2);
     }
-    if (await Dialogs.yesNoDialog("Run tests for UriTools?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for UriTools?")) === true) {
         await testUriTools();
     }
-    if (await Dialogs.yesNoDialog("Run tests for FileTools?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for FileTools?")) === true) {
         await testFileTools();
     }
-    if (await Dialogs.yesNoDialog("Run tests for Helpers?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for Helpers?")) === true) {
         await testHelpers();
     }
-    if (await Dialogs.yesNoDialog("Run tests for file system events?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for file system events?")) === true) {
         await testFileSystemEvents();
     }
-    if (await Dialogs.yesNoDialog("Run tests for AutomationStudioVersion?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for AutomationStudioVersion?")) === true) {
         await testAutomationStudioVersion(context);
     }
-    if (await Dialogs.yesNoDialog("Run tests for gcc?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for gcc?")) === true) {
         await testGcc(context);
     }
-    if (await Dialogs.yesNoDialog("Run tests for PVI?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for PVI?")) === true) {
         await testPvi(context);
     }
-    if (await Dialogs.yesNoDialog("Run tests for BRConfiguration?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for BRConfiguration?")) === true) {
         await testBRConfiguration();
     }
-    if (await Dialogs.yesNoDialog("Run tests for workspace projects?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for workspace projects?")) === true) {
         await testWorkspaceProjects();
     }
-    if (await Dialogs.yesNoDialog("Run tests for BRAsProjectWorkspace?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for BRAsProjectWorkspace?")) === true) {
         await testBRAsProjectWorkspace();
     }
-    if (await Dialogs.yesNoDialog("Run tests for workspace project files?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for workspace project files?")) === true) {
         await testProjectFiles();
     }
-    if (await Dialogs.yesNoDialog("Run tests for workspace project files with manual selection?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for workspace project files with manual selection?")) === true) {
         await testProjectFilesManualSel();
     }
-    if (await Dialogs.yesNoDialog("Run tests for VS Code extension context?")) {
+    if ((await Dialogs.yesNoDialog("Run tests for VS Code extension context?")) === true) {
         await testVsCodeExtensionContext(context);
     }
-    if (await Dialogs.yesNoDialog("Run tests for BrLog")) {
+    if ((await Dialogs.yesNoDialog("Run tests for BrLog")) === true) {
         await testBrLog(context);
     }
-    if (await Dialogs.yesNoDialog("Run tests for StatusBar")) {
+    if ((await Dialogs.yesNoDialog("Run tests for StatusBar")) === true) {
         await testStatusBar(context);
     }
-    if (await Dialogs.yesNoDialog("Run tests for PLC lookup table")) {
+    if ((await Dialogs.yesNoDialog("Run tests for PLC lookup table")) === true) {
         await testPlcLookup(context);
     }
     // end
@@ -256,7 +256,7 @@ async function testAutomationStudioVersion(context: vscode.ExtensionContext): Pr
     logHeader("Test AutomationStudioVersion start");
     // Update AS versions
     const update = await Dialogs.yesNoDialog("Update AS versions?");
-    if (update) {
+    if (update === true) {
         const allVersions = await Environment.automationStudio.updateVersions();
         logger.info("AS versions found:", { versions: allVersions });
     }
@@ -308,7 +308,7 @@ async function testGcc(context: vscode.ExtensionContext): Promise<void> {
         const strict = await Dialogs.yesNoDialog("Strict search?");
         const matchingExe = gccInstall.getExecutable(gccVersion, sysGen, arch, strict);
         logger.info("Matching gcc exe:", { result: matchingExe });
-    } while (await Dialogs.yesNoDialog("Try again?"));
+    } while ((await Dialogs.yesNoDialog("Try again?")) === true);
     // Test mingw gcc
     const mingwBase = vscode.Uri.file("C:\\msys64\\mingw64");
     const mingwGcc = await GccInstallation.createFromDir(mingwBase);
@@ -320,7 +320,7 @@ async function testPvi(context: vscode.ExtensionContext): Promise<void> {
     logHeader("Test PVI start");
     // Update PVI
     const update = await Dialogs.yesNoDialog("Update PVI versions?");
-    if (update) {
+    if (update === true) {
         const allVersions = await Environment.pvi.updateVersions();
         logger.info("PVI versions found:", { versions: allVersions });
     }
@@ -407,7 +407,7 @@ async function testBRAsProjectWorkspace(): Promise<void> {
     //TODO, old, remove
     logHeader("Test WorkspaceProjects start");
     // Update AS projects
-    if (await Dialogs.yesNoDialog("Update AS projects in workspace?")) {
+    if ((await Dialogs.yesNoDialog("Update AS projects in workspace?")) === true) {
         logger.info("WorkspaceProjects.updateProjects() start");
         const numProjects = await WorkspaceProjects.updateProjects();
         logger.info("WorkspaceProjects.updateProjects() done", { result: numProjects });
@@ -417,14 +417,14 @@ async function testBRAsProjectWorkspace(): Promise<void> {
     logger.info("WorkspaceProjects.getProjects()", { result: projectsData });
     // find project for path
     const pathToGetProject = await vscode.window.showInputBox({ prompt: "Enter path to get corresponding project" });
-    if (pathToGetProject) {
+    if (pathToGetProject !== undefined && pathToGetProject !== "") {
         const uri = vscode.Uri.file(pathToGetProject);
         const projectForPath = await WorkspaceProjects.getProjectForUri(uri);
         logger.info("WorkspaceProjects.getProjectForUri(uri)", { uri: uri.toString(true), result: projectForPath });
     }
     // Get build settings for file / URI
     const pathToGetHeaderDirs = await vscode.window.showInputBox({ prompt: "Enter path to get corresponding header directories" });
-    if (pathToGetHeaderDirs) {
+    if (pathToGetHeaderDirs !== undefined && pathToGetHeaderDirs !== "") {
         const uri = vscode.Uri.file(pathToGetHeaderDirs);
         const buildInfo = await WorkspaceProjects.getCBuildInformationForUri(uri);
         logger.info("WorkspaceProjects.getCBuildInformationForUri(uri)", { uri: uri.toString(true), result: buildInfo });
@@ -564,7 +564,7 @@ async function testProjectFilesManualSel(): Promise<void> {
     });
     // Write XML file to disk
     const newFileName = await vscode.window.showInputBox({ prompt: "Enter new file name to save XML, empty or ESC to abort" });
-    if (newFileName && xmlFile) {
+    if (newFileName !== undefined && newFileName !== "" && xmlFile !== undefined) {
         const xmlDir = uriTools.pathDirname(filePath);
         const newFilePath = uriTools.pathJoin(xmlDir, newFileName);
         const success = await xmlFile.writeToFile(newFilePath);

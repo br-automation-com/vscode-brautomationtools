@@ -86,7 +86,7 @@ export class AsProject implements vscode.Disposable {
 
     /** The name of the project */
     public get name(): string {
-        if (!this.#isInitialized || !this.#name) throw new Error(`Use of not initialized object`);
+        if (!this.#isInitialized || this.#name === undefined) throw new Error(`Use of not initialized object`);
         return this.#name;
     }
     #name: string | undefined;
@@ -148,7 +148,7 @@ export class AsProject implements vscode.Disposable {
         //TODO add all default stuff for AS project
         //TODO do not create here on every get call, initialize private field '#cBuildInfo' during init and return that one
         const options: string[] = [];
-        if (this.#projectFile?.cCodeOptions.enableDefaultIncludes) {
+        if (this.#projectFile?.cCodeOptions.enableDefaultIncludes === true) {
             options.push("-D", "_DEFAULT_INCLUDES");
         }
         options.push(...this.#defaultCompilerArgs);

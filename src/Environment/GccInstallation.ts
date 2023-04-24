@@ -99,7 +99,7 @@ export class GccInstallation {
         // prepare sorted array to select best target if there is no exact match. Best target will be index 0 (descending sort)
         const sorted = [...this.executables].sort((a, b) => GccExecutable.compareForQuery(b, a));
         // get matches for version, system generation and architecture. If argument === undefined all is a match
-        const versionMatch = !version ? sorted : sorted.filter((el) => semver.eq(el.version, version));
+        const versionMatch = version === undefined ? sorted : sorted.filter((el) => semver.eq(el.version, version));
         const sgMatch = !systemGeneration ? sorted : sorted.filter((el) => el.systemGeneration === systemGeneration);
         const archMatch = !architecture ? sorted : sorted.filter((el) => el.architecture === architecture);
         // get intersection of separate matches
@@ -107,7 +107,7 @@ export class GccInstallation {
         // find best match: matchAll > versionMatch > sgMatch > archMatch > noMatch
         if (allMatch.length > 0) {
             return allMatch[0];
-        } else if (strict) {
+        } else if (strict === true) {
             return undefined;
         } else if (versionMatch.length > 0) {
             return versionMatch[0];

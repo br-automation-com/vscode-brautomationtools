@@ -175,12 +175,8 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
     private static definitionToTaskName(definition: BrAsBuildTaskDefinition): string {
         const nameContents: string[] = [];
         // basic task type
-        const isCleanTask =
-            definition.cleanBinary ||
-            definition.cleanDiagnosis ||
-            definition.cleanGenerated || //
-            definition.cleanTemporary;
-        const isCrossRefTask = definition.buildCrossReferences;
+        const isCleanTask = checkIsCleanTask(definition);
+        const isCrossRefTask = definition.buildCrossReferences === true;
         if (isCleanTask) {
             nameContents.push("Clean");
         } else if (isCrossRefTask) {
@@ -193,19 +189,19 @@ class BrAsBuildTaskProvider implements vscode.TaskProvider {
             }
         }
         // project, configuration...
-        if (definition.asProjectFile) {
+        if (definition.asProjectFile !== undefined) {
             nameContents.push(`of project: '${definition.asProjectFile}'`);
         }
-        if (definition.asConfiguration) {
+        if (definition.asConfiguration !== undefined) {
             nameContents.push(`for configuration: '${definition.asConfiguration}'`);
         }
-        if (definition.buildForSimulation) {
+        if (definition.buildForSimulation !== true) {
             nameContents.push(`as simulation`);
         }
-        if (definition.buildRUCPackage) {
+        if (definition.buildRUCPackage === true) {
             nameContents.push(`with RUC package`);
         }
-        if (definition.additionalArguments) {
+        if (definition.additionalArguments !== undefined && definition.additionalArguments.length > 0) {
             nameContents.push(`additional arguments '${definition.additionalArguments.join(" ")}'`);
         }
         // return
@@ -268,7 +264,7 @@ class BrAsBuildTerminal implements vscode.Pseudoterminal {
             return;
         }
         // Get project data to get BR.AS.Build.exe in matching version
-        if (!usedDefinition.asProjectFile) {
+        if (usedDefinition.asProjectFile === undefined || usedDefinition.asProjectFile === "") {
             this.writeLine(`ERROR: No project file selected for build`);
             this.done(42);
             return;
@@ -417,36 +413,32 @@ function processTaskDefinitionWithSettings(baseDefinition: BrAsBuildTaskDefiniti
 async function processTaskDefinitionWithDialogs(baseDefinition: BrAsBuildTaskDefinition): Promise<BrAsBuildTaskDefinition | undefined> {
     // Project file
     let asProjectFile = baseDefinition.asProjectFile;
-    if (!asProjectFile) {
+    if (asProjectFile === undefined || asProjectFile === "") {
         asProjectFile = (await BrDialogs.selectAsProjectFromWorkspace())?.paths.projectFile.fsPath;
-        if (!asProjectFile) {
+        if (asProjectFile === undefined || asProjectFile === "") {
             return undefined;
         }
     }
     // Configuration
     let asConfiguration = baseDefinition.asConfiguration;
-    if (!asConfiguration) {
+    if (asConfiguration === undefined || asConfiguration === "") {
         const asProject = await WorkspaceProjects.getProjectForUri(vscode.Uri.file(asProjectFile));
         if (!asProject) {
             return undefined;
         }
         const selectedConfiguration = await BrDialogs.selectASProjectConfiguration(asProject);
         asConfiguration = selectedConfiguration?.name;
-        if (!asConfiguration) {
+        if (asConfiguration === undefined || asConfiguration === "") {
             return undefined;
         }
     }
     // Build mode
-    const isCleanTask =
-        baseDefinition.cleanBinary ||
-        baseDefinition.cleanDiagnosis ||
-        baseDefinition.cleanGenerated || //
-        baseDefinition.cleanTemporary;
-    const isCrossRefTask = baseDefinition.buildCrossReferences;
+    const isCleanTask = checkIsCleanTask(baseDefinition);
+    const isCrossRefTask = baseDefinition.buildCrossReferences === true;
     let asBuildMode = baseDefinition.asBuildMode;
-    if (!isCleanTask && !isCrossRefTask && !asBuildMode) {
+    if (!isCleanTask && !isCrossRefTask && (asBuildMode === undefined || asBuildMode === "")) {
         asBuildMode = await BrDialogs.selectBuildMode();
-        if (!asBuildMode) {
+        if (asBuildMode === undefined || asBuildMode === "") {
             return undefined;
         }
     }
@@ -464,14 +456,14 @@ async function processTaskDefinitionWithDialogs(baseDefinition: BrAsBuildTaskDef
  */
 function taskDefinitionToBuildArgs(definition: BrAsBuildTaskDefinition): string[] {
     const buildArgs: string[] = [];
-    if (definition.asProjectFile) {
+    if (definition.asProjectFile !== undefined && definition.asProjectFile !== "") {
         buildArgs.push(definition.asProjectFile);
     }
-    if (definition.asConfiguration && definition.asConfiguration !== "") {
+    if (definition.asConfiguration !== undefined && definition.asConfiguration !== "") {
         buildArgs.push("-c");
         buildArgs.push(definition.asConfiguration);
     }
-    if (definition.asBuildMode && definition.asBuildMode !== "") {
+    if (definition.asBuildMode !== undefined && definition.asBuildMode !== "") {
         buildArgs.push("-buildMode");
         buildArgs.push(definition.asBuildMode);
     }
@@ -500,6 +492,15 @@ function taskDefinitionToBuildArgs(definition: BrAsBuildTaskDefinition): string[
         buildArgs.push(...definition.additionalArguments);
     }
     return buildArgs;
+}
+
+function checkIsCleanTask(definition: BrAsBuildTaskDefinition): boolean {
+    const isCleanTask =
+        definition.cleanBinary === true || //
+        definition.cleanDiagnosis === true ||
+        definition.cleanGenerated === true ||
+        definition.cleanTemporary === true;
+    return isCleanTask;
 }
 
 //#endregion local functions
