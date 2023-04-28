@@ -3,11 +3,12 @@
  * @packageDocumentation
  */
 
-import { ValueQuickPickItem, ValueQuickPickOptions, ValueQuickPickInitialValues, getQuickPickSingleValue } from "./Dialogs";
 import { extensionConfiguration } from "../ExtensionConfiguration";
-import { AsProjectConfiguration } from "../Workspace/AsProjectConfiguration";
+import { urisEqual } from "../Tools/UriTools";
 import { AsProject } from "../Workspace/AsProject";
+import { AsProjectConfiguration } from "../Workspace/AsProjectConfiguration";
 import { WorkspaceProjects } from "../Workspace/BRAsProjectWorkspace";
+import { ValueQuickPickInitialValues, ValueQuickPickItem, ValueQuickPickOptions, getQuickPickSingleValue } from "./Dialogs";
 
 /**
  * Dialog to select a project from all projects within the workspace.
@@ -46,7 +47,7 @@ export async function selectASProjectConfiguration(asProject: AsProject): Promis
         };
         return item;
     });
-    const activeConfigurationItem = configurationItems.find((item) => item.value.rootPath.toString() === asProject.activeConfiguration?.rootPath.toString());
+    const activeConfigurationItem = configurationItems.find((item) => urisEqual(item.value.rootPath, asProject.activeConfiguration?.rootPath));
     if (activeConfigurationItem) {
         activeConfigurationItem.label += " (ACTIVE)";
     }

@@ -3,6 +3,7 @@ import { Uri } from "vscode";
 import { createFile, replaceAllTextInFile } from "../../Tools/FileTools";
 import { logger } from "../../Tools/Logger";
 import { AsXmlBuilder, AsXmlParser, ParsedXmlObject } from "./AsXmlParser";
+import { withoutUndefined } from "../../Tools/Helpers";
 
 /**
  * The Automation Studio XML processing instruction data containing file and project versions
@@ -93,8 +94,9 @@ export class AsXmlFile {
 
     /** Get the XML representation of the file */
     public toXml(): string {
+        const filtered = withoutUndefined(this.#xmlObj); // filter to prevent writing undefined values (e.g. <?AutomationStudio Version="6.3.5.44 UP" WorkingVersion="undefined" FileVersion="undefined"?>)
         const builder = new AsXmlBuilder();
-        return builder.build(this.#xmlObj);
+        return builder.build(filtered as object);
     }
 
     /**
@@ -155,22 +157,20 @@ function getXmlVersionHeader(xmlObj: ParsedXmlObject): AsXmlVersionHeader {
  * Change the XML version information header to new data
  */
 function setXmlVersionHeader(xmlObj: ParsedXmlObject, versionHeader: AsXmlVersionHeader): void {
-    // Only assign properties if the value is defined. Properties with assigned property and value undefined will lead to attr="undefined"
-    const attributesObj: Record<string, string> = {};
-    if (versionHeader.asVersion !== undefined) {
-        attributesObj.Version = versionHeader.asVersion;
-    }
-    if (versionHeader.asWorkingVersion !== undefined) {
-        attributesObj.WorkingVersion = versionHeader.asWorkingVersion;
-    }
-    if (versionHeader.asFileVersion !== undefined) {
-        attributesObj.FileVersion = versionHeader.asFileVersion;
-    }
     // add attribute object to PI node
-    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
-    const xmlAny = xmlObj as any; //HACK to access by indexer. find out how to solve properly?
-    xmlAny["?AutomationStudio"] = { _att: attributesObj };
-    /* eslint-enable */
+    if ("?AutomationStudio" in xmlObj) {
+        xmlObj["?AutomationStudio"] = {
+            /* eslint-disable @typescript-eslint/naming-convention */
+            _att: {
+                Version: versionHeader.asVersion,
+                WorkingVersion: versionHeader.asWorkingVersion,
+                FileVersion: versionHeader.asFileVersion,
+            },
+            /* eslint-enable */
+        };
+    } else {
+        logger.warning("Could not set B&R XML version data, as the PI node <?AutomationStudio> was not found");
+    }
 }
 
 function getXmlRootData(xmlObj: ParsedXmlObject): { name: string; value: ParsedXmlObject } {

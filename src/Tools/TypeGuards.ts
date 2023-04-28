@@ -35,3 +35,12 @@ export function isString(value: unknown): value is string {
         return false;
     }
 }
+
+/**
+ * Checks if a value is of type `object` and not `null`
+ * @param value The value to be checked
+ * @returns true if typeof value === "object" && value !== null
+ */
+export function isNonNullObject(value: unknown): value is object {
+    return typeof value === "object" && value !== null;
+}

@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import { Uri } from "vscode";
 import { logger } from "../../Tools/Logger";
-import { AsPackageFile, AsPackageObject } from "./AsPackageFile";
+import { AsPackageFile } from "./AsPackageFile";
+import { AsPackageObject } from "./AsPackageObject";
 
 /**
  * Configuration package file representation (Config.pkg in configuration directory). This package file contains additional

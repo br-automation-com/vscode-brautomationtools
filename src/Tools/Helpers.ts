@@ -124,3 +124,21 @@ export function splitShellArgs(rawArgs: string | undefined | null): string[] {
     const options = rawArgs.split(/\s/gm);
     return options;
 }
+
+/**
+ * Creates a new object where all undefined properties from a source object were filtered out
+ * @param source The source object or array which contains undefined values
+ * @returns A new object where all properties and array elements with value `undefinef` were removed
+ */
+export function withoutUndefined(source: unknown): unknown {
+    if (typeof source !== "object") return source;
+    if (source === null) return source;
+    if (Array.isArray(source)) {
+        return source.filter((ele) => ele !== undefined).map((ele) => withoutUndefined(ele));
+    }
+    return Object.fromEntries(
+        Object.entries(source)
+            .filter(([_, value]) => value !== undefined)
+            .map(([key, oldVal]) => [key, withoutUndefined(oldVal)])
+    );
+}

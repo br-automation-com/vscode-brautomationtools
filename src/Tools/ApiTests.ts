@@ -567,6 +567,7 @@ async function testProjectFilesManualSel(): Promise<void> {
     if (newFileName !== undefined && newFileName !== "" && xmlFile !== undefined) {
         const xmlDir = uriTools.pathDirname(filePath);
         const newFilePath = uriTools.pathJoin(xmlDir, newFileName);
+        //xmlFile.versionHeader = { asVersion: "6.3.5.44 UP" };
         const success = await xmlFile.writeToFile(newFilePath);
         logger.info(`Tried to write file ${logger.formatUri(newFilePath)}`, { success: success });
     }
@@ -576,6 +577,19 @@ async function testProjectFilesManualSel(): Promise<void> {
         uri: filePath.toString(true),
         result: prjFile,
         resultEqualToSource: prjFile?.toXml() === fileContent,
+    });
+    // Test package file
+    const pkgFile = await AsPackageFile.createFromFile(filePath);
+    logger.info("AsPackageFile.createFromFile(uri)", {
+        uri: filePath.toString(true),
+        result: pkgFile,
+        resultEqualToSource: pkgFile?.toXml() === fileContent,
+    });
+    await pkgFile?.updateChildren(true);
+    logger.info("AsPackageFile.updateChildren(true)", {
+        uri: filePath.toString(true),
+        result: pkgFile,
+        resultEqualToSource: pkgFile?.toXml() === fileContent,
     });
     //end
     logHeader("Test project files end");

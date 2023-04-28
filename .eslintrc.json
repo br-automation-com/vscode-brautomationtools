@@ -50,7 +50,7 @@
             }
         ],
         "@typescript-eslint/no-unused-vars": [
-            "error",
+            "warn",
             {
                 // relax restrictions of "@typescript-eslint/recommended"
                 // -> Otherwise leads to errors on functions which are used as callbacks in defined external library interfaces (e.g. fast-xml-parser isArray option)

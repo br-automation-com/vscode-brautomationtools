@@ -3,8 +3,8 @@
  * @packageDocumentation
  */
 
-import * as vscode from "vscode";
 import { posix } from "path"; // always use posix style path for vscode.Uri.path: https://github.com/microsoft/vscode-extension-samples/blob/master/fsconsumer-sample/README.md
+import * as vscode from "vscode";
 import { testStringFilter } from "./Helpers";
 
 //#region implementations of path.posix for vscode.Uri
@@ -14,8 +14,8 @@ import { testStringFilter } from "./Helpers";
  * Return the last portion of a path. Similar to the Unix basename command.
  * Often used to extract the file name from a fully qualified path.
  *
- * @param p the path to evaluate.
- * @param ext optionally, an extension to remove from the result.
+ * @param uri the path to evaluate.
+ * @param extension optionally, an extension to remove from the result.
  */
 export function pathBasename(uri: vscode.Uri, extension?: string): string {
     return posix.basename(uri.path, extension);
@@ -326,4 +326,27 @@ export async function findDirectory(rootUri: vscode.Uri, depth: number, filter: 
         actDepthUris = subDirs;
     }
     return result;
+}
+
+/**
+ * @returns A URI which will not point to any valid resource
+ */
+export function getInvalidUri(): vscode.Uri {
+    return vscode.Uri.from({
+        scheme: "vscode-brautomationtools-invalid",
+        path: `/invalid/path/`,
+    });
+}
+
+/**
+ * Compares two URIs for equality
+ * @param uri1 First URI to compare
+ * @param uri2 Second URI to compare
+ * @returns `true` of both URI values point to the exact same resource and both URI values contain a value, `false` otherwise
+ */
+export function urisEqual(uri1?: vscode.Uri, uri2?: vscode.Uri): boolean {
+    // TODO check if there are more official utilities for a proper comparison with edge case handling
+    // see also https://github.com/microsoft/vscode/issues/93368
+    if (uri1 === undefined || uri2 === undefined) return false;
+    return uri1.toString() === uri2.toString();
 }

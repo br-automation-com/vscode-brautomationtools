@@ -2,37 +2,33 @@ import * as vscode from "vscode";
 import { Uri } from "vscode";
 import { anyToBoolOrUndefined } from "../../Tools/Helpers";
 import { logger } from "../../Tools/Logger";
-import { pathDirname, pathResolve, winPathToPosixPath } from "../../Tools/UriTools";
+import { isNonNullObject } from "../../Tools/TypeGuards";
+import { exists, getInvalidUri, listSubDirectories, listSubFiles, pathBasename, pathDirname, pathResolve, urisEqual, winPathToPosixPath } from "../../Tools/UriTools";
+import { AsPackageObject, packageObjectFromDirPath, packageObjectFromFilePath } from "./AsPackageObject";
 import { AsXmlFile } from "./AsXmlFile";
 import { ParsedXmlObject } from "./AsXmlParser";
-
-/** Data of an object within a package */
-export interface AsPackageObject {
-    /** Path of the object. Interpretation of the path depends on the value of `isReference` */
-    readonly path: string;
-    /** Type of the object. e.g. 'Configuration', 'Program', 'File' */
-    readonly type?: string | undefined;
-    /** Language of the object, mostly used in library or program objects. e.g. 'IEC' or 'ANSIC' */
-    readonly language?: string | undefined;
-    /** Additional description of the object for documentation */
-    readonly description?: string | undefined;
-    /** The object is referenced (SymLink).
-     *
-     * If `false` or `undefined`, path is relative to the directory containing the package file. Use `pathJoin(packageDir, path)` to get the full path.
-     *
-     * If `true`, the path will be either relative to the project root or absolute. Use `pathResolve(projectRoot, path)` to get the full path.
-     */
-    readonly isReference?: boolean | undefined;
-    /** Used for type and variable declaration files, to define if the declarations are global or limited to package scope. */
-    readonly isPrivate?: boolean | undefined;
-    /** Resolve `path` to get absolute URIs */
-    readonly resolvePath: (projectRoot: Uri) => Uri;
-}
 
 /**
  * Generic Automation Studio package file representation. Can be used for all packages types without additional data.
  */
 export class AsPackageFile extends AsXmlFile {
+    //TODO should we add new property 'referencesBasePath' which would remove the parameter 'projectRoot' for resolving the URI of the child? With this we could even remove the function resolvePath() and replace it with a URI property
+    /**
+     * Checks if a file name is a package file name
+     * @param filePath Path to the file which should be checked
+     * @returns true if the base file name of the path is a name of some kind of package file
+     */
+    public static isPackageFileName(filePath: Uri): boolean {
+        const fileName = pathBasename(filePath);
+        // check all known package names
+        if (fileName.endsWith(".pkg")) return true;
+        if (fileName.endsWith(".lby")) return true;
+        if (fileName.endsWith(".prg")) return true;
+        if (fileName.endsWith(".dob")) return true;
+        // false for all other files
+        return false;
+    }
+
     /**
      * Automation Studio package file representation from a specified file pathe
      * @param filePath The path to the package file. e.g. `C:\Projects\Test\Logical\MyFolder\Package.pkg` or `C:\Projects\Test\Logical\MyLib\ANSIC.lby`
@@ -56,7 +52,10 @@ export class AsPackageFile extends AsXmlFile {
         this.#dirPath = pathDirname(this.filePath);
         this.#type = this.xmlRootName;
         this.#subType = getSubType(this.xmlRootObj);
-        this.#childObjects = getChildObjects(this.xmlRootObj, this.#dirPath);
+        const xmlChildData = getXmlChildArrayData(this.xmlRootObj);
+        this.#xmlChildObjectsName = xmlChildData.name;
+        this.#xmlChildObjects = xmlChildData.children;
+        this.#childObjects = xmlChildData.children.map((child) => xmlElementToPackageObject(child, xmlChildData.name, this.#dirPath));
     }
 
     /** The path of the directory which contains this file */
@@ -82,6 +81,98 @@ export class AsPackageFile extends AsXmlFile {
         return this.#childObjects;
     }
     #childObjects: AsPackageObject[];
+    #xmlChildObjects: unknown[];
+    #xmlChildObjectsName: string;
+
+    /**
+     * Update the XML Object from the childObjects Array
+     */
+    private updateXmlChildrenData(): void {
+        // Currently handling for a change between XML Element "Files" and "Objects" is not implemented. This happens only in prg and lby if there are no packages within
+        if (this.#xmlChildObjectsName !== "Object") {
+            logger.error("Update of package XML content only possible for files with <Objects> element.");
+            return;
+        }
+        // clear array and add based on childObjects
+        const newElements = this.childObjects.map((child) => packageElementToXmlObj(child));
+        this.#xmlChildObjects.length = 0;
+        this.#xmlChildObjects.push(...newElements);
+    }
+
+    /**
+     * Remove all child objects which do not exist in the file system from the package object.
+     * @param keepReferences If set to true, non-existing referenced files will be kept in the package
+     */
+    public async removeNonExtistingChildren(keepReferences = false): Promise<void> {
+        if (!keepReferences) {
+            // To also remove references, we would need the proper full path of the referenced items. For this we would need the project root path...
+            logger.error("Removing non-existing referenced files from package not implemented!");
+            return;
+        }
+        // find all children which should be kept
+        const DUMMY_URI = getInvalidUri(); // HACK Dummy for resolve. Resolving of non-references should not require the project URI
+        const itemsToKeep: AsPackageObject[] = []; // cannot use Array.filter() because of async
+        for (const obj of this.childObjects) {
+            if (keepReferences && obj.isReference === true) {
+                itemsToKeep.push(obj);
+                continue;
+            }
+            const objPath = obj.resolvePath(DUMMY_URI);
+            const objExists = await exists(objPath);
+            if (objExists) {
+                itemsToKeep.push(obj);
+                continue;
+            }
+        }
+        // clear and refill children array
+        this.#childObjects.length = 0;
+        this.#childObjects.push(...itemsToKeep);
+        this.updateXmlChildrenData();
+    }
+
+    /**
+     * Add child objects for files and packages which exist in the package directory but are not yet listed.
+     */
+    public async addMissingChildren(): Promise<void> {
+        const DUMMY_URI = getInvalidUri(); // HACK Dummy for resolve. Resolving of non-references should not require the project URI
+        const pathsInPkg = this.childObjects.filter((obj) => obj.isReference !== true).map((obj) => obj.resolvePath(DUMMY_URI));
+        // Compare files in file system / in package file and add
+        const filePathsOnFs = (await listSubFiles(this.dirPath)).filter((filePath) => filePath.toString() !== this.filePath.toString());
+        for (const pathOnFs of filePathsOnFs) {
+            const isDuplicate = pathsInPkg.some((pathInPkg) => urisEqual(pathInPkg, pathOnFs));
+            if (!isDuplicate) {
+                const pkgObj = await packageObjectFromFilePath(pathOnFs);
+                if (pkgObj !== undefined) {
+                    this.childObjects.push(pkgObj);
+                } else {
+                    logger.error(`Could not add file ${logger.formatUri(pathOnFs)} to package ${logger.formatUri(this.filePath)}`);
+                }
+            }
+        }
+        // Compare directories in file system / in package file and add
+        const dirPathsOnFs = await listSubDirectories(this.dirPath);
+        for (const pathOnFs of dirPathsOnFs) {
+            const isDuplicate = pathsInPkg.some((pathInPkg) => urisEqual(pathInPkg, pathOnFs));
+            if (!isDuplicate) {
+                const pkgObj = await packageObjectFromDirPath(pathOnFs);
+                if (pkgObj !== undefined) {
+                    this.childObjects.push(pkgObj);
+                } else {
+                    logger.error(`Could not add directory ${logger.formatUri(pathOnFs)} to package ${logger.formatUri(this.filePath)}`);
+                }
+            }
+        }
+        this.updateXmlChildrenData();
+    }
+
+    /**
+     * Update package file object contents from the files and packages which exist in the package directory.
+     * @param keepNonExistingReferences If set to true, non-existing referenced files will be kept in the package
+     */
+    public async updateChildren(keepNonExistingReferences = false): Promise<void> {
+        await this.removeNonExtistingChildren(keepNonExistingReferences);
+        await this.addMissingChildren();
+    }
 
     //TODO <Dependencies> element, but currently not used in any code
 
@@ -113,17 +204,7 @@ function getSubType(rootElement: ParsedXmlObject): string | undefined {
     return typeof subType === "string" ? subType : undefined;
 }
 
-/**
- * Get all child objects from the package XML
- * @throws If there are multiple child object root nodes (<Files> or <Objects>)
- */
-function getChildObjects(rootElement: ParsedXmlObject, packageDir: Uri): AsPackageObject[] {
-    const childrenObj = getChildArrayData(rootElement);
-    return childrenObj.children.map((child) => xmlElementToPackageObject(child, childrenObj.name, packageDir));
-    //TODO test here 14.04.
-}
-
-function getChildArrayData(rootElement: ParsedXmlObject): { name: string; children: unknown[] } {
+function getXmlChildArrayDataOld(rootElement: ParsedXmlObject): { name: string; children: unknown[] } {
     /* TODO, should we really handle all package types in this main class?
     Maybe we'd better make a helper to extract the objects element from XML...
     It would be also easier to handle special cases such as the Files / Objects difference in libs and programs (not in normal pkg files?? old AS??)...
@@ -138,10 +219,22 @@ function getChildArrayData(rootElement: ParsedXmlObject): { name: string; childr
         return { name: "Object", children: children };
     }
     //
-    children = rootAny?.Files?.File;
-    if (children !== undefined) {
-        if (!Array.isArray(children)) throw new Error(`XML object "ROOT.Files.File is no array!"`);
-        return { name: "File", children: children };
+    // children = rootAny?.Files?.File;
+    // if (children !== undefined) {
+    //     if (!Array.isArray(children)) throw new Error(`XML object "ROOT.Files.File is no array!"`);
+    //     return { name: "File", children: children };
+    // }
+    //TODO test new implementation
+    if ("Files" in rootElement) {
+        if (!isNonNullObject(rootElement.Files)) throw new Error("XXXXX");
+        if (!("File" in rootElement.Files)) {
+            (rootElement.Files as Record<string, unknown>).File = [];
+            return { name: "File", children: [] };
+        } else {
+            children = rootElement.Files.File;
+            if (!Array.isArray(children)) throw new Error(`XML object "ROOT.Files.File is no array!"`);
+            return { name: "File", children: children };
+        }
     }
     //
     children = rootAny?.Configurations?.Configuration;
@@ -152,6 +245,58 @@ function getChildArrayData(rootElement: ParsedXmlObject): { name: string; childr
     /* eslint-enable */
     // no match --> error
     throw new Error("Package child objects data not found");
+}
+
+function getXmlChildArrayData(rootElement: ParsedXmlObject): { name: string; children: unknown[] } {
+    // Test for Objects
+    const objects = getXmlChildArrayByNames(rootElement, "Objects", "Object");
+    if (objects !== undefined) return { name: "Object", children: objects };
+    // Test for Files
+    const files = getXmlChildArrayByNames(rootElement, "Files", "File");
+    if (files !== undefined) return { name: "File", children: files };
+    // Test for Configurations
+    const configurations = getXmlChildArrayByNames(rootElement, "Configurations", "Configuration");
+    if (configurations !== undefined) return { name: "Configuration", children: configurations };
+    // no match --> error
+    throw new Error("Package child objects data not found");
+}
+
+/**
+ * TODO a bit detail
+ * @param rootElement Root element object of the parsed XML data
+ * @param nameLv1 Name of the first level property / XML element, e.g. `"Objects"`
+ * @param nameLv2 Name of the first level property / XML element, e.g. `"Objects.Object"`
+ * @returns The array representing the second level data. If only the first level exists, an empty array is added to the XML object. `undefined` if no property with key `nameLv1` exists in the `rootElement`
+ * @throws If the level1 object was found and afterwards some of the type guards failed
+ */
+function getXmlChildArrayByNames(rootElement: ParsedXmlObject, nameLv1: string, nameLv2: string): unknown[] | undefined {
+    // Get lv1 object, needs to be an object if it exists
+    const [, lv1Property] = Object.entries(rootElement)
+        .map(([k, v]) => [k, v as unknown])
+        .find(([key, _]) => key === nameLv1) ?? [nameLv1, undefined];
+    // check value of lv1 object
+    if (lv1Property === undefined) return undefined;
+    if (!isNonNullObject(lv1Property)) throw new Error(`XML object "ROOT.${nameLv1} is no object!"`);
+    // get lv2 object
+    const [, lv2Property] = Object.entries(lv1Property)
+        .map(([k, v]) => [k, v as unknown])
+        .find(([key, _]) => key === nameLv2) ?? [nameLv2, undefined];
+    // check value of lv2 object
+    if (lv2Property === undefined) {
+        // Lv2 property does not exist -> create property with empty array
+        const newChildren: unknown[] = [];
+        (lv1Property as Record<string, unknown>)[nameLv2] = newChildren;
+        return newChildren;
+    } else if (Array.isArray(lv2Property)) {
+        return lv2Property as unknown[];
+    } else {
+        throw new Error(`XML object "ROOT.${nameLv1}.${nameLv2} is no array!"`);
+    }
+    //TODO why does following not work?
+    // const name32 = name1;
+    // if (name32 in rootElement) {
+    //     if (!isNonNullObject(rootElement[name32])) throw new Error("XXXXX");
+    // }
 }
 
 /**
@@ -187,14 +332,8 @@ function xmlElementToPackageObject(child: unknown, childName: string, packageDir
     const description = childAny?._att?.Description as unknown;
     const language = childAny?._att?.Language as unknown;
     /* eslint-enable */
-    // function to resolve path from project root
-    const resolvePath = (projectRoot: Uri): Uri => {
-        if (isReference === true) {
-            return pathResolve(projectRoot, posixPath);
-        } else {
-            return pathResolve(packageDir, posixPath);
-        }
-    };
+    // function to resolve path from project root or from package directory
+    const resolvePath: (prjRoot: Uri) => Uri = isReference === true ? (prjRoot) => pathResolve(prjRoot, posixPath) : () => pathResolve(packageDir, posixPath);
     // return result
     return {
         path: posixPath,
@@ -205,4 +344,21 @@ function xmlElementToPackageObject(child: unknown, childName: string, packageDir
         isPrivate: isPrivate,
         resolvePath: resolvePath,
     };
+}
+
+function packageElementToXmlObj(pkgElem: AsPackageObject): ParsedXmlObject {
+    // TODO proper path and Windows ref path handling
+    // TODO move to AsPackageObject file?
+    /* eslint-disable @typescript-eslint/naming-convention */
+    return {
+        _txt: pkgElem.path,
+        _att: {
+            Type: pkgElem.type,
+            Language: pkgElem.language,
+            Description: pkgElem.description,
+            Private: pkgElem.isPrivate,
+            Reference: pkgElem.isReference,
+        },
+    };
+    /* eslint-enable */
 }
