@@ -1,403 +1,487 @@
 {
-	"name": "vscode-brautomationtools",
-	"displayName": "B&R Automation Tools",
-	"description": "Tools to edit B&R Automation Studio projects in VS Code",
-	"version": "0.0.8",
-	"publisher": "Radeonmann",
-	"icon": "resources/favicon.png",
-	"repository": {
-		"url": "https://github.com/br-automation-com/vscode-brAutomationTools"
-	},
-	"license": "MIT",
-	"engines": {
-		"vscode": "^1.61.0"
-	},
-	"categories": [
-		"Programming Languages",
-		"Other"
-	],
-	"capabilities": {
-		"untrustedWorkspaces": {
-			"supported": false,
-			"description": "Not supported because some CLI's are called with arguments parsed from workspace files (Build CLI, gcc, ...)"
-		}
-	},
-	"activationEvents": [
-		"workspaceContains:/*.apj",
-		"onCommand:vscode-brautomationtools.forceActivate"
-	],
-	"extensionDependencies": [
-		"ms-vscode.cpptools"
-	],
-	"main": "./dist/extension.js",
-	"contributes": {
-		"commands": [
-			{
-				"command": "vscode-brautomationtools.forceActivate",
-				"title": "Force activate extension",
-				"category": "B&R Tools"
-			},
-			{
-				"command": "vscode-brautomationtools.test",
-				"title": "Test",
-				"category": "B&R Tools"
-			},
-			{
-				"command": "vscode-brautomationtools.updateAvailableAutomationStudioVersions",
-				"title": "Refresh installed AS version information",
-				"category": "B&R Tools"
-			},
-			{
-				"command": "vscode-brautomationtools.changeActiveConfiguration",
-				"title": "Change active project configuration",
-				"category": "B&R Tools"
-			}
-		],
-		"configuration": {
-			"title": "B&R Automation Tools",
-			"properties": {
-				"vscode-brautomationtools.build.defaultBuildMode": {
-					"description": "Default build mode which will be pre-selected in build task dialogs.",
-					"type": "string",
-					"enum": [
-						"Build",
-						"Rebuild",
-						"BuildAndTransfer",
-						"BuildAndCreateCompactFlash"
-					],
-					"enumDescriptions": [
-						"Incremental build",
-						"Complete rebuild",
-						"Build for transfer",
-						"Build for creation of CF card"
-					],
-					"default": "Build"
-				},
-				"vscode-brautomationtools.environment.automationStudioInstallPaths": {
-					"description": "Paths where the Automation Studio versions are installed. E.g. if Automation Studio V4.6.x is installed in C:\\BrAutomation\\AS46, the install path is C:\\BrAutomation",
-					"type": "array",
-					"items": {
-						"type": "string"
-					},
-					"default": [
-						"C:\\BrAutomation"
-					]
-				},
-				"vscode-brautomationtools.environment.pviInstallPaths": {
-					"description": "Paths where the PVI versions are installed. E.g. if PVI V4.6.x is installed in C:\\BrAutomation\\PVI\\V4.6, the install path is C:\\BrAutomation\\PVI",
-					"type": "array",
-					"items": {
-						"type": "string"
-					},
-					"default": [
-						"C:\\BrAutomation\\PVI"
-					]
-				},
-				"vscode-brautomationtools.logging.logLevel": {
-					"description": "Level for log outputs to the console",
-					"type": "string",
-					"enum": [
-						"Fatal",
-						"Error",
-						"Warning",
-						"Info",
-						"Detail",
-						"Debug"
-					],
-					"enumDescriptions": [
-						"Log only fatal error messages",
-						"Log error messages",
-						"Log warning messages",
-						"Log information messages",
-						"Log detailed information messages",
-						"Log debug messages"
-					],
-					"default": "Info"
-				},
-				"vscode-brautomationtools.logging.showOutputOnImportantMessage": {
-					"description": "If activated, the log output will be automatically shown on messages of level Warning or higher",
-					"type": "string",
-					"enum": [
-						"Always",
-						"OnFirst",
-						"Never"
-					],
-					"enumDescriptions": [
-						"Show on every new important message",
-						"Show only the first time an important message is written",
-						"Never show automatically"
-					],
-					"default": "Always"
-				},
-				"vscode-brautomationtools.logging.prettyPrintAdditionalData": {
-					"description": "Pretty print additional data in logger. This means, that the additional JSON data will be spread over mutliple lines and indented.",
-					"type": "boolean",
-					"default": false
-				},
-				"vscode-brautomationtools.notifications.hideActivationMessage": {
-					"description": "Hide the information pop-up after the extension activation is done",
-					"type": "boolean",
-					"default": false,
-					"scope": "application"
-				},
-				"vscode-brautomationtools.notifications.hideNewVersionMessage": {
-					"description": "Hide the information pop-up after a new version was installed",
-					"type": "boolean",
-					"default": false,
-					"scope": "application"
-				}
-			}
-		},
-		"problemPatterns": [
-			{
-				"name": "BrAsBuildCombinedPattern",
-				"regexp": "^[0-9: ]*(AM |PM )?(.*): \\((?:(?:Ln:\\s*(\\d+)(?:,\\s*Col:\\s*){0,1}(\\d+){0,1})|(?:.*))\\)\\s+(warning|error)\\s+(\\d*):(.*)$",
-				"file": 2,
-				"line": 3,
-				"column": 4,
-				"severity": 5,
-				"code": 6,
-				"message": 7
-			}
-		],
-		"problemMatchers": [
-			{
-				"name": "BrAsBuild",
-				"label": "B&R Automation Studio build",
-				"fileLocation": "autoDetect",
-				"pattern": "$BrAsBuildCombinedPattern"
-			}
-		],
-		"taskDefinitions": [
-			{
-				"type": "BrAsBuild",
-				"properties": {
-					"asProjectFile": {
-						"description": "The (absolute?) path of the Automation Studio project file, e.g. 'C:\\projects\\MyFirstProject\\MyFirstProject.apj'. If not set, a dialog will ask for the project on every execution.",
-						"type": "string"
-					},
-					"asBuildMode": {
-						"description": "The build mode for this task. If not set, a dialog will ask for the build mode on every execution.",
-						"type": "string",
-						"enum": [
-							"$useSettings",
-							"Build",
-							"Rebuild",
-							"BuildAndTransfer",
-							"BuildAndCreateCompactFlash"
-						],
-						"enumDescriptions": [
-							"Use value from setting `vscode-brautomationtools.build.defaultBuildMode`",
-							"Incremental build",
-							"Complete rebuild",
-							"Build for transfer",
-							"Build for creation of CF card"
-						]
-					},
-					"asConfiguration": {
-						"description": "The AS configuration which will be built. If not set, a dialog will ask for the configuration on every execution.",
-						"type": "string"
-					},
-					"buildForSimulation": {
-						"description": "Always build project for ArSim target. If not set or set to false, the setting of the Automation Studio project configuration is used",
-						"type": "boolean"
-					},
-					"buildRUCPackage": {
-						"description": "Always create RUC package. If not set or set to false, the setting of the Automation Studio project configuration is used",
-						"type": "boolean"
-					},
-					"buildCrossReferences": {
-						"description": "Build only cross reference and header files. If set to true, no binaries are created",
-						"type": "boolean"
-					},
-					"cleanTemporary": {
-						"description": "Cleans the temporary folder.",
-						"type": "boolean"
-					},
-					"cleanBinary": {
-						"description": "Cleans the binaries folder.",
-						"type": "boolean"
-					},
-					"cleanGenerated": {
-						"description": "Cleans all generated .h and .a files. ATTENTION this affects all configurations!",
-						"type": "boolean"
-					},
-					"cleanDiagnosis": {
-						"description": "Cleans the diagnosis folder.",
-						"type": "boolean"
-					},
-					"additionalArguments": {
-						"description": "Additional arguments for Br.As.Build.exe. Write each argument as a separate array element, as strings with whitespaces get automatically quoted. For the same reason e.g. paths with whitespaces do not need to be quoted manually",
-						"type": "array",
-						"items": {
-							"type": "string"
-						}
-					}
-				}
-			},
-			{
-				"type": "BrAsTransfer",
-				"properties": {
-					"asProjectFile": {
-						"description": "The (absolute?) path of the Automation Studio project file, e.g. 'C:\\projects\\MyFirstProject\\MyFirstProject.apj'. If not set, a dialog will ask for the project on every execution.",
-						"type": "string"
-					},
-					"asConfiguration": {
-						"description": "The AS configuration which will be transfered. If not set, a dialog will ask for the configuration on every execution.",
-						"type": "string"
-					},
-					"pviConnectionSettings": {
-						"description": "Settings for PVI connection",
-						"type": "object",
-						"properties": {
-							"deviceInterface": {
-								"description": "Interface type of the device (e.g. tcpip) (/IF parameter)",
-								"type": "string",
-								"enum": [
-									"tcpip"
-								],
-								"enumDescriptions": [
-									"Ethernet connection"
-								]
-							},
-							"sourceNode": {
-								"description": "INA source node number for the connection. This value should differ from your AS connection to prevent connection losses (/SA parameter)",
-								"type": "number",
-								"minimum": 0,
-								"maximum": 255
-							},
-							"destinationAddress": {
-								"description": "Address of the transfer destination. Can be an IP address or a host name (/IP parameter)",
-								"type": "string"
-							},
-							"destinationPort": {
-								"description": "Port of the transfer destination. Default ANSL port is 11169 (/PT parameter)",
-								"type": "number",
-								"minimum": 1024,
-								"maximum": 32767
-							},
-							"communicationTimeout": {
-								"description": "Communication timeout in ms (/COMT parameter)",
-								"type": "number",
-								"minimum": 500,
-								"maximum": 360000
-							},
-							"connectionEstablishedTimeout": {
-								"description": "Maximum time in s permitted to elapse before a valid connection must be established (WT parameter in connection command)",
-								"type": "number",
-								"minimum": 5,
-								"maximum": 65535
-							},
-							"additionalDeviceParameters": {
-								"description": "Additional PVI device parameters (e.g. `/IF`, `/BD`, `/RS`)",
-								"type": "string"
-							},
-							"additionalCPUparameters": {
-								"description": "Additional PVI CPU parameters (e.g. `/AM`, `/IP`)",
-								"type": "string"
-							},
-							"remoteParameters": {
-								"description": "Parameters to establish a remote connection",
-								"type": "string"
-							}
-						}
-					},
-					"installationSettings": {
-						"description": "Settings for installation of project",
-						"type": "object",
-						"properties": {
-							"installMode": {
-								"description": "Mode of installation",
-								"type": "string",
-								"enum": [
-									"Consistent",
-									"InstallDuringTaskOperation",
-									"ForceReboot",
-									"ForceInitialInstallation"
-								],
-								"enumDescriptions": [
-									"All tasks will be stopped during installation process (RECOMMENDED)",
-									"Only changed tasks will be stopped during installation process",
-									"A reboot is forced and the installation will be executed during startup",
-									"All memory (permanent, remanent) will be deleted and a reboot will be executed during installation"
-								]
-							},
-							"installRestriction": {
-								"description": "Installation restrictions",
-								"type": "string",
-								"enum": [
-									"AllowInitialInstallation",
-									"AllowPartitioning",
-									"AllowUpdatesWithoutDataLoss"
-								],
-								"enumDescriptions": [
-									"Allows installation with complete data loss (e.g. change of configuration ID)",
-									"Allows installation where a partitioning of the flash will be executed. Data on the flash may be lost.",
-									"Allows only an installation without data loss of flash or remanent data."
-								]
-							},
-							"keepPVValues": {
-								"description": "Try to keep process variable values",
-								"type": "boolean"
-							},
-							"executeInitExit": {
-								"description": "Execute INIT and EXIT subroutines of changed tasks during transfer",
-								"type": "boolean"
-							},
-							"tryToBootInRUNMode": {
-								"description": "Try to boot in RUN mode whenever a reboot of the target is required or forced",
-								"type": "boolean"
-							}
-						}
-					},
-					"pviTransferExecutionArgumets": {
-						"description": "Command line arguments for PVITransfer.exe. Write each argument as a separate array element, as strings with whitespaces get automatically quoted. For the same reason e.g. paths with whitespaces do not need to be quoted manually",
-						"type": "array",
-						"items": {
-							"type": "string"
-						}
-					}
-				}
-			}
-		]
-	},
-	"scripts": {
-		"vscode:prepublish": "npm run package",
-		"compile": "webpack",
-		"watch": "webpack --watch",
-		"package": "webpack --mode production --devtool hidden-source-map",
-		"compile-tests": "tsc -p . --outDir out",
-		"watch-tests": "tsc -p . -w --outDir out",
-		"pretest": "npm run compile-tests && npm run compile && npm run lint",
-		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js",
-		"vsce:package": "vsce package --out ./packages/",
-		"vsce:publish": "vsce publish"
-	},
-	"devDependencies": {
-		"@types/glob": "^7.2.0",
-		"@types/mocha": "^9.0.0",
-		"@types/node": "^16.11.6",
-		"@types/semver": "^7.3.9",
-		"@types/vscode": "^1.61.0",
-		"@typescript-eslint/eslint-plugin": "5.59",
-		"@typescript-eslint/parser": "5.59",
-		"@vscode/test-electron": "^1.6.2",
-		"@vscode/vsce": "^2.19.0",
-		"eslint": "8.38",
-		"eslint-config-prettier": "^8.8.0",
-		"glob": "^7.2.0",
-		"mocha": "^9.2.2",
-		"prettier": "2.8.7",
-		"ts-loader": "^9.2.6",
-		"typescript": "^5.0.4",
-		"webpack": "^5.76.0",
-		"webpack-cli": "^4.9.1"
-	},
-	"dependencies": {
-		"fast-xml-parser": "^4.2.0",
-		"semver": "^7.3.5",
-		"vscode-cpptools": "^5.0.0",
-		"vscode-jsonrpc": "^6.0.0"
-	}
+    "name": "vscode-brautomationtools",
+    "displayName": "B&R Automation Tools",
+    "description": "Tools to edit B&R Automation Studio projects in VS Code",
+    "version": "0.0.9-alpha.1",
+    "publisher": "Radeonmann",
+    "icon": "resources/favicon.png",
+    "repository": {
+        "url": "https://github.com/br-automation-com/vscode-brAutomationTools"
+    },
+    "license": "MIT",
+    "engines": {
+        "vscode": "^1.61.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Other"
+    ],
+    "capabilities": {
+        "untrustedWorkspaces": {
+            "supported": false,
+            "description": "Not supported because some CLI's are called with arguments parsed from workspace files (Build CLI, gcc, ...)"
+        }
+    },
+    "activationEvents": [
+        "workspaceContains:/*.apj"
+    ],
+    "extensionDependencies": [
+        "ms-vscode.cpptools"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "vscode-brautomationtools.forceActivate",
+                "title": "Force activate extension",
+                "category": "B&R Tools"
+            },
+            {
+                "command": "vscode-brautomationtools.test",
+                "title": "Test",
+                "category": "B&R Tools"
+            },
+            {
+                "command": "vscode-brautomationtools.updateAvailableAutomationStudioVersions",
+                "title": "Refresh installed AS version information",
+                "category": "B&R Tools"
+            },
+            {
+                "command": "vscode-brautomationtools.changeActiveConfiguration",
+                "title": "Change active project configuration",
+                "category": "B&R Tools"
+            },
+            {
+                "command": "vscode-brautomationtools.updateAllPackageFileEntries",
+                "title": "Update all AS Package entries",
+                "category": "B&R Tools",
+                "enablement": "resourceFilename == Package.pkg",
+                "shortTitle": "Update pkg",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "vscode-brautomationtools.addMissingPackageFileEntries",
+                "title": "Add missing AS Package entries",
+                "category": "B&R Tools",
+                "enablement": "resourceFilename == Package.pkg",
+                "shortTitle": "Add to pkg",
+                "icon": "$(add)"
+            },
+            {
+                "command": "vscode-brautomationtools.removeNonExistingPackageFileEntries",
+                "title": "Remove non existing AS Package entries",
+                "category": "B&R Tools",
+                "enablement": "resourceFilename == Package.pkg",
+                "shortTitle": "Remove from pkg",
+                "icon": "$(remove)"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "vscode-brautomationtools.updateAllPackageFileEntries",
+                    "when": "resourceFilename == Package.pkg"
+                },
+                {
+                    "command": "vscode-brautomationtools.addMissingPackageFileEntries",
+                    "when": "resourceFilename == Package.pkg"
+                },
+                {
+                    "command": "vscode-brautomationtools.removeNonExistingPackageFileEntries",
+                    "when": "resourceFilename == Package.pkg"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "submenu": "vscode-brautomationtools.submenu.packageFile",
+                    "when": "resourceFilename == Package.pkg",
+                    "group": "7_modification"
+                }
+            ],
+            "editor/context": [
+                {
+                    "submenu": "vscode-brautomationtools.submenu.packageFile",
+                    "when": "resourceFilename == Package.pkg",
+                    "group": "1_modification"
+                }
+            ],
+            "editor/title": [
+                {
+                    "submenu": "vscode-brautomationtools.submenu.packageFile",
+                    "when": "resourceFilename == Package.pkg",
+                    "group": "navigation"
+                }
+            ],
+            "vscode-brautomationtools.submenu.packageFile": [
+                {
+                    "command": "vscode-brautomationtools.updateAllPackageFileEntries",
+                    "when": "resourceFilename == Package.pkg",
+                    "group": "7_modification@1"
+                },
+                {
+                    "command": "vscode-brautomationtools.addMissingPackageFileEntries",
+                    "when": "resourceFilename == Package.pkg",
+                    "group": "7_modification@2"
+                },
+                {
+                    "command": "vscode-brautomationtools.removeNonExistingPackageFileEntries",
+                    "when": "resourceFilename == Package.pkg",
+                    "group": "7_modification@3"
+                }
+            ]
+        },
+        "submenus": [
+            {
+                "id": "vscode-brautomationtools.submenu.packageFile",
+                "label": "AS Package File",
+                "icon": "$(file-submodule)"
+            }
+        ],
+        "configuration": {
+            "title": "B&R Automation Tools",
+            "properties": {
+                "vscode-brautomationtools.build.defaultBuildMode": {
+                    "description": "Default build mode which will be pre-selected in build task dialogs.",
+                    "type": "string",
+                    "enum": [
+                        "Build",
+                        "Rebuild",
+                        "BuildAndTransfer",
+                        "BuildAndCreateCompactFlash"
+                    ],
+                    "enumDescriptions": [
+                        "Incremental build",
+                        "Complete rebuild",
+                        "Build for transfer",
+                        "Build for creation of CF card"
+                    ],
+                    "default": "Build"
+                },
+                "vscode-brautomationtools.environment.automationStudioInstallPaths": {
+                    "description": "Paths where the Automation Studio versions are installed. E.g. if Automation Studio V4.6.x is installed in C:\\BrAutomation\\AS46, the install path is C:\\BrAutomation",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "C:\\BrAutomation"
+                    ]
+                },
+                "vscode-brautomationtools.environment.pviInstallPaths": {
+                    "description": "Paths where the PVI versions are installed. E.g. if PVI V4.6.x is installed in C:\\BrAutomation\\PVI\\V4.6, the install path is C:\\BrAutomation\\PVI",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "C:\\BrAutomation\\PVI"
+                    ]
+                },
+                "vscode-brautomationtools.logging.logLevel": {
+                    "description": "Level for log outputs to the console",
+                    "type": "string",
+                    "enum": [
+                        "Fatal",
+                        "Error",
+                        "Warning",
+                        "Info",
+                        "Detail",
+                        "Debug"
+                    ],
+                    "enumDescriptions": [
+                        "Log only fatal error messages",
+                        "Log error messages",
+                        "Log warning messages",
+                        "Log information messages",
+                        "Log detailed information messages",
+                        "Log debug messages"
+                    ],
+                    "default": "Info"
+                },
+                "vscode-brautomationtools.logging.showOutputOnImportantMessage": {
+                    "description": "If activated, the log output will be automatically shown on messages of level Warning or higher",
+                    "type": "string",
+                    "enum": [
+                        "Always",
+                        "OnFirst",
+                        "Never"
+                    ],
+                    "enumDescriptions": [
+                        "Show on every new important message",
+                        "Show only the first time an important message is written",
+                        "Never show automatically"
+                    ],
+                    "default": "Always"
+                },
+                "vscode-brautomationtools.logging.prettyPrintAdditionalData": {
+                    "description": "Pretty print additional data in logger. This means, that the additional JSON data will be spread over mutliple lines and indented.",
+                    "type": "boolean",
+                    "default": false
+                },
+                "vscode-brautomationtools.notifications.hideActivationMessage": {
+                    "description": "Hide the information pop-up after the extension activation is done",
+                    "type": "boolean",
+                    "default": false,
+                    "scope": "application"
+                },
+                "vscode-brautomationtools.notifications.hideNewVersionMessage": {
+                    "description": "Hide the information pop-up after a new version was installed",
+                    "type": "boolean",
+                    "default": false,
+                    "scope": "application"
+                }
+            }
+        },
+        "problemPatterns": [
+            {
+                "name": "BrAsBuildCombinedPattern",
+                "regexp": "^[0-9: ]*(AM |PM )?(.*): \\((?:(?:Ln:\\s*(\\d+)(?:,\\s*Col:\\s*){0,1}(\\d+){0,1})|(?:.*))\\)\\s+(warning|error)\\s+(\\d*):(.*)$",
+                "file": 2,
+                "line": 3,
+                "column": 4,
+                "severity": 5,
+                "code": 6,
+                "message": 7
+            }
+        ],
+        "problemMatchers": [
+            {
+                "name": "BrAsBuild",
+                "label": "B&R Automation Studio build",
+                "fileLocation": "autoDetect",
+                "pattern": "$BrAsBuildCombinedPattern"
+            }
+        ],
+        "taskDefinitions": [
+            {
+                "type": "BrAsBuild",
+                "properties": {
+                    "asProjectFile": {
+                        "description": "The (absolute?) path of the Automation Studio project file, e.g. 'C:\\projects\\MyFirstProject\\MyFirstProject.apj'. If not set, a dialog will ask for the project on every execution.",
+                        "type": "string"
+                    },
+                    "asBuildMode": {
+                        "description": "The build mode for this task. If not set, a dialog will ask for the build mode on every execution.",
+                        "type": "string",
+                        "enum": [
+                            "$useSettings",
+                            "Build",
+                            "Rebuild",
+                            "BuildAndTransfer",
+                            "BuildAndCreateCompactFlash"
+                        ],
+                        "enumDescriptions": [
+                            "Use value from setting `vscode-brautomationtools.build.defaultBuildMode`",
+                            "Incremental build",
+                            "Complete rebuild",
+                            "Build for transfer",
+                            "Build for creation of CF card"
+                        ]
+                    },
+                    "asConfiguration": {
+                        "description": "The AS configuration which will be built. If not set, a dialog will ask for the configuration on every execution.",
+                        "type": "string"
+                    },
+                    "buildForSimulation": {
+                        "description": "Always build project for ArSim target. If not set or set to false, the setting of the Automation Studio project configuration is used",
+                        "type": "boolean"
+                    },
+                    "buildRUCPackage": {
+                        "description": "Always create RUC package. If not set or set to false, the setting of the Automation Studio project configuration is used",
+                        "type": "boolean"
+                    },
+                    "buildCrossReferences": {
+                        "description": "Build only cross reference and header files. If set to true, no binaries are created",
+                        "type": "boolean"
+                    },
+                    "cleanTemporary": {
+                        "description": "Cleans the temporary folder.",
+                        "type": "boolean"
+                    },
+                    "cleanBinary": {
+                        "description": "Cleans the binaries folder.",
+                        "type": "boolean"
+                    },
+                    "cleanGenerated": {
+                        "description": "Cleans all generated .h and .a files. ATTENTION this affects all configurations!",
+                        "type": "boolean"
+                    },
+                    "cleanDiagnosis": {
+                        "description": "Cleans the diagnosis folder.",
+                        "type": "boolean"
+                    },
+                    "additionalArguments": {
+                        "description": "Additional arguments for Br.As.Build.exe. Write each argument as a separate array element, as strings with whitespaces get automatically quoted. For the same reason e.g. paths with whitespaces do not need to be quoted manually",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "BrAsTransfer",
+                "properties": {
+                    "asProjectFile": {
+                        "description": "The (absolute?) path of the Automation Studio project file, e.g. 'C:\\projects\\MyFirstProject\\MyFirstProject.apj'. If not set, a dialog will ask for the project on every execution.",
+                        "type": "string"
+                    },
+                    "asConfiguration": {
+                        "description": "The AS configuration which will be transfered. If not set, a dialog will ask for the configuration on every execution.",
+                        "type": "string"
+                    },
+                    "pviConnectionSettings": {
+                        "description": "Settings for PVI connection",
+                        "type": "object",
+                        "properties": {
+                            "deviceInterface": {
+                                "description": "Interface type of the device (e.g. tcpip) (/IF parameter)",
+                                "type": "string",
+                                "enum": [
+                                    "tcpip"
+                                ],
+                                "enumDescriptions": [
+                                    "Ethernet connection"
+                                ]
+                            },
+                            "sourceNode": {
+                                "description": "INA source node number for the connection. This value should differ from your AS connection to prevent connection losses (/SA parameter)",
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 255
+                            },
+                            "destinationAddress": {
+                                "description": "Address of the transfer destination. Can be an IP address or a host name (/IP parameter)",
+                                "type": "string"
+                            },
+                            "destinationPort": {
+                                "description": "Port of the transfer destination. Default ANSL port is 11169 (/PT parameter)",
+                                "type": "number",
+                                "minimum": 1024,
+                                "maximum": 32767
+                            },
+                            "communicationTimeout": {
+                                "description": "Communication timeout in ms (/COMT parameter)",
+                                "type": "number",
+                                "minimum": 500,
+                                "maximum": 360000
+                            },
+                            "connectionEstablishedTimeout": {
+                                "description": "Maximum time in s permitted to elapse before a valid connection must be established (WT parameter in connection command)",
+                                "type": "number",
+                                "minimum": 5,
+                                "maximum": 65535
+                            },
+                            "additionalDeviceParameters": {
+                                "description": "Additional PVI device parameters (e.g. `/IF`, `/BD`, `/RS`)",
+                                "type": "string"
+                            },
+                            "additionalCPUparameters": {
+                                "description": "Additional PVI CPU parameters (e.g. `/AM`, `/IP`)",
+                                "type": "string"
+                            },
+                            "remoteParameters": {
+                                "description": "Parameters to establish a remote connection",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "installationSettings": {
+                        "description": "Settings for installation of project",
+                        "type": "object",
+                        "properties": {
+                            "installMode": {
+                                "description": "Mode of installation",
+                                "type": "string",
+                                "enum": [
+                                    "Consistent",
+                                    "InstallDuringTaskOperation",
+                                    "ForceReboot",
+                                    "ForceInitialInstallation"
+                                ],
+                                "enumDescriptions": [
+                                    "All tasks will be stopped during installation process (RECOMMENDED)",
+                                    "Only changed tasks will be stopped during installation process",
+                                    "A reboot is forced and the installation will be executed during startup",
+                                    "All memory (permanent, remanent) will be deleted and a reboot will be executed during installation"
+                                ]
+                            },
+                            "installRestriction": {
+                                "description": "Installation restrictions",
+                                "type": "string",
+                                "enum": [
+                                    "AllowInitialInstallation",
+                                    "AllowPartitioning",
+                                    "AllowUpdatesWithoutDataLoss"
+                                ],
+                                "enumDescriptions": [
+                                    "Allows installation with complete data loss (e.g. change of configuration ID)",
+                                    "Allows installation where a partitioning of the flash will be executed. Data on the flash may be lost.",
+                                    "Allows only an installation without data loss of flash or remanent data."
+                                ]
+                            },
+                            "keepPVValues": {
+                                "description": "Try to keep process variable values",
+                                "type": "boolean"
+                            },
+                            "executeInitExit": {
+                                "description": "Execute INIT and EXIT subroutines of changed tasks during transfer",
+                                "type": "boolean"
+                            },
+                            "tryToBootInRUNMode": {
+                                "description": "Try to boot in RUN mode whenever a reboot of the target is required or forced",
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "pviTransferExecutionArgumets": {
+                        "description": "Command line arguments for PVITransfer.exe. Write each argument as a separate array element, as strings with whitespaces get automatically quoted. For the same reason e.g. paths with whitespaces do not need to be quoted manually",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "node ./out/test/runTest.js",
+        "vsce:package": "vsce package --out ./packages/",
+        "vsce:publish": "vsce publish"
+    },
+    "devDependencies": {
+        "@types/glob": "^7.2.0",
+        "@types/mocha": "^9.0.0",
+        "@types/node": "^16.11.6",
+        "@types/semver": "^7.3.9",
+        "@types/vscode": "^1.61.0",
+        "@typescript-eslint/eslint-plugin": "5.59",
+        "@typescript-eslint/parser": "5.59",
+        "@vscode/test-electron": "^1.6.2",
+        "@vscode/vsce": "^2.19.0",
+        "eslint": "8.38",
+        "eslint-config-prettier": "^8.8.0",
+        "glob": "^7.2.0",
+        "mocha": "^9.2.2",
+        "prettier": "2.8.7",
+        "ts-loader": "^9.2.6",
+        "typescript": "^5.0.4",
+        "webpack": "^5.76.0",
+        "webpack-cli": "^4.9.1"
+    },
+    "dependencies": {
+        "fast-xml-parser": "^4.2.0",
+        "semver": "^7.3.5",
+        "vscode-cpptools": "^5.0.0",
+        "vscode-jsonrpc": "^6.0.0"
+    }
 }
