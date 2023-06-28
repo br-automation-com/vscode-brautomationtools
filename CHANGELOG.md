@@ -11,7 +11,7 @@ Add new but unreleased features, fixes... here during development
 
 Users can look forward to these changes for the next release 😀😉
 
-## [0.0.8] - 2023-07-24
+## [0.0.8] - 2023-04-24
 
 Release with mostly internal changes and fixes.
 
