@@ -11,6 +11,12 @@ Add new but unreleased features, fixes... here during development
 
 Users can look forward to these changes for the next release 😀😉
 
+### Fixed
+
+-   On slower machines it was possible, that we didn't provide information to the C/C++ extension with correct timing.
+    In that case the IntelliSense was not working correctly for already opened files when opening a workspace.
+    [#66](https://github.com/br-automation-com/vscode-brautomationtools/issues/66)
+
 ## [0.0.8] - 2023-04-24
 
 Release with mostly internal changes and fixes.

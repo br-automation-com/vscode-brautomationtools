@@ -46,10 +46,12 @@ class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
             return false;
         }
         this.#cppApi.registerCustomConfigurationProvider(this);
-        // Ready only parsing of workspace and environment (required for proper includes)
-        void Environment.automationStudio.getVersions().then(() => this.didChangeCppToolsConfig()); // TODO clarify async in #55
-        void WorkspaceProjects.getProjects().then(() => this.didChangeCppToolsConfig()); // TODO clarify async in #55
+        logger.detail("Registered extension as IntelliSense configuration provider on C/C++ extension");
+        // Wait until ready and notify
+        await Environment.automationStudio.getVersions(); // TODO It would be cleaner to split it up into two functions, one which registers and one which notifies readyness. The Ready function would then be called at the end of extension activation in extension.ts #55
+        await WorkspaceProjects.getProjects();
         this.#cppApi.notifyReady(this);
+        logger.detail("Extension is now ready to provide C/C++ IntelliSense configurations");
         return true;
     }
 
